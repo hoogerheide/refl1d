@@ -1,0 +1,7 @@
+refl1d.lib.python.build\_profile module
+=======================================
+
+.. automodule:: refl1d.lib.python.build_profile
+   :members:
+   :undoc-members:
+   :show-inheritance:

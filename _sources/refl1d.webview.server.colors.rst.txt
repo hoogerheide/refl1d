@@ -1,0 +1,7 @@
+refl1d.webview.server.colors module
+===================================
+
+.. automodule:: refl1d.webview.server.colors
+   :members:
+   :undoc-members:
+   :show-inheritance:

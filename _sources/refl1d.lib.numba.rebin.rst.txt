@@ -1,0 +1,7 @@
+refl1d.lib.numba.rebin module
+=============================
+
+.. automodule:: refl1d.lib.numba.rebin
+   :members:
+   :undoc-members:
+   :show-inheritance:

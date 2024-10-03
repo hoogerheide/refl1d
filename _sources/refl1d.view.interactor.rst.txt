@@ -1,0 +1,7 @@
+refl1d.view.interactor module
+=============================
+
+.. automodule:: refl1d.view.interactor
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,7 @@
+refl1d.view.model\_view module
+==============================
+
+.. automodule:: refl1d.view.model_view
+   :members:
+   :undoc-members:
+   :show-inheritance:

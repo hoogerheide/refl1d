@@ -1,0 +1,7 @@
+refl1d.stitch module
+====================
+
+.. automodule:: refl1d.stitch
+   :members:
+   :undoc-members:
+   :show-inheritance:

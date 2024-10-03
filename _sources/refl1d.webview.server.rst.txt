@@ -1,0 +1,23 @@
+refl1d.webview.server package
+=============================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   refl1d.webview.server.api
+   refl1d.webview.server.colors
+   refl1d.webview.server.names
+   refl1d.webview.server.profile_plot
+   refl1d.webview.server.profile_uncertainty
+   refl1d.webview.server.webserver
+
+Module contents
+---------------
+
+.. automodule:: refl1d.webview.server
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,7 @@
+refl1d.oversampling module
+==========================
+
+.. automodule:: refl1d.oversampling
+   :members:
+   :undoc-members:
+   :show-inheritance:

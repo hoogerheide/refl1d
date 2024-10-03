@@ -1,0 +1,7 @@
+refl1d.experiment module
+========================
+
+.. automodule:: refl1d.experiment
+   :members:
+   :undoc-members:
+   :show-inheritance:

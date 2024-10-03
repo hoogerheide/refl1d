@@ -1,0 +1,32 @@
+refl1d.view package
+===================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   refl1d.view.binder
+   refl1d.view.config
+   refl1d.view.data_view
+   refl1d.view.demo
+   refl1d.view.interactor
+   refl1d.view.interface
+   refl1d.view.layer
+   refl1d.view.layer_dialog
+   refl1d.view.model_view
+   refl1d.view.monoi
+   refl1d.view.polymeri
+   refl1d.view.profilei
+   refl1d.view.registry
+   refl1d.view.thickness
+   refl1d.view.util
+
+Module contents
+---------------
+
+.. automodule:: refl1d.view
+   :members:
+   :undoc-members:
+   :show-inheritance:

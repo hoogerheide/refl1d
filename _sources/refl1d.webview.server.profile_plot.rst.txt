@@ -1,0 +1,7 @@
+refl1d.webview.server.profile\_plot module
+==========================================
+
+.. automodule:: refl1d.webview.server.profile_plot
+   :members:
+   :undoc-members:
+   :show-inheritance:

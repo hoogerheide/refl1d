@@ -1,0 +1,7 @@
+refl1d.lib.python.convolve module
+=================================
+
+.. automodule:: refl1d.lib.python.convolve
+   :members:
+   :undoc-members:
+   :show-inheritance:

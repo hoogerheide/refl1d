@@ -1,0 +1,7 @@
+refl1d.instrument module
+========================
+
+.. automodule:: refl1d.instrument
+   :members:
+   :undoc-members:
+   :show-inheritance:

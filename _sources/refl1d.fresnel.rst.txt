@@ -1,0 +1,7 @@
+refl1d.fresnel module
+=====================
+
+.. automodule:: refl1d.fresnel
+   :members:
+   :undoc-members:
+   :show-inheritance:

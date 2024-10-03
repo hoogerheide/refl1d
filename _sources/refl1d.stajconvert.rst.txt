@@ -1,0 +1,7 @@
+refl1d.stajconvert module
+=========================
+
+.. automodule:: refl1d.stajconvert
+   :members:
+   :undoc-members:
+   :show-inheritance:

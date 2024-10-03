@@ -1,0 +1,7 @@
+refl1d.fitplugin module
+=======================
+
+.. automodule:: refl1d.fitplugin
+   :members:
+   :undoc-members:
+   :show-inheritance:

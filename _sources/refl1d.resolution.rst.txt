@@ -1,0 +1,7 @@
+refl1d.resolution module
+========================
+
+.. automodule:: refl1d.resolution
+   :members:
+   :undoc-members:
+   :show-inheritance:

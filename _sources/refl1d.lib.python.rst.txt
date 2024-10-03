@@ -1,0 +1,24 @@
+refl1d.lib.python package
+=========================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   refl1d.lib.python.build_profile
+   refl1d.lib.python.contract_profile
+   refl1d.lib.python.convolve
+   refl1d.lib.python.convolve_sampled
+   refl1d.lib.python.magnetic
+   refl1d.lib.python.rebin
+   refl1d.lib.python.reflectivity
+
+Module contents
+---------------
+
+.. automodule:: refl1d.lib.python
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,26 @@
+refl1d.webview package
+======================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   refl1d.webview.server
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   refl1d.webview.build_client
+
+Module contents
+---------------
+
+.. automodule:: refl1d.webview
+   :members:
+   :undoc-members:
+   :show-inheritance:

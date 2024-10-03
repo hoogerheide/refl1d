@@ -1,0 +1,7 @@
+refl1d.material module
+======================
+
+.. automodule:: refl1d.material
+   :members:
+   :undoc-members:
+   :show-inheritance:

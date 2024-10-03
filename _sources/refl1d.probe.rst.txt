@@ -1,0 +1,7 @@
+refl1d.probe module
+===================
+
+.. automodule:: refl1d.probe
+   :members:
+   :undoc-members:
+   :show-inheritance:

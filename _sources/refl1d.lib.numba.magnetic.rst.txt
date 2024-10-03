@@ -1,0 +1,7 @@
+refl1d.lib.numba.magnetic module
+================================
+
+.. automodule:: refl1d.lib.numba.magnetic
+   :members:
+   :undoc-members:
+   :show-inheritance:

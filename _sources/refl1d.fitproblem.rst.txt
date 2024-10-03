@@ -1,0 +1,7 @@
+refl1d.fitproblem module
+========================
+
+.. automodule:: refl1d.fitproblem
+   :members:
+   :undoc-members:
+   :show-inheritance:

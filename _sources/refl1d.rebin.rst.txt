@@ -1,0 +1,7 @@
+refl1d.rebin module
+===================
+
+.. automodule:: refl1d.rebin
+   :members:
+   :undoc-members:
+   :show-inheritance:

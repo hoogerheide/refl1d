@@ -1,0 +1,68 @@
+refl1d package
+==============
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   refl1d.lib
+   refl1d.view
+   refl1d.webview
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   refl1d.abeles
+   refl1d.anstodata
+   refl1d.cheby
+   refl1d.composition
+   refl1d.corrtest
+   refl1d.dist
+   refl1d.errors
+   refl1d.experiment
+   refl1d.fasta
+   refl1d.fitplugin
+   refl1d.fitproblem
+   refl1d.flayer
+   refl1d.freeform
+   refl1d.fresnel
+   refl1d.garefl
+   refl1d.instrument
+   refl1d.magnetic
+   refl1d.magnetism
+   refl1d.main
+   refl1d.material
+   refl1d.materialdb
+   refl1d.model
+   refl1d.mono
+   refl1d.names
+   refl1d.ncnrdata
+   refl1d.oversampling
+   refl1d.plottable
+   refl1d.polymer
+   refl1d.probe
+   refl1d.profile
+   refl1d.rebin
+   refl1d.refl_tr
+   refl1d.reflectivity
+   refl1d.refllib
+   refl1d.resolution
+   refl1d.snsdata
+   refl1d.staj
+   refl1d.stajconvert
+   refl1d.stitch
+   refl1d.support
+   refl1d.util
+
+Module contents
+---------------
+
+.. automodule:: refl1d
+   :members:
+   :undoc-members:
+   :show-inheritance:

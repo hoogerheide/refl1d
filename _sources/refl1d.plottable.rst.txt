@@ -1,0 +1,7 @@
+refl1d.plottable module
+=======================
+
+.. automodule:: refl1d.plottable
+   :members:
+   :undoc-members:
+   :show-inheritance:
