@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>experiment - Reflectivity fitness function &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
+    <script src="../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="fitplugin - Bumps plugin definition for reflectivity models" href="fitplugin.html" />
+    <link rel="prev" title="errors - Plot sample profile uncertainty" href="errors.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>experiment - Reflectivity fitness function</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        «&#160;&#160;<a href="errors.html">errors - Plot sample profile uncertainty</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="fitplugin.html">fitplugin - Bumps plugin definition for reflectivity models</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="experiment-reflectivity-fitness-function">
+<h1>experiment - Reflectivity fitness function<a class="headerlink" href="#experiment-reflectivity-fitness-function" title="Link to this heading">¶</a></h1>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../refl1d.experiment.html#refl1d.experiment.Experiment" title="refl1d.experiment.Experiment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Experiment</span></code></a></p></td>
+<td><p>Theory calculator.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../refl1d.experiment.html#refl1d.experiment.ExperimentBase" title="refl1d.experiment.ExperimentBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ExperimentBase</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../refl1d.experiment.html#refl1d.experiment.MixedExperiment" title="refl1d.experiment.MixedExperiment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MixedExperiment</span></code></a></p></td>
+<td><p>Support composite sample reflectivity measurements.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../refl1d.experiment.html#refl1d.experiment.WebviewPlotFunction" title="refl1d.experiment.WebviewPlotFunction"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WebviewPlotFunction</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../refl1d.experiment.html#refl1d.experiment.WebviewPlotInfo" title="refl1d.experiment.WebviewPlotInfo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WebviewPlotInfo</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../refl1d.experiment.html#refl1d.experiment.nice" title="refl1d.experiment.nice"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nice</span></code></a></p></td>
+<td><p>Fix v to a value with a given number of digits of precision</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../refl1d.experiment.html#refl1d.experiment.plot_sample" title="refl1d.experiment.plot_sample"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_sample</span></code></a></p></td>
+<td><p>Quick plot of a reflectivity sample and the corresponding reflectivity.</p></td>
+</tr>
+</tbody>
+</table>
+<p id="module-refl1d.experiment">Experiment definition</p>
+<p>An experiment combines the sample definition with a measurement probe
+to create a fittable reflectometry model.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">refl1d.experiment.</span></span><span class="sig-name descname"><span class="pre">Experiment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../refl1d.model.html#refl1d.model.Stack" title="refl1d.model.Stack"><span class="pre">Stack</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probe</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roughness_limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dA</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_interfaces</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smoothness</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auto_tag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#Experiment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.Experiment" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../refl1d.experiment.html#refl1d.experiment.ExperimentBase" title="refl1d.experiment.ExperimentBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExperimentBase</span></code></a></p>
+<p>Theory calculator.  Associates sample with data, Sample plus data.
+Associate sample with measurement.</p>
+<p>The model calculator is specific to the particular measurement technique
+that was applied to the model.</p>
+<p>Measurement properties:</p>
+<blockquote>
+<div><p><em>probe</em> is the measuring probe</p>
+</div></blockquote>
+<p>Sample properties:</p>
+<blockquote>
+<div><p><em>sample</em> is the model sample
+<em>step_interfaces</em> use slabs to approximate gaussian interfaces
+<em>roughness_limit</em> limit the roughness based on layer thickness
+<em>dz</em> minimum step size for computed profile steps in Angstroms
+<em>dA</em> discretization condition for computed profiles</p>
+</div></blockquote>
+<p>If <em>step_interfaces</em> is True, then approximate the interface using
+microslabs with step size <em>dz</em>.  The microslabs extend throughout
+the whole profile, both the interfaces and the bulk; a value
+for <em>dA</em> should be specified to save computation time.  If False, then
+use the Nevot-Croce analytic expression for the interface between slabs.</p>
+<p>The <em>roughness_limit</em> value should be reasonably large (e.g., 2.5 or above)
+to make sure that the Nevot-Croce reflectivity calculation matches the
+calculation of the displayed profile.  Use a value of 0 if you want no
+limits on the roughness,  but be aware that the displayed profile may
+not reflect the actual scattering densities in the material.</p>
+<p>The <em>dz</em> step size sets the size of the slabs for non-uniform profiles.
+Using the relation d = 2 pi / Q_max,  we use a default step size of d/20
+rounded to two digits, with 5 Å as the maximum default.  For
+simultaneous fitting you may want to set <em>dz</em> explicitly using to
+round(pi/Q_max/10, 1) so that all models use the same step size.</p>
+<p>The <em>dA</em> condition measures the uncertainty in scattering materials
+allowed when combining the steps of a non-uniform profile into slabs.
+Specifically, the area of the box containing the minimum and the
+maximum of the non-uniform profile within the slab will be smaller
+than <em>dA</em>.  A <em>dA</em> of 10 gives coarse slabs.  If <em>dA</em> is not provided
+then each profile step forms its own slab.  The <em>dA</em> condition will
+also apply to the slab approximation to the interfaces.</p>
+<p><em>interpolation</em> indicates the number of points to plot in between
+existing points.</p>
+<p><em>smoothness</em> <strong>DEPRECATED</strong> This parameter is not used.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.amplitude">
+<span class="sig-name descname"><span class="pre">amplitude</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#Experiment.amplitude"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.Experiment.amplitude" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate reflectivity amplitude at the probe points.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.dA">
+<span class="sig-name descname"><span class="pre">dA</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.experiment.Experiment.dA" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.dz">
+<span class="sig-name descname"><span class="pre">dz</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.experiment.Experiment.dz" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.format_parameters">
+<span class="sig-name descname"><span class="pre">format_parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.Experiment.format_parameters" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.interpolation">
+<span class="sig-name descname"><span class="pre">interpolation</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#refl1d.experiment.Experiment.interpolation" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.is_reset">
+<span class="sig-name descname"><span class="pre">is_reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.Experiment.is_reset" title="Link to this definition">¶</a></dt>
+<dd><p>Returns True if a model reset was triggered.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.ismagnetic">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ismagnetic</span></span><a class="headerlink" href="#refl1d.experiment.Experiment.ismagnetic" title="Link to this definition">¶</a></dt>
+<dd><p>True if experiment contains magnetic materials</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.magnetic_slabs">
+<span class="sig-name descname"><span class="pre">magnetic_slabs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#Experiment.magnetic_slabs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.Experiment.magnetic_slabs" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.magnetic_smooth_profile">
+<span class="sig-name descname"><span class="pre">magnetic_smooth_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#Experiment.magnetic_smooth_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.Experiment.magnetic_smooth_profile" title="Link to this definition">¶</a></dt>
+<dd><p>Return the nuclear and magnetic scattering potential for the sample.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.magnetic_step_profile">
+<span class="sig-name descname"><span class="pre">magnetic_step_profile</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#Experiment.magnetic_step_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.Experiment.magnetic_step_profile" title="Link to this definition">¶</a></dt>
+<dd><p>Return the nuclear and magnetic scattering potential for the sample.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#refl1d.experiment.Experiment.name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.nllf">
+<span class="sig-name descname"><span class="pre">nllf</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.Experiment.nllf" title="Link to this definition">¶</a></dt>
+<dd><p>Return the -log(P(data|model)).</p>
+<p>Using the assumption that data uncertainty is uncorrelated, with
+measurements normally distributed with mean R and variance dR**2,
+this is just sum( resid**2/2 + log(2*pi*dR**2)/2 ).</p>
+<p>The current version drops the constant term, sum(log(2*pi*dR**2)/2).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.numpoints">
+<span class="sig-name descname"><span class="pre">numpoints</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.Experiment.numpoints" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.parameters">
+<span class="sig-name descname"><span class="pre">parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#Experiment.parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.Experiment.parameters" title="Link to this definition">¶</a></dt>
+<dd><p>Fittable parameters to sample and probe</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.penalty">
+<span class="sig-name descname"><span class="pre">penalty</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#Experiment.penalty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.Experiment.penalty" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.plot">
+<span class="sig-name descname"><span class="pre">plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plot_shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile_shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.Experiment.plot" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.plot_profile">
+<span class="sig-name descname"><span class="pre">plot_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plot_shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#Experiment.plot_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.Experiment.plot_profile" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.plot_reflectivity">
+<span class="sig-name descname"><span class="pre">plot_reflectivity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">show_resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.Experiment.plot_reflectivity" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.probe">
+<span class="sig-name descname"><span class="pre">probe</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../refl1d.probe.html#refl1d.probe.Probe" title="refl1d.probe.Probe"><span class="pre">Probe</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="../refl1d.probe.html#refl1d.probe.PolarizedNeutronProbe" title="refl1d.probe.PolarizedNeutronProbe"><span class="pre">PolarizedNeutronProbe</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#refl1d.experiment.Experiment.probe" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.profile_shift">
+<span class="sig-name descname"><span class="pre">profile_shift</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#refl1d.experiment.Experiment.profile_shift" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.reflectivity">
+<span class="sig-name descname"><span class="pre">reflectivity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#Experiment.reflectivity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.Experiment.reflectivity" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate predicted reflectivity.</p>
+<p>If <em>resolution</em> is true include resolution effects.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.register_webview_plot">
+<span class="sig-name descname"><span class="pre">register_webview_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plot_title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../refl1d.experiment.html#refl1d.experiment.WebviewPlotFunction" title="refl1d.experiment.WebviewPlotFunction"><span class="pre">WebviewPlotFunction</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">change_with</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'parameter'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'uncertainty'</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.Experiment.register_webview_plot" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.residuals">
+<span class="sig-name descname"><span class="pre">residuals</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.Experiment.residuals" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.restore_data">
+<span class="sig-name descname"><span class="pre">restore_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.Experiment.restore_data" title="Link to this definition">¶</a></dt>
+<dd><p>Restore original data after resynthesis.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.resynth_data">
+<span class="sig-name descname"><span class="pre">resynth_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.Experiment.resynth_data" title="Link to this definition">¶</a></dt>
+<dd><p>Resynthesize data with noise from the uncertainty estimates.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.roughness_limit">
+<span class="sig-name descname"><span class="pre">roughness_limit</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#refl1d.experiment.Experiment.roughness_limit" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.sample">
+<span class="sig-name descname"><span class="pre">sample</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../refl1d.model.html#refl1d.model.Stack" title="refl1d.model.Stack"><span class="pre">Stack</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#refl1d.experiment.Experiment.sample" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">basename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.Experiment.save" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.save_json">
+<span class="sig-name descname"><span class="pre">save_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">basename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.Experiment.save_json" title="Link to this definition">¶</a></dt>
+<dd><p>Save the experiment as a json file</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.save_profile">
+<span class="sig-name descname"><span class="pre">save_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">basename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.Experiment.save_profile" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.save_refl">
+<span class="sig-name descname"><span class="pre">save_refl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">basename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.Experiment.save_refl" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.save_staj">
+<span class="sig-name descname"><span class="pre">save_staj</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">basename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#Experiment.save_staj"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.Experiment.save_staj" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.simulate_data">
+<span class="sig-name descname"><span class="pre">simulate_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.Experiment.simulate_data" title="Link to this definition">¶</a></dt>
+<dd><p>Simulate a random data set for the model.</p>
+<p>This sets R and dR according to the noise level given.</p>
+<p><strong>Parameters:</strong></p>
+<dl class="simple">
+<dt><em>noise</em>: float or array or None | %</dt><dd><p>dR/R uncertainty as a percentage.  If noise is set to None, then
+use dR from the data if present, otherwise default to 2%.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.slabs">
+<span class="sig-name descname"><span class="pre">slabs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#Experiment.slabs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.Experiment.slabs" title="Link to this definition">¶</a></dt>
+<dd><p>Return the slab thickness, roughness, rho, irho for the
+rendered model.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Roughness is for the top of the layer.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.smooth_profile">
+<span class="sig-name descname"><span class="pre">smooth_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#Experiment.smooth_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.Experiment.smooth_profile" title="Link to this definition">¶</a></dt>
+<dd><p>Return the scattering potential for the sample.</p>
+<p>If <em>dz</em> is not given, use <em>dz</em> = 0.1 A.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.step_interfaces">
+<span class="sig-name descname"><span class="pre">step_interfaces</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#refl1d.experiment.Experiment.step_interfaces" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.step_profile">
+<span class="sig-name descname"><span class="pre">step_profile</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#Experiment.step_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.Experiment.step_profile" title="Link to this definition">¶</a></dt>
+<dd><p>Return the step scattering potential for the sample, ignoring
+interfaces.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#Experiment.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.Experiment.to_dict" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.Experiment.update" title="Link to this definition">¶</a></dt>
+<dd><p>Called when any parameter in the model is changed.</p>
+<p>This signals that the entire model needs to be recalculated.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.update_composition">
+<span class="sig-name descname"><span class="pre">update_composition</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.Experiment.update_composition" title="Link to this definition">¶</a></dt>
+<dd><p>When the model composition has changed, we need to lookup the
+scattering factors for the new model.  This is only needed
+when an existing chemical formula is modified; new and
+deleted formulas will be handled automatically.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.version">
+<span class="sig-name descname"><span class="pre">version</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#refl1d.experiment.Experiment.version" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.webview_plots">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">webview_plots</span></span><a class="headerlink" href="#refl1d.experiment.Experiment.webview_plots" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.Experiment.write_data">
+<span class="sig-name descname"><span class="pre">write_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.Experiment.write_data" title="Link to this definition">¶</a></dt>
+<dd><p>Save simulated data to a file</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="refl1d.experiment.ExperimentBase">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">refl1d.experiment.</span></span><span class="sig-name descname"><span class="pre">ExperimentBase</span></span><a class="reference internal" href="../_modules/refl1d/experiment.html#ExperimentBase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.ExperimentBase" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.ExperimentBase.format_parameters">
+<span class="sig-name descname"><span class="pre">format_parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#ExperimentBase.format_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.ExperimentBase.format_parameters" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.experiment.ExperimentBase.interpolation">
+<span class="sig-name descname"><span class="pre">interpolation</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#refl1d.experiment.ExperimentBase.interpolation" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.ExperimentBase.is_reset">
+<span class="sig-name descname"><span class="pre">is_reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#ExperimentBase.is_reset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.ExperimentBase.is_reset" title="Link to this definition">¶</a></dt>
+<dd><p>Returns True if a model reset was triggered.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.ExperimentBase.magnetic_slabs">
+<span class="sig-name descname"><span class="pre">magnetic_slabs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#ExperimentBase.magnetic_slabs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.ExperimentBase.magnetic_slabs" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.ExperimentBase.magnetic_step_profile">
+<span class="sig-name descname"><span class="pre">magnetic_step_profile</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#ExperimentBase.magnetic_step_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.ExperimentBase.magnetic_step_profile" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.ExperimentBase.nllf">
+<span class="sig-name descname"><span class="pre">nllf</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#ExperimentBase.nllf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.ExperimentBase.nllf" title="Link to this definition">¶</a></dt>
+<dd><p>Return the -log(P(data|model)).</p>
+<p>Using the assumption that data uncertainty is uncorrelated, with
+measurements normally distributed with mean R and variance dR**2,
+this is just sum( resid**2/2 + log(2*pi*dR**2)/2 ).</p>
+<p>The current version drops the constant term, sum(log(2*pi*dR**2)/2).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.ExperimentBase.numpoints">
+<span class="sig-name descname"><span class="pre">numpoints</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#ExperimentBase.numpoints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.ExperimentBase.numpoints" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.ExperimentBase.parameters">
+<span class="sig-name descname"><span class="pre">parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#ExperimentBase.parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.ExperimentBase.parameters" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.ExperimentBase.plot">
+<span class="sig-name descname"><span class="pre">plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plot_shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile_shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#ExperimentBase.plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.ExperimentBase.plot" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.ExperimentBase.plot_profile">
+<span class="sig-name descname"><span class="pre">plot_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plot_shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#ExperimentBase.plot_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.ExperimentBase.plot_profile" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.ExperimentBase.plot_reflectivity">
+<span class="sig-name descname"><span class="pre">plot_reflectivity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">show_resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#ExperimentBase.plot_reflectivity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.ExperimentBase.plot_reflectivity" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.experiment.ExperimentBase.probe">
+<span class="sig-name descname"><span class="pre">probe</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../refl1d.probe.html#refl1d.probe.Probe" title="refl1d.probe.Probe"><span class="pre">Probe</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#refl1d.experiment.ExperimentBase.probe" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.ExperimentBase.reflectivity">
+<span class="sig-name descname"><span class="pre">reflectivity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#ExperimentBase.reflectivity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.ExperimentBase.reflectivity" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.ExperimentBase.register_webview_plot">
+<span class="sig-name descname"><span class="pre">register_webview_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plot_title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../refl1d.experiment.html#refl1d.experiment.WebviewPlotFunction" title="refl1d.experiment.WebviewPlotFunction"><span class="pre">WebviewPlotFunction</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">change_with</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'parameter'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'uncertainty'</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#ExperimentBase.register_webview_plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.ExperimentBase.register_webview_plot" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.ExperimentBase.residuals">
+<span class="sig-name descname"><span class="pre">residuals</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#ExperimentBase.residuals"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.ExperimentBase.residuals" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.ExperimentBase.restore_data">
+<span class="sig-name descname"><span class="pre">restore_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#ExperimentBase.restore_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.ExperimentBase.restore_data" title="Link to this definition">¶</a></dt>
+<dd><p>Restore original data after resynthesis.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.ExperimentBase.resynth_data">
+<span class="sig-name descname"><span class="pre">resynth_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#ExperimentBase.resynth_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.ExperimentBase.resynth_data" title="Link to this definition">¶</a></dt>
+<dd><p>Resynthesize data with noise from the uncertainty estimates.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.ExperimentBase.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">basename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#ExperimentBase.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.ExperimentBase.save" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.ExperimentBase.save_json">
+<span class="sig-name descname"><span class="pre">save_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">basename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#ExperimentBase.save_json"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.ExperimentBase.save_json" title="Link to this definition">¶</a></dt>
+<dd><p>Save the experiment as a json file</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.ExperimentBase.save_profile">
+<span class="sig-name descname"><span class="pre">save_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">basename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#ExperimentBase.save_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.ExperimentBase.save_profile" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.ExperimentBase.save_refl">
+<span class="sig-name descname"><span class="pre">save_refl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">basename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#ExperimentBase.save_refl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.ExperimentBase.save_refl" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.ExperimentBase.simulate_data">
+<span class="sig-name descname"><span class="pre">simulate_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#ExperimentBase.simulate_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.ExperimentBase.simulate_data" title="Link to this definition">¶</a></dt>
+<dd><p>Simulate a random data set for the model.</p>
+<p>This sets R and dR according to the noise level given.</p>
+<p><strong>Parameters:</strong></p>
+<dl class="simple">
+<dt><em>noise</em>: float or array or None | %</dt><dd><p>dR/R uncertainty as a percentage.  If noise is set to None, then
+use dR from the data if present, otherwise default to 2%.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.ExperimentBase.slabs">
+<span class="sig-name descname"><span class="pre">slabs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#ExperimentBase.slabs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.ExperimentBase.slabs" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.ExperimentBase.smooth_profile">
+<span class="sig-name descname"><span class="pre">smooth_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#ExperimentBase.smooth_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.ExperimentBase.smooth_profile" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.ExperimentBase.step_profile">
+<span class="sig-name descname"><span class="pre">step_profile</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#ExperimentBase.step_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.ExperimentBase.step_profile" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.ExperimentBase.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#ExperimentBase.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.ExperimentBase.to_dict" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.ExperimentBase.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#ExperimentBase.update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.ExperimentBase.update" title="Link to this definition">¶</a></dt>
+<dd><p>Called when any parameter in the model is changed.</p>
+<p>This signals that the entire model needs to be recalculated.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.ExperimentBase.update_composition">
+<span class="sig-name descname"><span class="pre">update_composition</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#ExperimentBase.update_composition"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.ExperimentBase.update_composition" title="Link to this definition">¶</a></dt>
+<dd><p>When the model composition has changed, we need to lookup the
+scattering factors for the new model.  This is only needed
+when an existing chemical formula is modified; new and
+deleted formulas will be handled automatically.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="refl1d.experiment.ExperimentBase.webview_plots">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">webview_plots</span></span><a class="headerlink" href="#refl1d.experiment.ExperimentBase.webview_plots" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.ExperimentBase.write_data">
+<span class="sig-name descname"><span class="pre">write_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#ExperimentBase.write_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.ExperimentBase.write_data" title="Link to this definition">¶</a></dt>
+<dd><p>Save simulated data to a file</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">refl1d.experiment.</span></span><span class="sig-name descname"><span class="pre">MixedExperiment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probe</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coherent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#MixedExperiment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.MixedExperiment" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../refl1d.experiment.html#refl1d.experiment.ExperimentBase" title="refl1d.experiment.ExperimentBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExperimentBase</span></code></a></p>
+<p>Support composite sample reflectivity measurements.</p>
+<p>Sometimes the sample you are measuring is not uniform.
+For example, you may have one portion of you polymer
+brush sample where the brushes are close packed and able
+to stay upright, whereas a different section of the sample
+has the brushes lying flat.  Constructing two sample
+models, one with brushes upright and one with brushes
+flat, and adding the reflectivity incoherently, you can
+then fit the ratio of upright to flat.</p>
+<p><em>samples</em> the layer stacks making up the models
+<em>ratio</em> a list of parameters, such as [3, 1] for a 3:1 ratio
+<em>probe</em> the measurement to be fitted or simulated</p>
+<p><em>coherent</em> is True if the length scale of the domains
+is less than the coherence length of the neutron, or false
+otherwise.</p>
+<p>Statistics such as the cost functions for the individual
+profiles can be accessed from the underlying experiments
+using composite.parts[i] for the various samples.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.amplitude">
+<span class="sig-name descname"><span class="pre">amplitude</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#MixedExperiment.amplitude"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.MixedExperiment.amplitude" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.coherent">
+<span class="sig-name descname"><span class="pre">coherent</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#refl1d.experiment.MixedExperiment.coherent" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.format_parameters">
+<span class="sig-name descname"><span class="pre">format_parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.MixedExperiment.format_parameters" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.interpolation">
+<span class="sig-name descname"><span class="pre">interpolation</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#refl1d.experiment.MixedExperiment.interpolation" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.is_reset">
+<span class="sig-name descname"><span class="pre">is_reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.MixedExperiment.is_reset" title="Link to this definition">¶</a></dt>
+<dd><p>Returns True if a model reset was triggered.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.magnetic_slabs">
+<span class="sig-name descname"><span class="pre">magnetic_slabs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.MixedExperiment.magnetic_slabs" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.magnetic_step_profile">
+<span class="sig-name descname"><span class="pre">magnetic_step_profile</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.MixedExperiment.magnetic_step_profile" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#refl1d.experiment.MixedExperiment.name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.nllf">
+<span class="sig-name descname"><span class="pre">nllf</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.MixedExperiment.nllf" title="Link to this definition">¶</a></dt>
+<dd><p>Return the -log(P(data|model)).</p>
+<p>Using the assumption that data uncertainty is uncorrelated, with
+measurements normally distributed with mean R and variance dR**2,
+this is just sum( resid**2/2 + log(2*pi*dR**2)/2 ).</p>
+<p>The current version drops the constant term, sum(log(2*pi*dR**2)/2).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.numpoints">
+<span class="sig-name descname"><span class="pre">numpoints</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.MixedExperiment.numpoints" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.parameters">
+<span class="sig-name descname"><span class="pre">parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#MixedExperiment.parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.MixedExperiment.parameters" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.penalty">
+<span class="sig-name descname"><span class="pre">penalty</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#MixedExperiment.penalty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.MixedExperiment.penalty" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.plot">
+<span class="sig-name descname"><span class="pre">plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plot_shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile_shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.MixedExperiment.plot" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.plot_profile">
+<span class="sig-name descname"><span class="pre">plot_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plot_shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#MixedExperiment.plot_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.MixedExperiment.plot_profile" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.plot_reflectivity">
+<span class="sig-name descname"><span class="pre">plot_reflectivity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">show_resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.MixedExperiment.plot_reflectivity" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.probe">
+<span class="sig-name descname"><span class="pre">probe</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../refl1d.probe.html#refl1d.probe.Probe" title="refl1d.probe.Probe"><span class="pre">Probe</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="../refl1d.probe.html#refl1d.probe.PolarizedNeutronProbe" title="refl1d.probe.PolarizedNeutronProbe"><span class="pre">PolarizedNeutronProbe</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#refl1d.experiment.MixedExperiment.probe" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.ratio">
+<span class="sig-name descname"><span class="pre">ratio</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.experiment.MixedExperiment.ratio" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.reflectivity">
+<span class="sig-name descname"><span class="pre">reflectivity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#MixedExperiment.reflectivity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.MixedExperiment.reflectivity" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate predicted reflectivity.</p>
+<p>This will be the weighted sum of the reflectivity from the
+individual systems.  If coherent is set, then the coherent
+sum will be used, otherwise the incoherent sum will be used.</p>
+<p>If <em>resolution</em> is true include resolution effects.</p>
+<p><em>interpolation</em> is the number of theory points to show between data
+points.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.register_webview_plot">
+<span class="sig-name descname"><span class="pre">register_webview_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plot_title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../refl1d.experiment.html#refl1d.experiment.WebviewPlotFunction" title="refl1d.experiment.WebviewPlotFunction"><span class="pre">WebviewPlotFunction</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">change_with</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'parameter'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'uncertainty'</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.MixedExperiment.register_webview_plot" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.residuals">
+<span class="sig-name descname"><span class="pre">residuals</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.MixedExperiment.residuals" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.restore_data">
+<span class="sig-name descname"><span class="pre">restore_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.MixedExperiment.restore_data" title="Link to this definition">¶</a></dt>
+<dd><p>Restore original data after resynthesis.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.resynth_data">
+<span class="sig-name descname"><span class="pre">resynth_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.MixedExperiment.resynth_data" title="Link to this definition">¶</a></dt>
+<dd><p>Resynthesize data with noise from the uncertainty estimates.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.samples">
+<span class="sig-name descname"><span class="pre">samples</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../refl1d.model.html#refl1d.model.Stack" title="refl1d.model.Stack"><span class="pre">Stack</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#refl1d.experiment.MixedExperiment.samples" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">basename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.MixedExperiment.save" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.save_json">
+<span class="sig-name descname"><span class="pre">save_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">basename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.MixedExperiment.save_json" title="Link to this definition">¶</a></dt>
+<dd><p>Save the experiment as a json file</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.save_profile">
+<span class="sig-name descname"><span class="pre">save_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">basename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#MixedExperiment.save_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.MixedExperiment.save_profile" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.save_refl">
+<span class="sig-name descname"><span class="pre">save_refl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">basename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.MixedExperiment.save_refl" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.save_staj">
+<span class="sig-name descname"><span class="pre">save_staj</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">basename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#MixedExperiment.save_staj"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.MixedExperiment.save_staj" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.simulate_data">
+<span class="sig-name descname"><span class="pre">simulate_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.MixedExperiment.simulate_data" title="Link to this definition">¶</a></dt>
+<dd><p>Simulate a random data set for the model.</p>
+<p>This sets R and dR according to the noise level given.</p>
+<p><strong>Parameters:</strong></p>
+<dl class="simple">
+<dt><em>noise</em>: float or array or None | %</dt><dd><p>dR/R uncertainty as a percentage.  If noise is set to None, then
+use dR from the data if present, otherwise default to 2%.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.slabs">
+<span class="sig-name descname"><span class="pre">slabs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.MixedExperiment.slabs" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.smooth_profile">
+<span class="sig-name descname"><span class="pre">smooth_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.MixedExperiment.smooth_profile" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.step_profile">
+<span class="sig-name descname"><span class="pre">step_profile</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.MixedExperiment.step_profile" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#MixedExperiment.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.MixedExperiment.to_dict" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#MixedExperiment.update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.MixedExperiment.update" title="Link to this definition">¶</a></dt>
+<dd><p>Called when any parameter in the model is changed.</p>
+<p>This signals that the entire model needs to be recalculated.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.update_composition">
+<span class="sig-name descname"><span class="pre">update_composition</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.MixedExperiment.update_composition" title="Link to this definition">¶</a></dt>
+<dd><p>When the model composition has changed, we need to lookup the
+scattering factors for the new model.  This is only needed
+when an existing chemical formula is modified; new and
+deleted formulas will be handled automatically.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.webview_plots">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">webview_plots</span></span><a class="headerlink" href="#refl1d.experiment.MixedExperiment.webview_plots" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.MixedExperiment.write_data">
+<span class="sig-name descname"><span class="pre">write_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.MixedExperiment.write_data" title="Link to this definition">¶</a></dt>
+<dd><p>Save simulated data to a file</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="refl1d.experiment.WebviewPlotFunction">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">refl1d.experiment.</span></span><span class="sig-name descname"><span class="pre">WebviewPlotFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#WebviewPlotFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.WebviewPlotFunction" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="refl1d.experiment.WebviewPlotInfo">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">refl1d.experiment.</span></span><span class="sig-name descname"><span class="pre">WebviewPlotInfo</span></span><a class="reference internal" href="../_modules/refl1d/experiment.html#WebviewPlotInfo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.WebviewPlotInfo" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TypedDict</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.experiment.WebviewPlotInfo.change_with">
+<span class="sig-name descname"><span class="pre">change_with</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'parameter'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'uncertainty'</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.experiment.WebviewPlotInfo.change_with" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.WebviewPlotInfo.clear">
+<span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None.</span>&#160; <span class="pre">Remove</span> <span class="pre">all</span> <span class="pre">items</span> <span class="pre">from</span> <span class="pre">D.</span></span></span><a class="headerlink" href="#refl1d.experiment.WebviewPlotInfo.clear" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.WebviewPlotInfo.copy">
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">a</span> <span class="pre">shallow</span> <span class="pre">copy</span> <span class="pre">of</span> <span class="pre">D</span></span></span><a class="headerlink" href="#refl1d.experiment.WebviewPlotInfo.copy" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.WebviewPlotInfo.fromkeys">
+<span class="sig-name descname"><span class="pre">fromkeys</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.WebviewPlotInfo.fromkeys" title="Link to this definition">¶</a></dt>
+<dd><p>Create a new dictionary with keys from iterable and values set to value.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.experiment.WebviewPlotInfo.func">
+<span class="sig-name descname"><span class="pre">func</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../refl1d.experiment.html#refl1d.experiment.WebviewPlotFunction" title="refl1d.experiment.WebviewPlotFunction"><span class="pre">WebviewPlotFunction</span></a></em><a class="headerlink" href="#refl1d.experiment.WebviewPlotInfo.func" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.WebviewPlotInfo.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.WebviewPlotInfo.get" title="Link to this definition">¶</a></dt>
+<dd><p>Return the value for key if key is in the dictionary, else default.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.WebviewPlotInfo.items">
+<span class="sig-name descname"><span class="pre">items</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">a</span> <span class="pre">set-like</span> <span class="pre">object</span> <span class="pre">providing</span> <span class="pre">a</span> <span class="pre">view</span> <span class="pre">on</span> <span class="pre">D's</span> <span class="pre">items</span></span></span><a class="headerlink" href="#refl1d.experiment.WebviewPlotInfo.items" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.WebviewPlotInfo.keys">
+<span class="sig-name descname"><span class="pre">keys</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">a</span> <span class="pre">set-like</span> <span class="pre">object</span> <span class="pre">providing</span> <span class="pre">a</span> <span class="pre">view</span> <span class="pre">on</span> <span class="pre">D's</span> <span class="pre">keys</span></span></span><a class="headerlink" href="#refl1d.experiment.WebviewPlotInfo.keys" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.WebviewPlotInfo.pop">
+<span class="sig-name descname"><span class="pre">pop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em><span class="optional">[</span>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="optional">]</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">v,</span> <span class="pre">remove</span> <span class="pre">specified</span> <span class="pre">key</span> <span class="pre">and</span> <span class="pre">return</span> <span class="pre">the</span> <span class="pre">corresponding</span> <span class="pre">value.</span></span></span><a class="headerlink" href="#refl1d.experiment.WebviewPlotInfo.pop" title="Link to this definition">¶</a></dt>
+<dd><p>If the key is not found, return the default if given; otherwise,
+raise a KeyError.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.WebviewPlotInfo.popitem">
+<span class="sig-name descname"><span class="pre">popitem</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.WebviewPlotInfo.popitem" title="Link to this definition">¶</a></dt>
+<dd><p>Remove and return a (key, value) pair as a 2-tuple.</p>
+<p>Pairs are returned in LIFO (last-in, first-out) order.
+Raises KeyError if the dict is empty.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.WebviewPlotInfo.setdefault">
+<span class="sig-name descname"><span class="pre">setdefault</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.experiment.WebviewPlotInfo.setdefault" title="Link to this definition">¶</a></dt>
+<dd><p>Insert key with a value of default if key is not in the dictionary.</p>
+<p>Return the value for key if key is in the dictionary, else default.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.WebviewPlotInfo.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><span class="optional">[</span><em class="sig-param"><span class="n"><span class="pre">E</span></span></em>, <span class="optional">]</span><em class="sig-param"><span class="n"><span class="pre">**F</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None.</span>&#160; <span class="pre">Update</span> <span class="pre">D</span> <span class="pre">from</span> <span class="pre">dict/iterable</span> <span class="pre">E</span> <span class="pre">and</span> <span class="pre">F.</span></span></span><a class="headerlink" href="#refl1d.experiment.WebviewPlotInfo.update" title="Link to this definition">¶</a></dt>
+<dd><p>If E is present and has a .keys() method, then does:  for k in E: D[k] = E[k]
+If E is present and lacks a .keys() method, then does:  for k, v in E: D[k] = v
+In either case, this is followed by: for k in F:  D[k] = F[k]</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.experiment.WebviewPlotInfo.values">
+<span class="sig-name descname"><span class="pre">values</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">an</span> <span class="pre">object</span> <span class="pre">providing</span> <span class="pre">a</span> <span class="pre">view</span> <span class="pre">on</span> <span class="pre">D's</span> <span class="pre">values</span></span></span><a class="headerlink" href="#refl1d.experiment.WebviewPlotInfo.values" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.experiment.nice">
+<span class="sig-prename descclassname"><span class="pre">refl1d.experiment.</span></span><span class="sig-name descname"><span class="pre">nice</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">digits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#nice"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.nice" title="Link to this definition">¶</a></dt>
+<dd><p>Fix v to a value with a given number of digits of precision</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.experiment.plot_sample">
+<span class="sig-prename descclassname"><span class="pre">refl1d.experiment.</span></span><span class="sig-name descname"><span class="pre">plot_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">instrument</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roughness_limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/experiment.html#plot_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.experiment.plot_sample" title="Link to this definition">¶</a></dt>
+<dd><p>Quick plot of a reflectivity sample and the corresponding reflectivity.</p>
+</dd></dl>
+
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        «&#160;&#160;<a href="errors.html">errors - Plot sample profile uncertainty</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="fitplugin.html">fitplugin - Bumps plugin definition for reflectivity models</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

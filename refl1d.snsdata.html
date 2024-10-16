@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>refl1d.snsdata module &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="_static/plot_directive.css" />
+    <script src="_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>refl1d.snsdata module</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="module-refl1d.snsdata">
+<span id="refl1d-snsdata-module"></span><h1>refl1d.snsdata module<a class="headerlink" href="#module-refl1d.snsdata" title="Link to this heading">¶</a></h1>
+<p>SNS data loaders</p>
+<p>The following instruments are defined:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Liquids</span><span class="p">,</span> <span class="n">Magnetic</span>
+</pre></div>
+</div>
+<p>These are <code class="xref py py-class docutils literal notranslate"><span class="pre">resolution.Pulsed</span></code> classes tuned with
+default instrument parameters and loaders for reduced SNS data.
+See <code class="xref py py-mod docutils literal notranslate"><span class="pre">resolution</span></code> for details.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">refl1d.snsdata.</span></span><span class="sig-name descname"><span class="pre">Liquids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/snsdata.html#Liquids"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.snsdata.Liquids" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#refl1d.snsdata.SNSData" title="refl1d.snsdata.SNSData"><code class="xref py py-class docutils literal notranslate"><span class="pre">SNSData</span></code></a>, <a class="reference internal" href="refl1d.instrument.html#refl1d.instrument.Pulsed" title="refl1d.instrument.Pulsed"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pulsed</span></code></a></p>
+<p>Loader for reduced data from the SNS Liquids instrument.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.TOF_range">
+<span class="sig-name descname"><span class="pre">TOF_range</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(6000,</span> <span class="pre">60000)</span></em><a class="headerlink" href="#refl1d.snsdata.Liquids.TOF_range" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.dLoL">
+<span class="sig-name descname"><span class="pre">dLoL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.02</span></em><a class="headerlink" href="#refl1d.snsdata.Liquids.dLoL" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.d_moderator">
+<span class="sig-name descname"><span class="pre">d_moderator</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">14.85</span></em><a class="headerlink" href="#refl1d.snsdata.Liquids.d_moderator" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.d_s1">
+<span class="sig-name descname"><span class="pre">d_s1</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2086.0</span></em><a class="headerlink" href="#refl1d.snsdata.Liquids.d_s1" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.d_s2">
+<span class="sig-name descname"><span class="pre">d_s2</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">230.0</span></em><a class="headerlink" href="#refl1d.snsdata.Liquids.d_s2" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.feather">
+<span class="sig-name descname"><span class="pre">feather</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">array([[</span> <span class="pre">2.02555</span> <span class="pre">,</span>&#160; <span class="pre">2.29927</span> <span class="pre">,</span>&#160; <span class="pre">2.57299</span> <span class="pre">,</span>&#160; <span class="pre">2.87409</span> <span class="pre">,</span>&#160; <span class="pre">3.22993</span> <span class="pre">,</span>&#160; <span class="pre">3.58577</span> <span class="pre">,</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">4.07847</span> <span class="pre">,</span>&#160; <span class="pre">4.5438</span>&#160; <span class="pre">,</span>&#160; <span class="pre">5.11861</span> <span class="pre">,</span>&#160; <span class="pre">5.7208</span>&#160; <span class="pre">,</span>&#160; <span class="pre">6.37774</span> <span class="pre">,</span>&#160; <span class="pre">7.19891</span> <span class="pre">,</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">8.04745</span> <span class="pre">,</span>&#160; <span class="pre">9.06022</span> <span class="pre">,</span> <span class="pre">10.1825</span>&#160; <span class="pre">,</span> <span class="pre">11.4142</span>&#160; <span class="pre">,</span> <span class="pre">12.8102</span>&#160; <span class="pre">,</span> <span class="pre">14.3431</span>&#160; <span class="pre">],</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">[20.6369</span>&#160; <span class="pre">,</span> <span class="pre">23.6943</span>&#160; <span class="pre">,</span> <span class="pre">23.6943</span>&#160; <span class="pre">,</span> <span class="pre">21.1146</span>&#160; <span class="pre">,</span> <span class="pre">15.5732</span>&#160; <span class="pre">,</span> <span class="pre">12.8981</span>&#160; <span class="pre">,</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">9.4586</span>&#160; <span class="pre">,</span>&#160; <span class="pre">6.59236</span> <span class="pre">,</span>&#160; <span class="pre">4.68153</span> <span class="pre">,</span>&#160; <span class="pre">3.05732</span> <span class="pre">,</span>&#160; <span class="pre">1.91083</span> <span class="pre">,</span>&#160; <span class="pre">1.24204</span> <span class="pre">,</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">0.955414,</span>&#160; <span class="pre">0.573248,</span>&#160; <span class="pre">0.477707,</span>&#160; <span class="pre">0.382166,</span>&#160; <span class="pre">0.191083,</span>&#160; <span class="pre">0.286624]])</span></em><a class="headerlink" href="#refl1d.snsdata.Liquids.feather" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.instrument">
+<span class="sig-name descname"><span class="pre">instrument</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Liquids'</span></em><a class="headerlink" href="#refl1d.snsdata.Liquids.instrument" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.radiation">
+<span class="sig-name descname"><span class="pre">radiation</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'neutron'</span></em><a class="headerlink" href="#refl1d.snsdata.Liquids.radiation" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.wavelength">
+<span class="sig-name descname"><span class="pre">wavelength</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(2.0,</span> <span class="pre">15.0)</span></em><a class="headerlink" href="#refl1d.snsdata.Liquids.wavelength" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">refl1d.snsdata.</span></span><span class="sig-name descname"><span class="pre">Magnetic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/snsdata.html#Magnetic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.snsdata.Magnetic" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#refl1d.snsdata.SNSData" title="refl1d.snsdata.SNSData"><code class="xref py py-class docutils literal notranslate"><span class="pre">SNSData</span></code></a>, <a class="reference internal" href="refl1d.instrument.html#refl1d.instrument.Pulsed" title="refl1d.instrument.Pulsed"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pulsed</span></code></a></p>
+<p>Loader for reduced data from the SNS Magnetic instrument.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic.dLoL">
+<span class="sig-name descname"><span class="pre">dLoL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.02</span></em><a class="headerlink" href="#refl1d.snsdata.Magnetic.dLoL" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic.d_s1">
+<span class="sig-name descname"><span class="pre">d_s1</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">190.5</span></em><a class="headerlink" href="#refl1d.snsdata.Magnetic.d_s1" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic.d_s2">
+<span class="sig-name descname"><span class="pre">d_s2</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">35.56</span></em><a class="headerlink" href="#refl1d.snsdata.Magnetic.d_s2" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic.instrument">
+<span class="sig-name descname"><span class="pre">instrument</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Magnetic'</span></em><a class="headerlink" href="#refl1d.snsdata.Magnetic.instrument" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic.radiation">
+<span class="sig-name descname"><span class="pre">radiation</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'neutron'</span></em><a class="headerlink" href="#refl1d.snsdata.Magnetic.radiation" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic.wavelength">
+<span class="sig-name descname"><span class="pre">wavelength</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(1.8,</span> <span class="pre">14)</span></em><a class="headerlink" href="#refl1d.snsdata.Magnetic.wavelength" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.snsdata.QRL_to_data">
+<span class="sig-prename descclassname"><span class="pre">refl1d.snsdata.</span></span><span class="sig-name descname"><span class="pre">QRL_to_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instrument</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/snsdata.html#QRL_to_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.snsdata.QRL_to_data" title="Link to this definition">¶</a></dt>
+<dd><p>Convert data to T, L, R</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="refl1d.snsdata.SNSData">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">refl1d.snsdata.</span></span><span class="sig-name descname"><span class="pre">SNSData</span></span><a class="reference internal" href="_modules/refl1d/snsdata.html#SNSData"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.snsdata.SNSData" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.snsdata.SNSData.load">
+<span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/snsdata.html#SNSData.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.snsdata.SNSData.load" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.snsdata.TOF_to_data">
+<span class="sig-prename descclassname"><span class="pre">refl1d.snsdata.</span></span><span class="sig-name descname"><span class="pre">TOF_to_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instrument</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/snsdata.html#TOF_to_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.snsdata.TOF_to_data" title="Link to this definition">¶</a></dt>
+<dd><p>Convert TOF data to neutron probe.</p>
+<p>Wavelength is set from the average of the times at the edges of the
+bins, not the average of the wavelengths.  Wavelength resolution is
+set assuming the wavelength at the edges of the bins defines the
+full width at half maximum.</p>
+<p>The correct answer is to look at the wavelength distribution within
+the bin including effects of pulse width and intensity as a function
+wavelength and use that distribution, or a gaussian approximation
+thereof, when computing the resolution effects.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.snsdata.boltzmann_feather">
+<span class="sig-prename descclassname"><span class="pre">refl1d.snsdata.</span></span><span class="sig-name descname"><span class="pre">boltzmann_feather</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">L</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">counts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/snsdata.html#boltzmann_feather"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.snsdata.boltzmann_feather" title="Link to this definition">¶</a></dt>
+<dd><p>Return expected intensity as a function of wavelength given the TOF
+feather range and the total number of counts.</p>
+<p>TOF feather is approximately a boltzmann distribution with gaussian
+convolution.  The following looks pretty enough; don’t know how well it
+corresponds to the actual SNS feather.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.snsdata.has_columns">
+<span class="sig-prename descclassname"><span class="pre">refl1d.snsdata.</span></span><span class="sig-name descname"><span class="pre">has_columns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">header</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/snsdata.html#has_columns"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.snsdata.has_columns" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.snsdata.intensity_from_spline">
+<span class="sig-prename descclassname"><span class="pre">refl1d.snsdata.</span></span><span class="sig-name descname"><span class="pre">intensity_from_spline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Lrange</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dLoL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feather</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/snsdata.html#intensity_from_spline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.snsdata.intensity_from_spline" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.snsdata.load">
+<span class="sig-prename descclassname"><span class="pre">refl1d.snsdata.</span></span><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">instrument</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/snsdata.html#load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.snsdata.load" title="Link to this definition">¶</a></dt>
+<dd><p>Return a probe for SNS data.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.snsdata.parse_sns_file">
+<span class="sig-prename descclassname"><span class="pre">refl1d.snsdata.</span></span><span class="sig-name descname"><span class="pre">parse_sns_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/snsdata.html#parse_sns_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.snsdata.parse_sns_file" title="Link to this definition">¶</a></dt>
+<dd><p>Parse SNS reduced data, returning <em>header</em> and <em>data</em>.</p>
+<p><em>header</em> dictionary of fields such as ‘data’, ‘title’, ‘instrument’
+<em>data</em> 2D array of data</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.snsdata.write_file">
+<span class="sig-prename descclassname"><span class="pre">refl1d.snsdata.</span></span><span class="sig-name descname"><span class="pre">write_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">original</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">notes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">charge</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/snsdata.html#write_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.snsdata.write_file" title="Link to this definition">¶</a></dt>
+<dd><p>Save probe as SNS reduced file.</p>
+</dd></dl>
+
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

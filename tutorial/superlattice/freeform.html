@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Freeform structures &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <script src="../../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="MLayer Models" href="../staj/readme.html" />
+    <link rel="prev" title="Soft material structures" href="PEMU.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>Freeform structures</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        «&#160;&#160;<a href="PEMU.html">Soft material structures</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../staj/readme.html">MLayer Models</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="freeform-structures">
+<h1>Freeform structures<a class="headerlink" href="#freeform-structures" title="Link to this heading">¶</a></h1>
+<p>The following is a freeform superlattice floating in a solvent
+and anchored with a tether molecule.  The tether is anchored via
+a thiol group to a multilayer of Si/Cr/Au.  The sulphur in the
+thiol attaches well to gold, but not silicon.  Gold will stick
+to chrome which sticks to silicon.</p>
+<p>Here is the plot using a random tether, membrane and tail group:</p>
+<p>(<a class="reference download internal" download="" href="../../_downloads/18455fbda7e672556b5ab62c84998fb0/freeform-1.py"><code class="xref download docutils literal notranslate"><span class="pre">Source</span> <span class="pre">code</span></code></a>, <a class="reference download internal" download="" href="../../_downloads/7ea349daf182e2ff0df7dfdad017f444/freeform-1.png"><code class="xref download docutils literal notranslate"><span class="pre">png</span></code></a>, <a class="reference download internal" download="" href="../../_downloads/121e0b110c95c15d966dc6e9f797f056/freeform-1.hires.png"><code class="xref download docutils literal notranslate"><span class="pre">hires.png</span></code></a>, <a class="reference download internal" download="" href="../../_downloads/4f8b2bdad205bb31302e50550ee3435b/freeform-1.pdf"><code class="xref download docutils literal notranslate"><span class="pre">pdf</span></code></a>)</p>
+<figure class="align-default">
+<img alt="../../_images/freeform-1.png" class="plot-directive" src="../../_images/freeform-1.png" />
+</figure>
+<p>The model is defined by <a class="reference download internal" download="" href="../../_downloads/e626189ce030b5069e73ea9d5c097cb9/freeform.py"><code class="xref download docutils literal notranslate"><span class="pre">freeform.py</span></code></a>.</p>
+<p>The materials are straight forward:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">refl1d.names</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">chrome</span> <span class="o">=</span> <span class="n">Material</span><span class="p">(</span><span class="s2">&quot;Cr&quot;</span><span class="p">)</span>
+<span class="n">gold</span> <span class="o">=</span> <span class="n">Material</span><span class="p">(</span><span class="s2">&quot;Au&quot;</span><span class="p">)</span>
+<span class="n">solvent</span> <span class="o">=</span> <span class="n">Material</span><span class="p">(</span><span class="s2">&quot;H2O&quot;</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The sample description is more complicated.  When we define a freeform
+layer we need to anchor the ends of the freeform layer to a known
+material.  Usually, this is just the material that makes up the preceding
+and following layer.  In case we have freeform layers connected to each
+other, though, we need an anchor material that controls the SLD at the
+connection point.  For this purpose we introduce the dummy material
+wrap</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">wrap</span> <span class="o">=</span> <span class="n">SLD</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;wrap&quot;</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Each section of the freeform layer has a different number of control
+points.  The value should be large enough to give the profile enough
+flexibility to match the data, but not so large that it over fits the
+data.  Roughly the number of control points is the number of peaks and
+valleys allowed.  We want a relatively smooth tether and tail, so we
+keep <em>n1</em> and <em>n3</em> small, but make <em>n2</em> large enough to define an
+interesting repeat structure.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">,</span> <span class="n">n3</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">3</span>
+</pre></div>
+</div>
+<p>Free layers have a thickness, horizontal control points <em>z</em> varying
+in <span class="math notranslate nohighlight">\([0,1]\)</span>, real and complex SLD <span class="math notranslate nohighlight">\(\rho\)</span> and <span class="math notranslate nohighlight">\(\rho_i\)</span>, and the material
+above and below.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tether</span> <span class="o">=</span> <span class="n">FreeLayer</span><span class="p">(</span>
+    <span class="n">below</span><span class="o">=</span><span class="n">gold</span><span class="p">,</span> <span class="n">above</span><span class="o">=</span><span class="n">wrap</span><span class="p">,</span> <span class="n">thickness</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n1</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">rho</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">n1</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tether&quot;</span>
+<span class="p">)</span>
+<span class="n">bilayer</span> <span class="o">=</span> <span class="n">FreeLayer</span><span class="p">(</span>
+    <span class="n">below</span><span class="o">=</span><span class="n">wrap</span><span class="p">,</span>
+    <span class="n">above</span><span class="o">=</span><span class="n">wrap</span><span class="p">,</span>
+    <span class="n">thickness</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span>
+    <span class="n">z</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n2</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+    <span class="n">rho</span><span class="o">=</span><span class="mi">5</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">n2</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;bilayer&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">tail</span> <span class="o">=</span> <span class="n">FreeLayer</span><span class="p">(</span>
+    <span class="n">below</span><span class="o">=</span><span class="n">wrap</span><span class="p">,</span>
+    <span class="n">above</span><span class="o">=</span><span class="n">solvent</span><span class="p">,</span>
+    <span class="n">thickness</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+    <span class="n">z</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n3</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+    <span class="n">rho</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">n3</span><span class="p">),</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tail&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>With the predefined free layers, we can quickly define a stack, with
+the bilayer repeat structure.  Note that we are setting the thickness
+for the free layers when we define the layers, so there is no need to
+set it when composing the layers into a sample.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sample</span> <span class="o">=</span> <span class="n">silicon</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span> <span class="o">|</span> <span class="n">chrome</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">|</span> <span class="n">gold</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span> <span class="o">|</span> <span class="n">tether</span> <span class="o">|</span> <span class="n">bilayer</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">|</span> <span class="n">tail</span> <span class="o">|</span> <span class="n">solvent</span>
+</pre></div>
+</div>
+<p>Finally, simulate the resulting model.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">T</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">probe</span> <span class="o">=</span> <span class="n">NeutronProbe</span><span class="p">(</span><span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="n">dT</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">L</span><span class="o">=</span><span class="mf">4.75</span><span class="p">,</span> <span class="n">dL</span><span class="o">=</span><span class="mf">0.0475</span><span class="p">,</span> <span class="n">back_reflectivity</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">M</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">probe</span><span class="o">=</span><span class="n">probe</span><span class="p">,</span> <span class="n">sample</span><span class="o">=</span><span class="n">sample</span><span class="p">,</span> <span class="n">dA</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">M</span><span class="o">.</span><span class="n">simulate_data</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">problem</span> <span class="o">=</span> <span class="n">FitProblem</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        «&#160;&#160;<a href="PEMU.html">Soft material structures</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../staj/readme.html">MLayer Models</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

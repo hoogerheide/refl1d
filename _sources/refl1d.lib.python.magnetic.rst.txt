@@ -1,0 +1,7 @@
+refl1d.lib.python.magnetic module
+=================================
+
+.. automodule:: refl1d.lib.python.magnetic
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>refl1d.corrtest &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <script src="../../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>refl1d.corrtest</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <h1>Source code for refl1d.corrtest</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Residual correlation test.</span>
+
+<span class="sd">INCOMPLETE UNUSED UNTESTED CODE</span>
+
+<span class="sd">Returns the probability of seeing the given structure in the residuals.</span>
+
+<span class="sd">The residuals are assumed to be e ~ N(0, 1).  Gross deviations from this</span>
+<span class="sd">form will already be accounted for in the chisq statistic, and can be</span>
+<span class="sd">ignored here.  We do this by translating the residual into a z-scored</span>
+<span class="sd">residual, which should be in</span>
+
+<span class="sd">Protects against an incorrect estimation of the uncertainty in the data,</span>
+<span class="sd">which is anyway already covered by the chisq cost function.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span>
+
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">stats</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+
+<div class="viewcode-block" id="residual_nllf">
+<a class="viewcode-back" href="../../refl1d.corrtest.html#refl1d.corrtest.residual_nllf">[docs]</a>
+<span class="k">def</span> <span class="nf">residual_nllf</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
+    <span class="c1"># Normalize the scores so that we are assuming</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">zscore</span><span class="p">(</span><span class="n">v</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="plot">
+<a class="viewcode-back" href="../../refl1d.corrtest.html#refl1d.corrtest.plot">[docs]</a>
+<span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">313</span><span class="p">)</span>
+    <span class="n">Q</span><span class="p">,</span> <span class="n">R</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reflectivity</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">probe</span><span class="o">.</span><span class="n">plot_transform</span><span class="p">(</span><span class="n">theory</span><span class="o">=</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">R</span><span class="p">),</span> <span class="n">substrate</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sample</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">material</span><span class="p">,</span> <span class="n">surround</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sample</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">material</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># Experiments with different sorts of</span>
+<div class="viewcode-block" id="plot_transform">
+<a class="viewcode-back" href="../../refl1d.corrtest.html#refl1d.corrtest.plot_transform">[docs]</a>
+<span class="k">def</span> <span class="nf">plot_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theory</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">substrate</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">surround</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Plot the Fresnel-normalized reflectivity associated with the probe.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+    <span class="k">if</span> <span class="n">substrate</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">surround</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Fresnel-normalized reflectivity needs substrate or surround&quot;</span><span class="p">)</span>
+    <span class="n">F</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fresnel</span><span class="p">(</span><span class="n">substrate</span><span class="o">=</span><span class="n">substrate</span><span class="p">,</span> <span class="n">surround</span><span class="o">=</span><span class="n">surround</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;substrate </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">substrate</span><span class="p">)</span>
+    <span class="c1"># Qc = sqrt(16*pi*substrate)</span>
+    <span class="n">Qc</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">T</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">Qc</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Q</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Q</span><span class="p">))</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;R&quot;</span><span class="p">):</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">R</span> <span class="o">/</span> <span class="n">F</span><span class="p">)))</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">theory</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">Q</span><span class="p">,</span> <span class="n">R</span> <span class="o">=</span> <span class="n">theory</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">R</span> <span class="o">/</span> <span class="n">F</span><span class="p">)))</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">A</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;z (Angstroms)&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">substrate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;air:</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">surround</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">surround</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">surround</span><span class="p">,</span> <span class="n">Vacuum</span><span class="p">):</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">substrate</span><span class="o">.</span><span class="n">name</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">:</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">substrate</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">surround</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;FFT(R/R(</span><span class="si">%s</span><span class="s2">))&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="plot_deriv">
+<a class="viewcode-back" href="../../refl1d.corrtest.html#refl1d.corrtest.plot_deriv">[docs]</a>
+<span class="k">def</span> <span class="nf">plot_deriv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theory</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+    <span class="n">scale</span> <span class="o">=</span> <span class="mf">1e8</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">Q</span><span class="o">**</span><span class="mi">4</span>
+    <span class="c1"># scale=1</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;R&quot;</span><span class="p">):</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">deriv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">R</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dR</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Q</span><span class="p">,</span> <span class="n">d</span> <span class="o">*</span> <span class="n">scale</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">theory</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">Q</span><span class="p">,</span> <span class="n">R</span> <span class="o">=</span> <span class="n">theory</span>
+        <span class="n">dth</span> <span class="o">=</span> <span class="n">deriv</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">R</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">dth</span> <span class="o">*</span> <span class="n">scale</span><span class="p">)</span>
+    <span class="c1"># plt.plot(Q, (sign(d)-sign(dth))/2)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Q (inv Angstroms)&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;R&#39; (100 Q)^4&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="deriv">
+<a class="viewcode-back" href="../../refl1d.corrtest.html#refl1d.corrtest.deriv">[docs]</a>
+<span class="k">def</span> <span class="nf">deriv</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">dR</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+    <span class="kn">from</span> <span class="nn">bumps.wsolve</span> <span class="kn">import</span> <span class="n">wpolyfit</span>
+
+    <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">dR</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">dR</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="p">(</span><span class="n">width</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">wpolyfit</span><span class="p">(</span><span class="n">Q</span><span class="p">[:</span><span class="n">width</span><span class="p">],</span> <span class="n">R</span><span class="p">[:</span><span class="n">width</span><span class="p">],</span> <span class="n">dy</span><span class="o">=</span><span class="n">dR</span><span class="p">[:</span><span class="n">width</span><span class="p">],</span> <span class="n">degree</span><span class="o">=</span><span class="n">degree</span><span class="p">)</span>
+    <span class="n">d</span><span class="p">[:</span> <span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">der</span><span class="p">(</span><span class="n">Q</span><span class="p">[:</span> <span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span> <span class="o">-</span> <span class="n">k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">i</span> <span class="o">-</span> <span class="n">k</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">wpolyfit</span><span class="p">(</span><span class="n">Q</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">R</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">dy</span><span class="o">=</span><span class="n">dR</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">degree</span><span class="o">=</span><span class="n">degree</span><span class="p">)</span>
+        <span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">der</span><span class="p">(</span><span class="n">Q</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">wpolyfit</span><span class="p">(</span><span class="n">Q</span><span class="p">[</span><span class="o">-</span><span class="n">width</span><span class="p">:],</span> <span class="n">R</span><span class="p">[</span><span class="o">-</span><span class="n">width</span><span class="p">:],</span> <span class="n">dy</span><span class="o">=</span><span class="n">dR</span><span class="p">[</span><span class="o">-</span><span class="n">width</span><span class="p">:],</span> <span class="n">degree</span><span class="o">=</span><span class="n">degree</span><span class="p">)</span>
+    <span class="n">d</span><span class="p">[</span><span class="o">-</span><span class="n">k</span> <span class="o">-</span> <span class="mi">1</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">der</span><span class="p">(</span><span class="n">Q</span><span class="p">[</span><span class="o">-</span><span class="n">k</span> <span class="o">-</span> <span class="mi">1</span> <span class="p">:])</span>
+    <span class="k">return</span> <span class="n">d</span></div>
+
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

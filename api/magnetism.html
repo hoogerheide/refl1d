@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>magnetism - Magnetic Models &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
+    <script src="../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="material - Material" href="material.html" />
+    <link rel="prev" title="instrument - Reflectivity instrument definition" href="instrument.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>magnetism - Magnetic Models</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        «&#160;&#160;<a href="instrument.html">instrument - Reflectivity instrument definition</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="material.html">material - Material</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="magnetism-magnetic-models">
+<h1>magnetism - Magnetic Models<a class="headerlink" href="#magnetism-magnetic-models" title="Link to this heading">¶</a></h1>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../refl1d.magnetism.html#refl1d.magnetism.BaseMagnetism" title="refl1d.magnetism.BaseMagnetism"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseMagnetism</span></code></a></p></td>
+<td><p>Magnetic properties of the layer.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../refl1d.magnetism.html#refl1d.magnetism.FreeMagnetism" title="refl1d.magnetism.FreeMagnetism"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FreeMagnetism</span></code></a></p></td>
+<td><p>Spline change in magnetism throughout layer.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../refl1d.magnetism.html#refl1d.magnetism.Magnetism" title="refl1d.magnetism.Magnetism"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Magnetism</span></code></a></p></td>
+<td><p>Region of constant magnetism.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../refl1d.magnetism.html#refl1d.magnetism.MagnetismStack" title="refl1d.magnetism.MagnetismStack"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MagnetismStack</span></code></a></p></td>
+<td><p>Magnetic slabs within a magnetic layer.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../refl1d.magnetism.html#refl1d.magnetism.MagnetismTwist" title="refl1d.magnetism.MagnetismTwist"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MagnetismTwist</span></code></a></p></td>
+<td><p>Linear change in magnetism throughout layer.</p></td>
+</tr>
+</tbody>
+</table>
+<p id="module-refl1d.magnetism">Magnetic modeling for 1-D reflectometry.</p>
+<p>Magnetic properties are tied to the structural description of the
+but only loosely.</p>
+<p>There may be dead regions near the interfaces of magnetic materials.</p>
+<p>Magnetic behaviour may be varying in complex ways within and
+across structural boundaries.  For example, the ma
+Indeed, the pattern may continue
+across spacer layers, going to zero in the magnetically dead
+region and returning to its long range variation on entry to
+the next magnetic layer.  Magnetic multilayers may exhibit complex
+magnetism throughout the repeated section while the structural
+components are fixed.</p>
+<p>The scattering behaviour is dependent upon net field strength relative to
+polarization direction.   This arises from three underlying quantities:
+the strength of the individual dipole moments in the layer, the degree
+of alignment of these moments, and the net direction of the alignment.
+The strength of the dipole moment depends on the details of the electronic
+structure, so unlike the nuclear scattering potential, it cannot be readily
+determined from material composition.  Similarly, net magnetization
+depends on the details of the magnetic domains within the material, and
+cannot readily be determined from first principles.  The interaction
+potential of the net magnetic moment depends on the alignment of the field
+with respect to the beam, with a net scattering length density of
+<span class="math notranslate nohighlight">\(\rho_M \cos(\theta_M)\)</span>.  Clearly the scattering measurement will
+not be able to distinguish between a reduced net magnetic strength
+<span class="math notranslate nohighlight">\(\rho_M\)</span> and a change in orientation <span class="math notranslate nohighlight">\(\theta_M\)</span> for an
+individual measurement, as should be apparent from the correlated
+uncertainty plot produced when both parameters are fit.</p>
+<p>Magnetism support is split into two parts: describing the layers
+and anchoring them to the structure.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="refl1d.magnetism.BaseMagnetism">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">refl1d.magnetism.</span></span><span class="sig-name descname"><span class="pre">BaseMagnetism</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">extent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dead_below</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dead_above</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interface_below</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interface_above</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'LAYER'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/magnetism.html#BaseMagnetism"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.magnetism.BaseMagnetism" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Magnetic properties of the layer.</p>
+<p>Magnetism is attached to set of nuclear layers by setting the
+<em>magnetism</em> property of the first layer to the rendered for the
+magnetic profile, and setting <em>extent</em> to the number of nuclear
+layers attached to the magnetism object.</p>
+<p><em>dead_below</em> and <em>dead_above</em> are dead regions within the magnetic
+extent, which allow you to shift the magnetic interfaces relative
+to the nuclear interfaces.</p>
+<p><em>interface_below</em> and <em>interface_above</em> are the interface widths
+for the magnetic layer, which default to the interface widths for
+the corresponding nuclear layers if no interfaces are specified.
+For consecutive layers, only <em>interface_above</em> is used; any value
+for <em>interface_below</em> is ignored.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.BaseMagnetism.dead_above">
+<span class="sig-name descname"><span class="pre">dead_above</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.magnetism.BaseMagnetism.dead_above" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.BaseMagnetism.dead_below">
+<span class="sig-name descname"><span class="pre">dead_below</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.magnetism.BaseMagnetism.dead_below" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.BaseMagnetism.extent">
+<span class="sig-name descname"><span class="pre">extent</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#refl1d.magnetism.BaseMagnetism.extent" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.BaseMagnetism.interface_above">
+<span class="sig-name descname"><span class="pre">interface_above</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.magnetism.BaseMagnetism.interface_above" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.BaseMagnetism.interface_below">
+<span class="sig-name descname"><span class="pre">interface_below</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.magnetism.BaseMagnetism.interface_below" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.BaseMagnetism.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#refl1d.magnetism.BaseMagnetism.name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.magnetism.BaseMagnetism.parameters">
+<span class="sig-name descname"><span class="pre">parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Parameter</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/refl1d/magnetism.html#BaseMagnetism.parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.magnetism.BaseMagnetism.parameters" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.magnetism.BaseMagnetism.set_layer_name">
+<span class="sig-name descname"><span class="pre">set_layer_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/magnetism.html#BaseMagnetism.set_layer_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.magnetism.BaseMagnetism.set_layer_name" title="Link to this definition">¶</a></dt>
+<dd><p>Update the names of the magnetic parameters with the name of the
+layer if it has not already been set.  This is necessary since we don’t
+know the layer name until after we have constructed the magnetism object.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.magnetism.BaseMagnetism.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/magnetism.html#BaseMagnetism.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.magnetism.BaseMagnetism.to_dict" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="refl1d.magnetism.FreeMagnetism">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">refl1d.magnetism.</span></span><span class="sig-name descname"><span class="pre">FreeMagnetism</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rhoM</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thetaM</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'LAYER'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/magnetism.html#FreeMagnetism"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.magnetism.FreeMagnetism" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../refl1d.magnetism.html#refl1d.magnetism.BaseMagnetism" title="refl1d.magnetism.BaseMagnetism"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseMagnetism</span></code></a></p>
+<p>Spline change in magnetism throughout layer.</p>
+<p>Defines monotonic splines for rhoM and thetaM with shared knot positions.</p>
+<p><em>z</em> is position of the knot in [0, 1] relative to the magnetic layer
+thickness.  The <em>z</em> coordinates are automatically sorted before
+rendering, leading to multiple equivalent solutions if knots are swapped.</p>
+<p><em>rhoM</em> gives the magnetic scattering length density for each knot.</p>
+<p><em>thetaM</em> gives the magnetic angle for each knot.</p>
+<p><em>name</em> is the base name for the various layer parameters.</p>
+<p><em>dead_above</em> and <em>dead_below</em> define magnetically dead layers at the
+nuclear boundaries.  These can be negative if magnetism extends beyond
+the nuclear boundary.</p>
+<p><em>interface_above</em> and <em>interface_below</em> define the magnetic interface
+at the boundaries, if it is different from the nuclear interface.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.FreeMagnetism.dead_above">
+<span class="sig-name descname"><span class="pre">dead_above</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.magnetism.FreeMagnetism.dead_above" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.FreeMagnetism.dead_below">
+<span class="sig-name descname"><span class="pre">dead_below</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.magnetism.FreeMagnetism.dead_below" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.FreeMagnetism.extent">
+<span class="sig-name descname"><span class="pre">extent</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#refl1d.magnetism.FreeMagnetism.extent" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.FreeMagnetism.interface_above">
+<span class="sig-name descname"><span class="pre">interface_above</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.magnetism.FreeMagnetism.interface_above" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.FreeMagnetism.interface_below">
+<span class="sig-name descname"><span class="pre">interface_below</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.magnetism.FreeMagnetism.interface_below" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.FreeMagnetism.magnetic">
+<span class="sig-name descname"><span class="pre">magnetic</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#refl1d.magnetism.FreeMagnetism.magnetic" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.FreeMagnetism.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#refl1d.magnetism.FreeMagnetism.name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.magnetism.FreeMagnetism.parameters">
+<span class="sig-name descname"><span class="pre">parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/magnetism.html#FreeMagnetism.parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.magnetism.FreeMagnetism.parameters" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.magnetism.FreeMagnetism.profile">
+<span class="sig-name descname"><span class="pre">profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Pz</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thickness</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/magnetism.html#FreeMagnetism.profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.magnetism.FreeMagnetism.profile" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.magnetism.FreeMagnetism.render">
+<span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">probe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slabs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thickness</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">anchor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/magnetism.html#FreeMagnetism.render"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.magnetism.FreeMagnetism.render" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.FreeMagnetism.rhoM">
+<span class="sig-name descname"><span class="pre">rhoM</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Parameter</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.magnetism.FreeMagnetism.rhoM" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.magnetism.FreeMagnetism.set_layer_name">
+<span class="sig-name descname"><span class="pre">set_layer_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.magnetism.FreeMagnetism.set_layer_name" title="Link to this definition">¶</a></dt>
+<dd><p>Update the names of the magnetic parameters with the name of the
+layer if it has not already been set.  This is necessary since we don’t
+know the layer name until after we have constructed the magnetism object.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.FreeMagnetism.thetaM">
+<span class="sig-name descname"><span class="pre">thetaM</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Parameter</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.magnetism.FreeMagnetism.thetaM" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.magnetism.FreeMagnetism.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/magnetism.html#FreeMagnetism.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.magnetism.FreeMagnetism.to_dict" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.FreeMagnetism.z">
+<span class="sig-name descname"><span class="pre">z</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Parameter</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.magnetism.FreeMagnetism.z" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="refl1d.magnetism.Magnetism">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">refl1d.magnetism.</span></span><span class="sig-name descname"><span class="pre">Magnetism</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rhoM</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Parameter</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thetaM</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">270.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'LAYER'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/magnetism.html#Magnetism"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.magnetism.Magnetism" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../refl1d.magnetism.html#refl1d.magnetism.BaseMagnetism" title="refl1d.magnetism.BaseMagnetism"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseMagnetism</span></code></a></p>
+<p>Region of constant magnetism.</p>
+<p><em>rhoM</em> is the magnetic SLD the layer. Default is <code class="code docutils literal notranslate"><span class="pre">rhoM=0</span></code>.</p>
+<p><em>thetaM</em> is the magnetic angle for the layer. Default is <code class="code docutils literal notranslate"><span class="pre">thetaM=270</span></code>.</p>
+<p><em>name</em> is the base name for the various layer parameters.</p>
+<p><em>extent</em> defines the number of nuclear layers covered by the magnetic layer.</p>
+<p><em>dead_above</em> and <em>dead_below</em> define magnetically dead layers at the
+nuclear boundaries.  These can be negative if magnetism extends beyond
+the nuclear boundary.</p>
+<p><em>interface_above</em> and <em>interface_below</em> define the magnetic interface
+at the boundaries, if it is different from the nuclear interface.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.Magnetism.dead_above">
+<span class="sig-name descname"><span class="pre">dead_above</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.magnetism.Magnetism.dead_above" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.Magnetism.dead_below">
+<span class="sig-name descname"><span class="pre">dead_below</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.magnetism.Magnetism.dead_below" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.Magnetism.extent">
+<span class="sig-name descname"><span class="pre">extent</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#refl1d.magnetism.Magnetism.extent" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.Magnetism.interface_above">
+<span class="sig-name descname"><span class="pre">interface_above</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.magnetism.Magnetism.interface_above" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.Magnetism.interface_below">
+<span class="sig-name descname"><span class="pre">interface_below</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.magnetism.Magnetism.interface_below" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.Magnetism.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#refl1d.magnetism.Magnetism.name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.magnetism.Magnetism.parameters">
+<span class="sig-name descname"><span class="pre">parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/magnetism.html#Magnetism.parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.magnetism.Magnetism.parameters" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.magnetism.Magnetism.render">
+<span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">probe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slabs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thickness</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">anchor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/magnetism.html#Magnetism.render"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.magnetism.Magnetism.render" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.Magnetism.rhoM">
+<span class="sig-name descname"><span class="pre">rhoM</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span></em><a class="headerlink" href="#refl1d.magnetism.Magnetism.rhoM" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.magnetism.Magnetism.set_layer_name">
+<span class="sig-name descname"><span class="pre">set_layer_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.magnetism.Magnetism.set_layer_name" title="Link to this definition">¶</a></dt>
+<dd><p>Update the names of the magnetic parameters with the name of the
+layer if it has not already been set.  This is necessary since we don’t
+know the layer name until after we have constructed the magnetism object.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.Magnetism.thetaM">
+<span class="sig-name descname"><span class="pre">thetaM</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span></em><a class="headerlink" href="#refl1d.magnetism.Magnetism.thetaM" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.magnetism.Magnetism.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/magnetism.html#Magnetism.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.magnetism.Magnetism.to_dict" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="refl1d.magnetism.MagnetismStack">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">refl1d.magnetism.</span></span><span class="sig-name descname"><span class="pre">MagnetismStack</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rhoM</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thetaM</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interfaceM</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'LAYER'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/magnetism.html#MagnetismStack"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.magnetism.MagnetismStack" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../refl1d.magnetism.html#refl1d.magnetism.BaseMagnetism" title="refl1d.magnetism.BaseMagnetism"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseMagnetism</span></code></a></p>
+<p>Magnetic slabs within a magnetic layer.</p>
+<p><em>weight</em> is the relative thickness of each layer relative to the nuclear
+stack to which it is anchored.  Weights are automatically normalized to 1.
+Default is <code class="code docutils literal notranslate"><span class="pre">weight=[1]</span></code> equal size layers.</p>
+<p><em>rhoM</em> is the magnetic SLD for each layer. Default is <code class="code docutils literal notranslate"><span class="pre">rhoM=[0]</span></code>
+for shared magnetism in all the layers.</p>
+<p><em>thetaM</em> is the magnetic angle for each layer.  Default is
+<code class="code docutils literal notranslate"><span class="pre">thetaM=[270]</span></code> for no magnetic twist.</p>
+<p><strong>Not yet implemented.</strong>
+<em>interfaceM</em> is the magnetic interface for all but the last layer.  Default
+is <code class="code docutils literal notranslate"><span class="pre">interfaceM=[0]</span></code> for equal width interfaces in all layers.</p>
+<p><em>name</em> is the base name for the various layer parameters.</p>
+<p><em>extent</em> defines the number of nuclear layers covered by the magnetic layer.</p>
+<p><em>dead_above</em> and <em>dead_below</em> define magnetically dead layers at the
+nuclear boundaries.  These can be negative if magnetism extends beyond
+the nuclear boundary.</p>
+<p><em>interface_above</em> and <em>interface_below</em> define the magnetic interface
+at the boundaries, if it is different from the nuclear interface.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.MagnetismStack.dead_above">
+<span class="sig-name descname"><span class="pre">dead_above</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.magnetism.MagnetismStack.dead_above" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.MagnetismStack.dead_below">
+<span class="sig-name descname"><span class="pre">dead_below</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.magnetism.MagnetismStack.dead_below" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.MagnetismStack.extent">
+<span class="sig-name descname"><span class="pre">extent</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#refl1d.magnetism.MagnetismStack.extent" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.MagnetismStack.interface_above">
+<span class="sig-name descname"><span class="pre">interface_above</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.magnetism.MagnetismStack.interface_above" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.MagnetismStack.interface_below">
+<span class="sig-name descname"><span class="pre">interface_below</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.magnetism.MagnetismStack.interface_below" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.MagnetismStack.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#refl1d.magnetism.MagnetismStack.name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.magnetism.MagnetismStack.parameters">
+<span class="sig-name descname"><span class="pre">parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/magnetism.html#MagnetismStack.parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.magnetism.MagnetismStack.parameters" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.magnetism.MagnetismStack.render">
+<span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">probe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slabs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thickness</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">anchor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/magnetism.html#MagnetismStack.render"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.magnetism.MagnetismStack.render" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.MagnetismStack.rhoM">
+<span class="sig-name descname"><span class="pre">rhoM</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Parameter</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.magnetism.MagnetismStack.rhoM" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.magnetism.MagnetismStack.set_layer_name">
+<span class="sig-name descname"><span class="pre">set_layer_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.magnetism.MagnetismStack.set_layer_name" title="Link to this definition">¶</a></dt>
+<dd><p>Update the names of the magnetic parameters with the name of the
+layer if it has not already been set.  This is necessary since we don’t
+know the layer name until after we have constructed the magnetism object.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.MagnetismStack.thetaM">
+<span class="sig-name descname"><span class="pre">thetaM</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Parameter</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.magnetism.MagnetismStack.thetaM" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.magnetism.MagnetismStack.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/magnetism.html#MagnetismStack.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.magnetism.MagnetismStack.to_dict" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.MagnetismStack.weight">
+<span class="sig-name descname"><span class="pre">weight</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Parameter</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.magnetism.MagnetismStack.weight" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="refl1d.magnetism.MagnetismTwist">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">refl1d.magnetism.</span></span><span class="sig-name descname"><span class="pre">MagnetismTwist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rhoM</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0,</span> <span class="pre">0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thetaM</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(270.0,</span> <span class="pre">270.0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'LAYER'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/magnetism.html#MagnetismTwist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.magnetism.MagnetismTwist" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../refl1d.magnetism.html#refl1d.magnetism.BaseMagnetism" title="refl1d.magnetism.BaseMagnetism"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseMagnetism</span></code></a></p>
+<p>Linear change in magnetism throughout layer.</p>
+<p><em>rhoM</em> contains the <em>(left, right)</em> values for the magnetic scattering
+length density.  The number of steps is determined by the model <em>dz</em>.</p>
+<p><em>thetaM</em> contains the <em>(left, right)</em> values for the magnetic angle.</p>
+<p><em>name</em> is the base name for the various layer parameters.</p>
+<p><em>extent</em> defines the number of nuclear layers covered by the magnetic layer.</p>
+<p><em>dead_above</em> and <em>dead_below</em> define magnetically dead layers at the
+nuclear boundaries.  These can be negative if magnetism extends beyond
+the nuclear boundary.</p>
+<p><em>interface_above</em> and <em>interface_below</em> define the magnetic interface
+at the boundaries, if it is different from the nuclear interface.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.MagnetismTwist.dead_above">
+<span class="sig-name descname"><span class="pre">dead_above</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.magnetism.MagnetismTwist.dead_above" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.MagnetismTwist.dead_below">
+<span class="sig-name descname"><span class="pre">dead_below</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.magnetism.MagnetismTwist.dead_below" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.MagnetismTwist.extent">
+<span class="sig-name descname"><span class="pre">extent</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#refl1d.magnetism.MagnetismTwist.extent" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.MagnetismTwist.interface_above">
+<span class="sig-name descname"><span class="pre">interface_above</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.magnetism.MagnetismTwist.interface_above" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.MagnetismTwist.interface_below">
+<span class="sig-name descname"><span class="pre">interface_below</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.magnetism.MagnetismTwist.interface_below" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.MagnetismTwist.magnetic">
+<span class="sig-name descname"><span class="pre">magnetic</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#refl1d.magnetism.MagnetismTwist.magnetic" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.MagnetismTwist.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#refl1d.magnetism.MagnetismTwist.name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.magnetism.MagnetismTwist.parameters">
+<span class="sig-name descname"><span class="pre">parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/magnetism.html#MagnetismTwist.parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.magnetism.MagnetismTwist.parameters" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.magnetism.MagnetismTwist.render">
+<span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">probe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slabs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thickness</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">anchor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/magnetism.html#MagnetismTwist.render"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.magnetism.MagnetismTwist.render" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.MagnetismTwist.rhoM">
+<span class="sig-name descname"><span class="pre">rhoM</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Parameter</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.magnetism.MagnetismTwist.rhoM" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.magnetism.MagnetismTwist.set_layer_name">
+<span class="sig-name descname"><span class="pre">set_layer_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.magnetism.MagnetismTwist.set_layer_name" title="Link to this definition">¶</a></dt>
+<dd><p>Update the names of the magnetic parameters with the name of the
+layer if it has not already been set.  This is necessary since we don’t
+know the layer name until after we have constructed the magnetism object.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.magnetism.MagnetismTwist.thetaM">
+<span class="sig-name descname"><span class="pre">thetaM</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Parameter</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.magnetism.MagnetismTwist.thetaM" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.magnetism.MagnetismTwist.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/magnetism.html#MagnetismTwist.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.magnetism.MagnetismTwist.to_dict" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        «&#160;&#160;<a href="instrument.html">instrument - Reflectivity instrument definition</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="material.html">material - Material</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

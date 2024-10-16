@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>anstodata - Reader for ANSTO data format &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
+    <script src="../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="cheby - Freeform - Chebyshev model" href="cheby.html" />
+    <link rel="prev" title="abeles - Pure python reflectivity calculator" href="abeles.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>anstodata - Reader for ANSTO data format</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        «&#160;&#160;<a href="abeles.html">abeles - Pure python reflectivity calculator</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="cheby.html">cheby - Freeform - Chebyshev model</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="anstodata-reader-for-ansto-data-format">
+<h1>anstodata - Reader for ANSTO data format<a class="headerlink" href="#anstodata-reader-for-ansto-data-format" title="Link to this heading">¶</a></h1>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../refl1d.anstodata.html#refl1d.anstodata.ANSTOData" title="refl1d.anstodata.ANSTOData"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ANSTOData</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../refl1d.anstodata.html#refl1d.anstodata.Platypus" title="refl1d.anstodata.Platypus"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Platypus</span></code></a></p></td>
+<td><p>Loader for reduced data from the ANSTO Platypus instrument.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../refl1d.anstodata.html#refl1d.anstodata.load" title="refl1d.anstodata.load"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load</span></code></a></p></td>
+<td><p>Return a probe for ANSTO data.</p></td>
+</tr>
+</tbody>
+</table>
+<p id="module-refl1d.anstodata">ANSTO data loaders</p>
+<p>The following instrument is defined:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Platypus</span>
+</pre></div>
+</div>
+<p>All the ANSTO instruments emit Q/R/dR/dQ in their output files.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="refl1d.anstodata.ANSTOData">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">refl1d.anstodata.</span></span><span class="sig-name descname"><span class="pre">ANSTOData</span></span><a class="reference internal" href="../_modules/refl1d/anstodata.html#ANSTOData"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.anstodata.ANSTOData" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.anstodata.ANSTOData.load">
+<span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/anstodata.html#ANSTOData.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.anstodata.ANSTOData.load" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="refl1d.anstodata.Platypus">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">refl1d.anstodata.</span></span><span class="sig-name descname"><span class="pre">Platypus</span></span><a class="reference internal" href="../_modules/refl1d/anstodata.html#Platypus"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.anstodata.Platypus" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../refl1d.anstodata.html#refl1d.anstodata.ANSTOData" title="refl1d.anstodata.ANSTOData"><code class="xref py py-class docutils literal notranslate"><span class="pre">ANSTOData</span></code></a></p>
+<p>Loader for reduced data from the ANSTO Platypus instrument.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.anstodata.Platypus.instrument">
+<span class="sig-name descname"><span class="pre">instrument</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Platypus'</span></em><a class="headerlink" href="#refl1d.anstodata.Platypus.instrument" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.anstodata.Platypus.load">
+<span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.anstodata.Platypus.load" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.anstodata.Platypus.radiation">
+<span class="sig-name descname"><span class="pre">radiation</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'neutron'</span></em><a class="headerlink" href="#refl1d.anstodata.Platypus.radiation" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.anstodata.load">
+<span class="sig-prename descclassname"><span class="pre">refl1d.anstodata.</span></span><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">instrument</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/anstodata.html#load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.anstodata.load" title="Link to this definition">¶</a></dt>
+<dd><p>Return a probe for ANSTO data.</p>
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt>f<span class="classifier">file-handle or string</span></dt><dd><p>File to load the dataset from.</p>
+</dd>
+</dl>
+<p><strong>Returns</strong></p>
+<p>probe : probe.QProbe</p>
+</dd></dl>
+
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        «&#160;&#160;<a href="abeles.html">abeles - Pure python reflectivity calculator</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="cheby.html">cheby - Freeform - Chebyshev model</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>refl1d.polymer module &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="_static/plot_directive.css" />
+    <script src="_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>refl1d.polymer module</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="module-refl1d.polymer">
+<span id="refl1d-polymer-module"></span><h1>refl1d.polymer module<a class="headerlink" href="#module-refl1d.polymer" title="Link to this heading">¶</a></h1>
+<p>Layer models for polymer systems.</p>
+<p>Analytic Self-consistent Field (SCF) Brush profile<a class="footnote-reference brackets" href="#zhulina" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a><a class="footnote-reference brackets" href="#karim" id="id2" role="doc-noteref"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></a></p>
+<p>Analytical Self-consistent Field (SCF) Mushroom Profile<a class="footnote-reference brackets" href="#adamuti-trache" id="id3" role="doc-noteref"><span class="fn-bracket">[</span>3<span class="fn-bracket">]</span></a></p>
+<p>Numerical Self-consistent Field (SCF) End-Tethered Polymer
+Profile<a class="footnote-reference brackets" href="#cosgrove" id="id4" role="doc-noteref"><span class="fn-bracket">[</span>4<span class="fn-bracket">]</span></a><a class="footnote-reference brackets" href="#devos" id="id5" role="doc-noteref"><span class="fn-bracket">[</span>5<span class="fn-bracket">]</span></a><a class="footnote-reference brackets" href="#sheridan" id="id6" role="doc-noteref"><span class="fn-bracket">[</span>6<span class="fn-bracket">]</span></a></p>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="zhulina" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">1</a><span class="fn-bracket">]</span></span>
+<p>Zhulina, EB; Borisov, OV; Pryamitsyn, VA; Birshtein, TM (1991)
+“Coil-Globule Type Transitions in Polymers. 1. Collapse of Layers
+of Grafted Polymer Chains”, Macromolecules 24, 140-149.</p>
+</aside>
+<aside class="footnote brackets" id="karim" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id2">2</a><span class="fn-bracket">]</span></span>
+<p>Karim, A; Douglas, JF; Horkay, F; Fetters, LJ; Satija, SK (1996)
+“Comparative swelling of gels and polymer brush layers”,
+Physica B 221, 331-336. doi:10.1016/0921-4526(95)00946-9</p>
+</aside>
+<aside class="footnote brackets" id="adamuti-trache" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span>3<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id3">1</a>,<a role="doc-backlink" href="#id11">2</a>)</span>
+<p>Adamuţi-Trache, M., McMullen, W. E. &amp; Douglas, J. F.
+Segmental concentration profiles of end-tethered polymers with
+excluded-volume and surface interactions. J. Chem. Phys. 105, 4798 (1996).</p>
+</aside>
+<aside class="footnote brackets" id="cosgrove" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span>4<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id4">1</a>,<a role="doc-backlink" href="#id7">2</a>)</span>
+<p>Cosgrove, T., Heath, T., Van Lent, B., Leermakers, F. A. M.,
+&amp; Scheutjens, J. M. H. M. (1987). Configuration of terminally attached
+chains at the solid/solvent interface: self-consistent field theory and
+a Monte Carlo model. Macromolecules, 20(7), 1692–1696.
+doi:10.1021/ma00173a041</p>
+</aside>
+<aside class="footnote brackets" id="devos" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span>5<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id5">1</a>,<a role="doc-backlink" href="#id8">2</a>)</span>
+<p>De Vos, W. M., &amp; Leermakers, F. A. M. (2009). Modeling the
+structure of a polydisperse polymer brush. Polymer, 50(1), 305–316.
+doi:10.1016/j.polymer.2008.10.025</p>
+</aside>
+<aside class="footnote brackets" id="sheridan" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span>6<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id6">1</a>,<a role="doc-backlink" href="#id9">2</a>)</span>
+<p>Sheridan, R. J., Orski, S. V., Jones, R. L., Satija, S.,
+&amp; Beers, K. L. (2017). Surface interaction parameter measurement of
+solvated polymers via model end-tethered chains. [Submitted]</p>
+</aside>
+<aside class="footnote brackets" id="vincent" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id10">7</a><span class="fn-bracket">]</span></span>
+<p>Vincent, B., Edwards, J., Emmett, S., &amp; Croot, R. (1988).
+Phase separation in dispersions of weakly-interacting particles in
+solutions of non-adsorbing polymer. Colloids and Surfaces, 31, 267–298.
+doi:10.1016/0166-6622(88)80200-2</p>
+</aside>
+</aside>
+<dl class="py class">
+<dt class="sig sig-object py" id="refl1d.polymer.EndTetheredPolymer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">refl1d.polymer.</span></span><span class="sig-name descname"><span class="pre">EndTetheredPolymer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">thickness</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interface</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'EndTetheredPolymer'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">polymer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solvent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chi_s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h_dry</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l_lat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_lat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pdi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phi_b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/polymer.html#EndTetheredPolymer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.polymer.EndTetheredPolymer" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="refl1d.model.html#refl1d.model.Layer" title="refl1d.model.Layer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Layer</span></code></a></p>
+<p>Polymer end-tethered to an interface in a solvent</p>
+<p>Uses a numerical self-consistent field profile.<a class="footnote-reference brackets" href="#cosgrove" id="id7" role="doc-noteref"><span class="fn-bracket">[</span>4<span class="fn-bracket">]</span></a><a class="footnote-reference brackets" href="#devos" id="id8" role="doc-noteref"><span class="fn-bracket">[</span>5<span class="fn-bracket">]</span></a><a class="footnote-reference brackets" href="#sheridan" id="id9" role="doc-noteref"><span class="fn-bracket">[</span>6<span class="fn-bracket">]</span></a></p>
+<dl class="simple">
+<dt><strong>Parameters</strong></dt><dd><dl class="simple">
+<dt><em>chi</em></dt><dd><p>solvent interaction parameter</p>
+</dd>
+<dt><em>chi_s</em></dt><dd><p>surface interaction parameter</p>
+</dd>
+<dt><em>h_dry</em></dt><dd><p>thickness of the neat polymer layer</p>
+</dd>
+<dt><em>l_lat</em></dt><dd><p>real length per lattice site</p>
+</dd>
+<dt><em>mn</em></dt><dd><p>Number average molecular weight</p>
+</dd>
+<dt><em>m_lat</em></dt><dd><p>real mass per lattice segment</p>
+</dd>
+<dt><em>pdi</em></dt><dd><p>Dispersity (Polydispersity index)</p>
+</dd>
+<dt><em>phi_b</em></dt><dd><p>volume fraction of free chains in solution. useful for associating
+grafted films e.g. PS-COOH in Toluene with an SiO2 surface.</p>
+</dd>
+<dt><em>thickness</em></dt><dd><p>Slab thickness should be greater than the contour
+length of the polymer</p>
+</dd>
+<dt><em>interface</em></dt><dd><p>should be zero</p>
+</dd>
+<dt><em>material</em></dt><dd><p>the polymer material</p>
+</dd>
+<dt><em>solvent</em></dt><dd><p>the solvent material</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>Previous layer should not have roughness! Use a spline to simulate it.</p>
+<p>According to <a class="footnote-reference brackets" href="#vincent" id="id10" role="doc-noteref"><span class="fn-bracket">[</span>7<span class="fn-bracket">]</span></a>, <span class="math notranslate nohighlight">\(l_\text{lat}\)</span> and <span class="math notranslate nohighlight">\(m_\text{lat}\)</span> should be
+calculated by the formulas:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}l_\text{lat} &amp;= \frac{a^2 m/l}{p_l} \\
+m_\text{lat} &amp;= \frac{(a m/l)^2}{p_l}\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(l\)</span> is the real polymer’s bond length, <span class="math notranslate nohighlight">\(m\)</span> is the real segment mass,
+and <span class="math notranslate nohighlight">\(a\)</span> is the ratio between molecular weight and radius of gyration at
+theta conditions. The lattice persistence, <span class="math notranslate nohighlight">\(p_l\)</span>, is:</p>
+<div class="math notranslate nohighlight">
+\[p_l = \frac16 \frac{1+1/Z}{1-1/Z}\]</div>
+<p>with coordination number <span class="math notranslate nohighlight">\(Z = 6\)</span> for a cubic lattice, <span class="math notranslate nohighlight">\(p_l = .233\)</span>.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.polymer.EndTetheredPolymer.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#refl1d.polymer.EndTetheredPolymer.name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.polymer.EndTetheredPolymer.parameters">
+<span class="sig-name descname"><span class="pre">parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/polymer.html#EndTetheredPolymer.parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.polymer.EndTetheredPolymer.parameters" title="Link to this definition">¶</a></dt>
+<dd><p>Returns a dictionary of parameters specific to the layer.  These will
+be added to the dictionary containing interface, thickness and magnetism
+parameters.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.polymer.EndTetheredPolymer.profile">
+<span class="sig-name descname"><span class="pre">profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/polymer.html#EndTetheredPolymer.profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.polymer.EndTetheredPolymer.profile" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.polymer.EndTetheredPolymer.render">
+<span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">probe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slabs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/polymer.html#EndTetheredPolymer.render"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.polymer.EndTetheredPolymer.render" title="Link to this definition">¶</a></dt>
+<dd><p>Use the probe to render the layer into a microslab representation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.polymer.EndTetheredPolymer.thickness">
+<span class="sig-name descname"><span class="pre">thickness</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span></em><a class="headerlink" href="#refl1d.polymer.EndTetheredPolymer.thickness" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.polymer.EndTetheredPolymer.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/polymer.html#EndTetheredPolymer.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.polymer.EndTetheredPolymer.to_dict" title="Link to this definition">¶</a></dt>
+<dd><p>Return a dictionary representation of the Slab object</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="refl1d.polymer.PolymerBrush">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">refl1d.polymer.</span></span><span class="sig-name descname"><span class="pre">PolymerBrush</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">thickness</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interface</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'brush'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">polymer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solvent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_vf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">power</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/polymer.html#PolymerBrush"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.polymer.PolymerBrush" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="refl1d.model.html#refl1d.model.Layer" title="refl1d.model.Layer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Layer</span></code></a></p>
+<p>Polymer brushes in a solvent</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><em>thickness</em></dt><dd><p>the thickness of the solvent layer</p>
+</dd>
+<dt><em>interface</em></dt><dd><p>the roughness of the solvent surface</p>
+</dd>
+<dt><em>polymer</em></dt><dd><p>the polymer material</p>
+</dd>
+<dt><em>solvent</em></dt><dd><p>the solvent material or vacuum</p>
+</dd>
+<dt><em>base_vf</em></dt><dd><p>volume fraction (%) of the polymer brush at the interface</p>
+</dd>
+<dt><em>base</em></dt><dd><p>the thickness of the brush interface (A)</p>
+</dd>
+<dt><em>length</em></dt><dd><p>the length of the brush above the interface (A)</p>
+</dd>
+<dt><em>power</em></dt><dd><p>the rate of brush thinning</p>
+</dd>
+<dt><em>sigma</em></dt><dd><p>rms brush roughness (A)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>The materials can either use the scattering length density directly,
+such as PDMS = SLD(0.063, 0.00006) or they can use chemical composition
+and material density such as PDMS=Material(“C2H6OSi”, density=0.965).</p>
+<p>These parameters combine in the following profile formula:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}V(z) &amp;= \left\{
+  \begin{array}{ll}
+    V_o                        &amp; \mbox{if } z &lt;= z_o \\
+    V_o (1 - ((z-z_o)/L)^2)^p  &amp; \mbox{if } z_o &lt; z &lt; z_o + L \\
+    0                          &amp; \mbox{if } z &gt;= z_o + L
+  \end{array}
+\right. \\
+V_\sigma(z)
+   &amp;= V(z) \star
+         \frac{e^{-\frac{1}{2}(z/\sigma)^2}}{\sqrt{2\pi\sigma^2}} \\
+\rho(z) &amp;= \rho_p V_\sigma(z) + \rho_s (1-V_\sigma(z))\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(V_\sigma(z)\)</span> is volume fraction convoluted with brush
+roughness <span class="math notranslate nohighlight">\(\sigma\)</span> and <span class="math notranslate nohighlight">\(\rho(z)\)</span> is the complex scattering
+length density of the profile.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.polymer.PolymerBrush.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#refl1d.polymer.PolymerBrush.name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.polymer.PolymerBrush.parameters">
+<span class="sig-name descname"><span class="pre">parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/polymer.html#PolymerBrush.parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.polymer.PolymerBrush.parameters" title="Link to this definition">¶</a></dt>
+<dd><p>Returns a dictionary of parameters specific to the layer.  These will
+be added to the dictionary containing interface, thickness and magnetism
+parameters.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.polymer.PolymerBrush.profile">
+<span class="sig-name descname"><span class="pre">profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/polymer.html#PolymerBrush.profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.polymer.PolymerBrush.profile" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.polymer.PolymerBrush.render">
+<span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">probe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slabs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/polymer.html#PolymerBrush.render"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.polymer.PolymerBrush.render" title="Link to this definition">¶</a></dt>
+<dd><p>Use the probe to render the layer into a microslab representation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.polymer.PolymerBrush.thickness">
+<span class="sig-name descname"><span class="pre">thickness</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span></em><a class="headerlink" href="#refl1d.polymer.PolymerBrush.thickness" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.polymer.PolymerBrush.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/polymer.html#PolymerBrush.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.polymer.PolymerBrush.to_dict" title="Link to this definition">¶</a></dt>
+<dd><p>Return a dictionary representation of the Slab object</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="refl1d.polymer.PolymerMushroom">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">refl1d.polymer.</span></span><span class="sig-name descname"><span class="pre">PolymerMushroom</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">thickness</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interface</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Mushroom'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">polymer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solvent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/polymer.html#PolymerMushroom"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.polymer.PolymerMushroom" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="refl1d.model.html#refl1d.model.Layer" title="refl1d.model.Layer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Layer</span></code></a></p>
+<p>Polymer mushrooms in a solvent (volume profile)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><em>delta</em> | real scalar</dt><dd><p>interaction parameter</p>
+</dd>
+<dt><em>vf</em> | real scalar</dt><dd><p>not quite volume fraction (dimensionless grafting density)</p>
+</dd>
+<dt><em>sigma</em> | real scalar</dt><dd><p>convolution roughness (A)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>Using analytical SCF methods for gaussian chains, which are scaled
+by the radius of gyration of the equivalent free polymer as an
+approximation to results of renormalization group methods.<a class="footnote-reference brackets" href="#adamuti-trache" id="id11" role="doc-noteref"><span class="fn-bracket">[</span>3<span class="fn-bracket">]</span></a></p>
+<p>Solutions are only strictly valid for vf &lt;&lt; 1.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.polymer.PolymerMushroom.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#refl1d.polymer.PolymerMushroom.name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.polymer.PolymerMushroom.parameters">
+<span class="sig-name descname"><span class="pre">parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/polymer.html#PolymerMushroom.parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.polymer.PolymerMushroom.parameters" title="Link to this definition">¶</a></dt>
+<dd><p>Returns a dictionary of parameters specific to the layer.  These will
+be added to the dictionary containing interface, thickness and magnetism
+parameters.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.polymer.PolymerMushroom.profile">
+<span class="sig-name descname"><span class="pre">profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/polymer.html#PolymerMushroom.profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.polymer.PolymerMushroom.profile" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.polymer.PolymerMushroom.render">
+<span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">probe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slabs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/polymer.html#PolymerMushroom.render"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.polymer.PolymerMushroom.render" title="Link to this definition">¶</a></dt>
+<dd><p>Use the probe to render the layer into a microslab representation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.polymer.PolymerMushroom.thickness">
+<span class="sig-name descname"><span class="pre">thickness</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span></em><a class="headerlink" href="#refl1d.polymer.PolymerMushroom.thickness" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.polymer.PolymerMushroom.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/polymer.html#PolymerMushroom.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.polymer.PolymerMushroom.to_dict" title="Link to this definition">¶</a></dt>
+<dd><p>Return a dictionary representation of the Slab object</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="refl1d.polymer.VolumeProfile">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">refl1d.polymer.</span></span><span class="sig-name descname"><span class="pre">VolumeProfile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">thickness</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interface</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'VolumeProfile'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">material</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solvent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/polymer.html#VolumeProfile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.polymer.VolumeProfile" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="refl1d.model.html#refl1d.model.Layer" title="refl1d.model.Layer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Layer</span></code></a></p>
+<p>Generic volume profile function</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><em>thickness</em></dt><dd><p>the thickness of the solvent layer</p>
+</dd>
+<dt><em>interface</em></dt><dd><p>the roughness of the solvent surface</p>
+</dd>
+<dt><em>material</em></dt><dd><p>the polymer material</p>
+</dd>
+<dt><em>solvent</em></dt><dd><p>the solvent material</p>
+</dd>
+<dt><em>profile</em></dt><dd><p>the profile function, suitably parameterized</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>The materials can either use the scattering length density directly,
+such as PDMS = SLD(0.063, 0.00006) or they can use chemical composition
+and material density such as PDMS=Material(“C2H6OSi”, density=0.965).</p>
+<p>These parameters combine in the following profile formula:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sld</span> <span class="o">=</span> <span class="n">material</span><span class="o">.</span><span class="n">sld</span> <span class="o">*</span> <span class="n">profile</span> <span class="o">+</span> <span class="n">solvent</span><span class="o">.</span><span class="n">sld</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">profile</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The profile function takes a depth z and returns a density rho.</p>
+<p>For volume profiles, the returned rho should be the volume fraction
+of the material.  For SLD profiles, rho should be complex scattering
+length density of the material.</p>
+<p>Fitting parameters are the available named arguments to the function.
+The first argument must be <em>z</em>, which is the array of depths at which
+the profile is to be evaluated.  It is guaranteed to be increasing, with
+step size 2*z[0].</p>
+<p>Initial values for the function parameters can be given using name=value.
+These values can be scalars or fitting parameters.  The function will
+be called with the current parameter values as arguments.  The layer
+thickness can be computed as :func: <cite>layer_thickness</cite>.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.polymer.VolumeProfile.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#refl1d.polymer.VolumeProfile.name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.polymer.VolumeProfile.parameters">
+<span class="sig-name descname"><span class="pre">parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/polymer.html#VolumeProfile.parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.polymer.VolumeProfile.parameters" title="Link to this definition">¶</a></dt>
+<dd><p>Returns a dictionary of parameters specific to the layer.  These will
+be added to the dictionary containing interface, thickness and magnetism
+parameters.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.polymer.VolumeProfile.render">
+<span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">probe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slabs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/polymer.html#VolumeProfile.render"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.polymer.VolumeProfile.render" title="Link to this definition">¶</a></dt>
+<dd><p>Use the probe to render the layer into a microslab representation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.polymer.VolumeProfile.thickness">
+<span class="sig-name descname"><span class="pre">thickness</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span></em><a class="headerlink" href="#refl1d.polymer.VolumeProfile.thickness" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.polymer.VolumeProfile.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/polymer.html#VolumeProfile.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.polymer.VolumeProfile.to_dict" title="Link to this definition">¶</a></dt>
+<dd><p>Return a dictionary representation of the Slab object</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.polymer.layer_thickness">
+<span class="sig-prename descclassname"><span class="pre">refl1d.polymer.</span></span><span class="sig-name descname"><span class="pre">layer_thickness</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/polymer.html#layer_thickness"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.polymer.layer_thickness" title="Link to this definition">¶</a></dt>
+<dd><p>Return the thickness of a layer given the microslab z points.</p>
+<p>The z points are at the centers of the bins.  we can use the recurrence
+that boundary b[k] = z[k-1] + (z[k-1] - b[k-1]) to compute the
+total length of the layer.</p>
+</dd></dl>
+
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

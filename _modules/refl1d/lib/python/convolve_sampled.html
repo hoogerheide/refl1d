@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>refl1d.lib.python.convolve_sampled &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/plot_directive.css" />
+    <script src="../../../../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../../../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>refl1d.lib.python.convolve_sampled</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        <a class="uplink" href="../../../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <h1>Source code for refl1d.lib.python.convolve_sampled</h1><div class="highlight"><pre>
+<div class="viewcode-block" id="convolve_point_sampled">
+<a class="viewcode-back" href="../../../../refl1d.lib.python.convolve_sampled.html#refl1d.lib.numba.convolve_point_sampled">[docs]</a>
+<span></span><span class="k">def</span> <span class="nf">convolve_point_sampled</span><span class="p">(</span><span class="n">Nin</span><span class="p">,</span> <span class="n">xin</span><span class="p">,</span> <span class="n">yin</span><span class="p">,</span> <span class="n">Np</span><span class="p">,</span> <span class="n">xp</span><span class="p">,</span> <span class="n">yp</span><span class="p">,</span> <span class="n">xo</span><span class="p">,</span> <span class="n">dx</span><span class="p">,</span> <span class="n">_in</span><span class="p">):</span>
+    <span class="c1"># Walk the theory spline and the resolution spline together, computing</span>
+    <span class="c1"># the integral of the pairs of line segments.  Since the spline knots</span>
+    <span class="c1"># do not necessarily correspond, we need to treat each individual segment</span>
+    <span class="c1"># in both curves piece-wise, integrating from knot to knot in the union</span>
+    <span class="c1"># of the two knot sets.</span>
+
+    <span class="c1"># Need an undefined value in case the algorithm is broken and we don&#39;t</span>
+    <span class="c1"># initialize the initial lines.  This would ideal be NaN, but that isn&#39;t</span>
+    <span class="c1"># available in MSVC, so set it to something very large.  In order to avoid</span>
+    <span class="c1"># normalizing that very large value to 1., only set the theory line to</span>
+    <span class="c1"># undefined, and set the resolution line to 0.</span>
+    <span class="c1"># const double undefined = 0./0.;</span>
+    <span class="n">undefined</span> <span class="o">=</span> <span class="mf">1e308</span>
+    <span class="n">m1</span> <span class="o">=</span> <span class="n">undefined</span>
+    <span class="n">b1</span> <span class="o">=</span> <span class="n">undefined</span>
+    <span class="n">m2</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">b2</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="nb">sum</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">norm</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="c1"># size_t p;</span>
+    <span class="c1"># double delta,delta2,delta3;</span>
+    <span class="c1"># double x, next_x, next_xin, next_xp;</span>
+
+    <span class="c1"># Set the target start of the integral to xin[_in].  This may or may</span>
+    <span class="c1"># not be beyond the end of the resolution function, depending on whether</span>
+    <span class="c1"># we are at the left edge of the data, or somewhere inside.</span>
+    <span class="n">next_xin</span> <span class="o">=</span> <span class="n">xin</span><span class="p">[</span><span class="n">_in</span><span class="p">]</span>
+
+    <span class="c1"># Set p to the point just before next_xin</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">Np</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">xo</span> <span class="o">+</span> <span class="n">dx</span> <span class="o">*</span> <span class="n">xp</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">next_xin</span><span class="p">:</span>
+            <span class="k">break</span>
+
+    <span class="n">p</span> <span class="o">-=</span> <span class="mi">1</span>
+    <span class="n">next_xp</span> <span class="o">=</span> <span class="n">xo</span> <span class="o">+</span> <span class="n">dx</span> <span class="o">*</span> <span class="n">xp</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
+
+    <span class="c1"># Choose the larger of next_xp and next_xin as the starting point of the</span>
+    <span class="c1"># integral.  This will force us to step both xin and xp in the first</span>
+    <span class="c1"># iteration of the loop, computing new slope/intercepts for both lines.</span>
+    <span class="c1"># If the theory line extends beyond the resolution function, then we will</span>
+    <span class="c1"># be called with xin[_in] before the first resolution point, and next_xp</span>
+    <span class="c1"># will be bigger than next_xin.  If the resolution extends beyond the</span>
+    <span class="c1"># end of the theory, then the next_xp will be set before next_xin, and</span>
+    <span class="c1"># next_xin will be the start of the integral.  The integral ends when</span>
+    <span class="c1"># either the resolution or the theory runs out.</span>
+    <span class="c1">#</span>
+    <span class="c1"># We are tracking the area under the resolution as well as the area</span>
+    <span class="c1"># under the product of theory and resolution so that we can properly</span>
+    <span class="c1"># normalize the data when less than the full resolution is included.</span>
+    <span class="c1"># This means that we do not need to provide a resolution function</span>
+    <span class="c1"># normalized to a total area of 1 as our input.</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">next_xp</span> <span class="k">if</span> <span class="n">next_xp</span> <span class="o">&gt;</span> <span class="n">next_xin</span> <span class="k">else</span> <span class="n">next_xin</span>
+    <span class="c1"># printf(&quot;  point xo:%g dx:%g x:%g, p:%ld, in:%ld, xp:%g, xin:%g\n&quot;,</span>
+    <span class="c1">#       xo,dx,x,p,in,next_xp,next_xin);</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="c1"># Step xin if we are at the next theory point</span>
+        <span class="k">if</span> <span class="n">next_xin</span> <span class="o">&lt;=</span> <span class="n">x</span><span class="p">:</span>
+            <span class="n">_in</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">_in</span> <span class="o">&gt;=</span> <span class="n">Nin</span><span class="p">:</span>
+                <span class="k">break</span>  <span class="c1"># At the right edge of the data</span>
+            <span class="n">next_xin</span> <span class="o">=</span> <span class="n">xin</span><span class="p">[</span><span class="n">_in</span><span class="p">]</span>
+            <span class="n">m1</span> <span class="o">=</span> <span class="p">(</span><span class="n">yin</span><span class="p">[</span><span class="n">_in</span><span class="p">]</span> <span class="o">-</span> <span class="n">yin</span><span class="p">[</span><span class="n">_in</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">xin</span><span class="p">[</span><span class="n">_in</span><span class="p">]</span> <span class="o">-</span> <span class="n">xin</span><span class="p">[</span><span class="n">_in</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+            <span class="n">b1</span> <span class="o">=</span> <span class="n">yin</span><span class="p">[</span><span class="n">_in</span><span class="p">]</span> <span class="o">-</span> <span class="n">m1</span> <span class="o">*</span> <span class="n">xin</span><span class="p">[</span><span class="n">_in</span><span class="p">]</span>
+
+        <span class="c1"># Step xp if we are at the next resolution point</span>
+        <span class="k">if</span> <span class="n">next_xp</span> <span class="o">&lt;=</span> <span class="n">x</span><span class="p">:</span>
+            <span class="n">p</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">p</span> <span class="o">&gt;=</span> <span class="n">Np</span><span class="p">:</span>
+                <span class="k">break</span>  <span class="c1"># At the right edge of the resolution</span>
+            <span class="n">next_xp</span> <span class="o">=</span> <span class="n">xo</span> <span class="o">+</span> <span class="n">dx</span> <span class="o">*</span> <span class="n">xp</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
+            <span class="n">m2</span> <span class="o">=</span> <span class="p">(</span><span class="n">yp</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">-</span> <span class="n">yp</span><span class="p">[</span><span class="n">p</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">xp</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">-</span> <span class="n">xp</span><span class="p">[</span><span class="n">p</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="n">dx</span>
+            <span class="n">b2</span> <span class="o">=</span> <span class="n">yp</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">-</span> <span class="n">m2</span> <span class="o">*</span> <span class="n">next_xp</span>
+
+        <span class="c1"># Find the next node</span>
+        <span class="n">next_x</span> <span class="o">=</span> <span class="n">next_xin</span> <span class="k">if</span> <span class="n">next_xin</span> <span class="o">&lt;</span> <span class="n">next_xp</span> <span class="k">else</span> <span class="n">next_xp</span>
+        <span class="c1"># Compute the convolution and norm between the current and next node</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="n">next_x</span> <span class="o">-</span> <span class="n">x</span>
+        <span class="n">delta2</span> <span class="o">=</span> <span class="n">next_x</span> <span class="o">*</span> <span class="n">next_x</span> <span class="o">-</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x</span>
+        <span class="n">delta3</span> <span class="o">=</span> <span class="n">next_x</span> <span class="o">*</span> <span class="n">next_x</span> <span class="o">*</span> <span class="n">next_x</span> <span class="o">-</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x</span>
+        <span class="n">norm</span> <span class="o">+=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">m2</span> <span class="o">*</span> <span class="n">delta2</span> <span class="o">+</span> <span class="n">b2</span> <span class="o">*</span> <span class="n">delta</span>
+        <span class="nb">sum</span> <span class="o">+=</span> <span class="n">m1</span> <span class="o">*</span> <span class="n">m2</span> <span class="o">/</span> <span class="mf">3.0</span> <span class="o">*</span> <span class="n">delta3</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">m1</span> <span class="o">*</span> <span class="n">b2</span> <span class="o">+</span> <span class="n">m2</span> <span class="o">*</span> <span class="n">b1</span><span class="p">)</span> <span class="o">*</span> <span class="n">delta2</span> <span class="o">+</span> <span class="n">b1</span> <span class="o">*</span> <span class="n">b2</span> <span class="o">*</span> <span class="n">delta</span>
+        <span class="c1"># printf(&quot;  delta:%g delta2:%g delta3:%g norm:%g sum:%g m1:%g b1:%g m2:%g b2:%g x:%g nx:%g ni:%g np:%g\n&quot;,</span>
+        <span class="c1">#  delta, delta2, delta3, norm, sum, m1, b1, m2, b2, x, next_x, next_xin, next_xp);</span>
+        <span class="c1"># Move to the next node</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">next_x</span>
+
+    <span class="k">return</span> <span class="nb">sum</span> <span class="o">/</span> <span class="n">norm</span></div>
+
+
+
+<div class="viewcode-block" id="convolve_sampled">
+<a class="viewcode-back" href="../../../../refl1d.lib.python.convolve_sampled.html#refl1d.lib.numba.convolve_sampled">[docs]</a>
+<span class="k">def</span> <span class="nf">convolve_sampled</span><span class="p">(</span><span class="n">xin</span><span class="p">,</span> <span class="n">yin</span><span class="p">,</span> <span class="n">xp</span><span class="p">,</span> <span class="n">yp</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">dx</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="n">Nin</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">xin</span><span class="p">)</span>
+    <span class="n">Np</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">xp</span><span class="p">)</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="c1"># /* FIXME fails if xin are not sorted</span>
+    <span class="c1"># * slow if x not sorted */</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">Nin</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Nin must be &gt; 1&quot;</span><span class="p">)</span>
+
+    <span class="c1"># /* Scan through all x values to be calculated */</span>
+    <span class="c1"># /* Re: omp, each thread is going through the entire input array,</span>
+    <span class="c1"># * independently, computing the resolution from the neighbourhood</span>
+    <span class="c1"># * around its individual output points.  The firstprivate( in )</span>
+    <span class="c1"># * clause sets each thread to keep its own copy of in, initialized</span>
+    <span class="c1"># * at in&#39;s initial value of zero.  The &quot;schedule(static,1)&quot; clause</span>
+    <span class="c1"># * puts neighbouring points in separate threads, which is a benefit</span>
+    <span class="c1"># * since there will be less backtracking if resolution width increases</span>
+    <span class="c1"># * from point to point.  Because the schedule is static, this does not</span>
+    <span class="c1"># * significantly increase the parallelization overhead.  Because the</span>
+    <span class="c1"># * threads are operating on interleaved points, there should be fewer cache</span>
+    <span class="c1"># * misses than if each thread were given different stretches of x to</span>
+    <span class="c1"># * convolve.</span>
+    <span class="c1"># */</span>
+
+    <span class="n">_in</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="c1"># ifdef _OPENMP</span>
+    <span class="c1"># pragma omp parallel for firstprivate(in) schedule(static,1)</span>
+    <span class="c1"># endif</span>
+    <span class="k">for</span> <span class="n">_out</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
+        <span class="c1"># /* width of resolution window for x is w = 2 dx ^ 2. */</span>
+        <span class="n">limit</span> <span class="o">=</span> <span class="o">-</span><span class="n">dx</span><span class="p">[</span><span class="n">_out</span><span class="p">]</span> <span class="o">*</span> <span class="n">xp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">xo</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">_out</span><span class="p">]</span>
+
+        <span class="c1"># /* Line up the left edge of the convolution window */</span>
+        <span class="c1"># /* It is probably forward from the current position, */</span>
+        <span class="c1"># /* but if the next dx is a lot higher than the current */</span>
+        <span class="c1"># /* dx or if the x are not sorted, then it may be before */</span>
+        <span class="c1"># /* the current position. * /</span>
+        <span class="c1"># /* FIXME verify that the convolution window is just right */</span>
+        <span class="k">while</span> <span class="n">_in</span> <span class="o">&lt;</span> <span class="n">Nin</span> <span class="o">-</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">xin</span><span class="p">[</span><span class="n">_in</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">xo</span> <span class="o">-</span> <span class="n">limit</span><span class="p">:</span>
+            <span class="n">_in</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">while</span> <span class="n">_in</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">xin</span><span class="p">[</span><span class="n">_in</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">xo</span> <span class="o">-</span> <span class="n">limit</span><span class="p">:</span>
+            <span class="n">_in</span> <span class="o">-=</span> <span class="mi">1</span>
+
+        <span class="c1"># /* Special handling to avoid 0/0 for w = 0. */</span>
+        <span class="k">if</span> <span class="n">dx</span><span class="p">[</span><span class="n">_out</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="c1"># printf(&quot;convolve in:%ld out:%ld, xo:%g dx:%g\n&quot;,in,out,xo,dx[out])</span>
+            <span class="n">y</span><span class="p">[</span><span class="n">_out</span><span class="p">]</span> <span class="o">=</span> <span class="n">convolve_point_sampled</span><span class="p">(</span><span class="n">Nin</span><span class="p">,</span> <span class="n">xin</span><span class="p">,</span> <span class="n">yin</span><span class="p">,</span> <span class="n">Np</span><span class="p">,</span> <span class="n">xp</span><span class="p">,</span> <span class="n">yp</span><span class="p">,</span> <span class="n">xo</span><span class="p">,</span> <span class="n">dx</span><span class="p">[</span><span class="n">_out</span><span class="p">],</span> <span class="n">_in</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">_in</span> <span class="o">&lt;</span> <span class="n">Nin</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># /* Linear interpolation */</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="p">(</span><span class="n">yin</span><span class="p">[</span><span class="n">_in</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">yin</span><span class="p">[</span><span class="n">_in</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">xin</span><span class="p">[</span><span class="n">_in</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">xin</span><span class="p">[</span><span class="n">_in</span><span class="p">])</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">yin</span><span class="p">[</span><span class="n">_in</span><span class="p">]</span> <span class="o">-</span> <span class="n">m</span> <span class="o">*</span> <span class="n">xin</span><span class="p">[</span><span class="n">_in</span><span class="p">]</span>
+            <span class="n">y</span><span class="p">[</span><span class="n">_out</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span> <span class="o">*</span> <span class="n">xo</span> <span class="o">+</span> <span class="n">b</span>
+        <span class="k">elif</span> <span class="n">_in</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># /* Linear extrapolation */</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="p">(</span><span class="n">yin</span><span class="p">[</span><span class="n">_in</span><span class="p">]</span> <span class="o">-</span> <span class="n">yin</span><span class="p">[</span><span class="n">_in</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">xin</span><span class="p">[</span><span class="n">_in</span><span class="p">]</span> <span class="o">-</span> <span class="n">xin</span><span class="p">[</span><span class="n">_in</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">yin</span><span class="p">[</span><span class="n">_in</span><span class="p">]</span> <span class="o">-</span> <span class="n">m</span> <span class="o">*</span> <span class="n">xin</span><span class="p">[</span><span class="n">_in</span><span class="p">]</span>
+            <span class="n">y</span><span class="p">[</span><span class="n">_out</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span> <span class="o">*</span> <span class="n">xo</span> <span class="o">+</span> <span class="n">b</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># /* Can&#39;t happen because there is more than one point in xin. */</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">Nin</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;should be more than one point in Nin&quot;</span><span class="p">)</span></div>
+
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        <a class="uplink" href="../../../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>refl1d.magnetism &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <script src="../../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>refl1d.magnetism</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <h1>Source code for refl1d.magnetism</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This program is public domain</span>
+<span class="c1"># Author: Paul Kienzle</span>
+<span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Magnetic modeling for 1-D reflectometry.</span>
+
+<span class="sd">Magnetic properties are tied to the structural description of the</span>
+<span class="sd">but only loosely.</span>
+
+<span class="sd">There may be dead regions near the interfaces of magnetic materials.</span>
+
+<span class="sd">Magnetic behaviour may be varying in complex ways within and</span>
+<span class="sd">across structural boundaries.  For example, the ma</span>
+<span class="sd">Indeed, the pattern may continue</span>
+<span class="sd">across spacer layers, going to zero in the magnetically dead</span>
+<span class="sd">region and returning to its long range variation on entry to</span>
+<span class="sd">the next magnetic layer.  Magnetic multilayers may exhibit complex</span>
+<span class="sd">magnetism throughout the repeated section while the structural</span>
+<span class="sd">components are fixed.</span>
+
+<span class="sd">The scattering behaviour is dependent upon net field strength relative to</span>
+<span class="sd">polarization direction.   This arises from three underlying quantities:</span>
+<span class="sd">the strength of the individual dipole moments in the layer, the degree</span>
+<span class="sd">of alignment of these moments, and the net direction of the alignment.</span>
+<span class="sd">The strength of the dipole moment depends on the details of the electronic</span>
+<span class="sd">structure, so unlike the nuclear scattering potential, it cannot be readily</span>
+<span class="sd">determined from material composition.  Similarly, net magnetization</span>
+<span class="sd">depends on the details of the magnetic domains within the material, and</span>
+<span class="sd">cannot readily be determined from first principles.  The interaction</span>
+<span class="sd">potential of the net magnetic moment depends on the alignment of the field</span>
+<span class="sd">with respect to the beam, with a net scattering length density of</span>
+<span class="sd">:math:`\rho_M \cos(\theta_M)`.  Clearly the scattering measurement will</span>
+<span class="sd">not be able to distinguish between a reduced net magnetic strength</span>
+<span class="sd">:math:`\rho_M` and a change in orientation :math:`\theta_M` for an</span>
+<span class="sd">individual measurement, as should be apparent from the correlated</span>
+<span class="sd">uncertainty plot produced when both parameters are fit.</span>
+
+<span class="sd">Magnetism support is split into two parts: describing the layers</span>
+<span class="sd">and anchoring them to the structure.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span>
+
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Literal</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">inf</span>
+<span class="kn">from</span> <span class="nn">bumps.parameter</span> <span class="kn">import</span> <span class="n">Parameter</span><span class="p">,</span> <span class="n">flatten</span><span class="p">,</span> <span class="n">to_dict</span>
+<span class="kn">from</span> <span class="nn">bumps.mono</span> <span class="kn">import</span> <span class="n">monospline</span>
+
+<span class="kn">from</span> <span class="nn">.reflectivity</span> <span class="kn">import</span> <span class="n">BASE_GUIDE_ANGLE</span> <span class="k">as</span> <span class="n">DEFAULT_THETA_M</span>
+
+
+<div class="viewcode-block" id="BaseMagnetism">
+<a class="viewcode-back" href="../../refl1d.magnetism.html#refl1d.magnetism.BaseMagnetism">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">BaseMagnetism</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Magnetic properties of the layer.</span>
+
+<span class="sd">    Magnetism is attached to set of nuclear layers by setting the</span>
+<span class="sd">    *magnetism* property of the first layer to the rendered for the</span>
+<span class="sd">    magnetic profile, and setting *extent* to the number of nuclear</span>
+<span class="sd">    layers attached to the magnetism object.</span>
+
+<span class="sd">    *dead_below* and *dead_above* are dead regions within the magnetic</span>
+<span class="sd">    extent, which allow you to shift the magnetic interfaces relative</span>
+<span class="sd">    to the nuclear interfaces.</span>
+
+<span class="sd">    *interface_below* and *interface_above* are the interface widths</span>
+<span class="sd">    for the magnetic layer, which default to the interface widths for</span>
+<span class="sd">    the corresponding nuclear layers if no interfaces are specified.</span>
+<span class="sd">    For consecutive layers, only *interface_above* is used; any value</span>
+<span class="sd">    for *interface_below* is ignored.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">extent</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">dead_below</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Parameter</span><span class="p">,</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">None</span><span class="p">]]</span>
+    <span class="n">dead_above</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Parameter</span><span class="p">,</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">None</span><span class="p">]]</span>
+    <span class="n">interface_below</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Parameter</span><span class="p">,</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">None</span><span class="p">]]</span>
+    <span class="n">interface_above</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Parameter</span><span class="p">,</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">None</span><span class="p">]]</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">extent</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">dead_below</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">dead_above</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">interface_below</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">interface_above</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;LAYER&quot;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dead_below</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">dead_below</span><span class="p">,</span> <span class="n">limits</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; deadM below&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dead_above</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">dead_above</span><span class="p">,</span> <span class="n">limits</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; deadM above&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">interface_below</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">interface_below</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">interface_below</span><span class="p">,</span> <span class="n">limits</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; interfaceM below&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">interface_above</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">interface_above</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">interface_above</span><span class="p">,</span> <span class="n">limits</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; interfaceM above&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">interface_below</span> <span class="o">=</span> <span class="n">interface_below</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">interface_above</span> <span class="o">=</span> <span class="n">interface_above</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extent</span> <span class="o">=</span> <span class="n">extent</span>
+
+<div class="viewcode-block" id="BaseMagnetism.parameters">
+<a class="viewcode-back" href="../../refl1d.magnetism.html#refl1d.magnetism.BaseMagnetism.parameters">[docs]</a>
+    <span class="k">def</span> <span class="nf">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="n">Parameter</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Parameter</span><span class="p">],</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">None</span><span class="p">]]]:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;dead_below&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dead_below</span><span class="p">,</span>
+            <span class="s2">&quot;dead_above&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dead_above</span><span class="p">,</span>
+            <span class="s2">&quot;interface_below&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface_below</span><span class="p">,</span>
+            <span class="s2">&quot;interface_above&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface_above</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="BaseMagnetism.to_dict">
+<a class="viewcode-back" href="../../refl1d.magnetism.html#refl1d.magnetism.BaseMagnetism.to_dict">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">to_dict</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="s2">&quot;extent&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">extent</span><span class="p">,</span>
+                <span class="s2">&quot;dead_below&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dead_below</span><span class="p">,</span>
+                <span class="s2">&quot;dead_above&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dead_above</span><span class="p">,</span>
+                <span class="s2">&quot;interface_below&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface_below</span><span class="p">,</span>
+                <span class="s2">&quot;interface_above&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface_above</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseMagnetism.set_layer_name">
+<a class="viewcode-back" href="../../refl1d.magnetism.html#refl1d.magnetism.BaseMagnetism.set_layer_name">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_layer_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Update the names of the magnetic parameters with the name of the</span>
+<span class="sd">        layer if it has not already been set.  This is necessary since we don&#39;t</span>
+<span class="sd">        know the layer name until after we have constructed the magnetism object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;LAYER&quot;</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">flatten</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">()):</span>
+                <span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;LAYER&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Magnetism">
+<a class="viewcode-back" href="../../refl1d.magnetism.html#refl1d.magnetism.Magnetism">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">Magnetism</span><span class="p">(</span><span class="n">BaseMagnetism</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Region of constant magnetism.</span>
+
+<span class="sd">    *rhoM* is the magnetic SLD the layer. Default is :code:`rhoM=0`.</span>
+
+<span class="sd">    *thetaM* is the magnetic angle for the layer. Default is :code:`thetaM=270`.</span>
+
+<span class="sd">    *name* is the base name for the various layer parameters.</span>
+
+<span class="sd">    *extent* defines the number of nuclear layers covered by the magnetic layer.</span>
+
+<span class="sd">    *dead_above* and *dead_below* define magnetically dead layers at the</span>
+<span class="sd">    nuclear boundaries.  These can be negative if magnetism extends beyond</span>
+<span class="sd">    the nuclear boundary.</span>
+
+<span class="sd">    *interface_above* and *interface_below* define the magnetic interface</span>
+<span class="sd">    at the boundaries, if it is different from the nuclear interface.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">rhoM</span><span class="p">:</span> <span class="n">Parameter</span>
+    <span class="n">thetaM</span><span class="p">:</span> <span class="n">Parameter</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rhoM</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">thetaM</span><span class="o">=</span><span class="n">DEFAULT_THETA_M</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;LAYER&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="n">BaseMagnetism</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rhoM</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">rhoM</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; rhoM&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thetaM</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">thetaM</span><span class="p">,</span> <span class="n">limits</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">360</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; thetaM&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Magnetism.parameters">
+<a class="viewcode-back" href="../../refl1d.magnetism.html#refl1d.magnetism.Magnetism.parameters">[docs]</a>
+    <span class="k">def</span> <span class="nf">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">parameters</span> <span class="o">=</span> <span class="n">BaseMagnetism</span><span class="o">.</span><span class="n">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">parameters</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">rhoM</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rhoM</span><span class="p">,</span> <span class="n">thetaM</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">thetaM</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">parameters</span></div>
+
+
+<div class="viewcode-block" id="Magnetism.to_dict">
+<a class="viewcode-back" href="../../refl1d.magnetism.html#refl1d.magnetism.Magnetism.to_dict">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">BaseMagnetism</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="s2">&quot;rhoM&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rhoM</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="s2">&quot;thetaM&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thetaM</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="Magnetism.render">
+<a class="viewcode-back" href="../../refl1d.magnetism.html#refl1d.magnetism.Magnetism.render">[docs]</a>
+    <span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">probe</span><span class="p">,</span> <span class="n">slabs</span><span class="p">,</span> <span class="n">thickness</span><span class="p">,</span> <span class="n">anchor</span><span class="p">,</span> <span class="n">sigma</span><span class="p">):</span>
+        <span class="n">slabs</span><span class="o">.</span><span class="n">add_magnetism</span><span class="p">(</span>
+            <span class="n">anchor</span><span class="o">=</span><span class="n">anchor</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="p">[</span><span class="n">thickness</span><span class="p">],</span> <span class="n">rhoM</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">rhoM</span><span class="o">.</span><span class="n">value</span><span class="p">],</span> <span class="n">thetaM</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">thetaM</span><span class="o">.</span><span class="n">value</span><span class="p">],</span> <span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span>
+        <span class="p">)</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;magnetism(</span><span class="si">%g</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhoM</span><span class="o">.</span><span class="n">value</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;Magnetism(rhoM=</span><span class="si">%g</span><span class="s2">, thetaM=</span><span class="si">%g</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rhoM</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">thetaM</span><span class="o">.</span><span class="n">value</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="MagnetismStack">
+<a class="viewcode-back" href="../../refl1d.magnetism.html#refl1d.magnetism.MagnetismStack">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">MagnetismStack</span><span class="p">(</span><span class="n">BaseMagnetism</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Magnetic slabs within a magnetic layer.</span>
+
+<span class="sd">    *weight* is the relative thickness of each layer relative to the nuclear</span>
+<span class="sd">    stack to which it is anchored.  Weights are automatically normalized to 1.</span>
+<span class="sd">    Default is :code:`weight=[1]` equal size layers.</span>
+
+<span class="sd">    *rhoM* is the magnetic SLD for each layer. Default is :code:`rhoM=[0]`</span>
+<span class="sd">    for shared magnetism in all the layers.</span>
+
+<span class="sd">    *thetaM* is the magnetic angle for each layer.  Default is</span>
+<span class="sd">    :code:`thetaM=[270]` for no magnetic twist.</span>
+
+<span class="sd">    **Not yet implemented.**</span>
+<span class="sd">    *interfaceM* is the magnetic interface for all but the last layer.  Default</span>
+<span class="sd">    is :code:`interfaceM=[0]` for equal width interfaces in all layers.</span>
+
+<span class="sd">    *name* is the base name for the various layer parameters.</span>
+
+<span class="sd">    *extent* defines the number of nuclear layers covered by the magnetic layer.</span>
+
+<span class="sd">    *dead_above* and *dead_below* define magnetically dead layers at the</span>
+<span class="sd">    nuclear boundaries.  These can be negative if magnetism extends beyond</span>
+<span class="sd">    the nuclear boundary.</span>
+
+<span class="sd">    *interface_above* and *interface_below* define the magnetic interface</span>
+<span class="sd">    at the boundaries, if it is different from the nuclear interface.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">weight</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Parameter</span><span class="p">]</span>
+    <span class="n">rhoM</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Parameter</span><span class="p">]</span>
+    <span class="n">thetaM</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Parameter</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rhoM</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">thetaM</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">interfaceM</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;LAYER&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="n">weight_n</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">weight</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">weight</span><span class="p">)</span>
+        <span class="n">rhoM_n</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">rhoM</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">rhoM</span><span class="p">)</span>
+        <span class="n">thetaM_n</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">thetaM</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">thetaM</span><span class="p">)</span>
+        <span class="n">interfaceM_n</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">interfaceM</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">interfaceM</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">weight_n</span><span class="p">,</span> <span class="n">rhoM_n</span><span class="p">,</span> <span class="n">thetaM_n</span><span class="p">,</span> <span class="n">interfaceM_n</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Must specify one of weight, rhoM, thetaM or interfaceM as vector&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="p">(</span><span class="n">weight_n</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">weight_n</span> <span class="o">!=</span> <span class="n">n</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="p">(</span><span class="n">rhoM_n</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">rhoM_n</span> <span class="o">!=</span> <span class="n">n</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="p">(</span><span class="n">thetaM_n</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">thetaM_n</span> <span class="o">!=</span> <span class="n">n</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="p">(</span><span class="n">interfaceM_n</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">interfaceM_n</span> <span class="o">!=</span> <span class="n">n</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Inconsistent lengths for weight, rhoM, thetaM and interfaceM&quot;</span><span class="p">)</span>
+
+        <span class="c1"># TODO: intefaces need to be implemented in profile.add_magnetism</span>
+        <span class="k">if</span> <span class="n">interfaceM</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Doesn&#39;t yet support magnetic interfaces&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">weight</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">weight</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">rhoM</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">rhoM</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">thetaM</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">thetaM</span> <span class="o">=</span> <span class="p">[</span><span class="n">DEFAULT_THETA_M</span><span class="p">]</span>
+        <span class="c1"># if interfaceM is None:</span>
+        <span class="c1">#    interfaceM = [0]</span>
+
+        <span class="n">BaseMagnetism</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weight</span> <span class="o">=</span> <span class="p">[</span><span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; weight[</span><span class="si">%d</span><span class="s2">]&quot;</span> <span class="o">%</span> <span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">weight</span><span class="p">)]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rhoM</span> <span class="o">=</span> <span class="p">[</span><span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; rhoM[</span><span class="si">%d</span><span class="s2">]&quot;</span> <span class="o">%</span> <span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">rhoM</span><span class="p">)]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thetaM</span> <span class="o">=</span> <span class="p">[</span><span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; thetaM[</span><span class="si">%d</span><span class="s2">]&quot;</span> <span class="o">%</span> <span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">thetaM</span><span class="p">)]</span>
+        <span class="c1"># self.interfaceM = [Parameter.default(v, name=name+&quot; interfaceM[%d]&quot;%i)</span>
+        <span class="c1">#                   for i, v in enumerate(interfaceM)]</span>
+
+<div class="viewcode-block" id="MagnetismStack.parameters">
+<a class="viewcode-back" href="../../refl1d.magnetism.html#refl1d.magnetism.MagnetismStack.parameters">[docs]</a>
+    <span class="k">def</span> <span class="nf">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">parameters</span> <span class="o">=</span> <span class="n">BaseMagnetism</span><span class="o">.</span><span class="n">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">parameters</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="n">rhoM</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rhoM</span><span class="p">,</span>
+            <span class="n">thetaM</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">thetaM</span><span class="p">,</span>
+            <span class="c1"># interfaceM=self.interfaceM,</span>
+            <span class="n">weight</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">weight</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">parameters</span></div>
+
+
+<div class="viewcode-block" id="MagnetismStack.to_dict">
+<a class="viewcode-back" href="../../refl1d.magnetism.html#refl1d.magnetism.MagnetismStack.to_dict">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">BaseMagnetism</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="s2">&quot;weight&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weight</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="s2">&quot;rhoM&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rhoM</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="s2">&quot;thetaM&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thetaM</span><span class="p">)</span>
+        <span class="c1"># result[&#39;interfaceM&#39;] = to_dict(self.interfaceM)</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="MagnetismStack.render">
+<a class="viewcode-back" href="../../refl1d.magnetism.html#refl1d.magnetism.MagnetismStack.render">[docs]</a>
+    <span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">probe</span><span class="p">,</span> <span class="n">slabs</span><span class="p">,</span> <span class="n">thickness</span><span class="p">,</span> <span class="n">anchor</span><span class="p">,</span> <span class="n">sigma</span><span class="p">):</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight</span><span class="p">])</span>
+        <span class="n">w</span> <span class="o">*=</span> <span class="n">thickness</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+        <span class="n">rhoM</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhoM</span><span class="p">]</span>
+        <span class="n">thetaM</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">thetaM</span><span class="p">]</span>
+        <span class="c1"># interfaceM = [p.value for p in self.interfaceM]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rhoM</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">rhoM</span> <span class="o">=</span> <span class="p">[</span><span class="n">rhoM</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">thetaM</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">thetaM</span> <span class="o">=</span> <span class="p">[</span><span class="n">thetaM</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+        <span class="c1"># if len(interfaceM) == 1:</span>
+        <span class="c1">#    interfaceM = [interfaceM[0]]*(len(w)-1)</span>
+
+        <span class="n">slabs</span><span class="o">.</span><span class="n">add_magnetism</span><span class="p">(</span>
+            <span class="n">anchor</span><span class="o">=</span><span class="n">anchor</span><span class="p">,</span>
+            <span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="p">,</span>
+            <span class="n">rhoM</span><span class="o">=</span><span class="n">rhoM</span><span class="p">,</span>
+            <span class="n">thetaM</span><span class="o">=</span><span class="n">thetaM</span><span class="p">,</span>
+            <span class="c1"># interfaceM=interfaceM,</span>
+            <span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;MagnetismStack(</span><span class="si">%d</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rhoM</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;MagnetismStack&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="MagnetismTwist">
+<a class="viewcode-back" href="../../refl1d.magnetism.html#refl1d.magnetism.MagnetismTwist">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">MagnetismTwist</span><span class="p">(</span><span class="n">BaseMagnetism</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Linear change in magnetism throughout layer.</span>
+
+<span class="sd">    *rhoM* contains the *(left, right)* values for the magnetic scattering</span>
+<span class="sd">    length density.  The number of steps is determined by the model *dz*.</span>
+
+<span class="sd">    *thetaM* contains the *(left, right)* values for the magnetic angle.</span>
+
+<span class="sd">    *name* is the base name for the various layer parameters.</span>
+
+<span class="sd">    *extent* defines the number of nuclear layers covered by the magnetic layer.</span>
+
+<span class="sd">    *dead_above* and *dead_below* define magnetically dead layers at the</span>
+<span class="sd">    nuclear boundaries.  These can be negative if magnetism extends beyond</span>
+<span class="sd">    the nuclear boundary.</span>
+
+<span class="sd">    *interface_above* and *interface_below* define the magnetic interface</span>
+<span class="sd">    at the boundaries, if it is different from the nuclear interface.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">rhoM</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Parameter</span><span class="p">]</span>
+    <span class="n">thetaM</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Parameter</span><span class="p">]</span>
+
+    <span class="n">magnetic</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rhoM</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">thetaM</span><span class="o">=</span><span class="p">(</span><span class="n">DEFAULT_THETA_M</span><span class="p">,</span> <span class="n">DEFAULT_THETA_M</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;LAYER&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="n">BaseMagnetism</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rhoM</span> <span class="o">=</span> <span class="p">[</span><span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; rhoM[</span><span class="si">%d</span><span class="s2">]&quot;</span> <span class="o">%</span> <span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">rhoM</span><span class="p">)]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thetaM</span> <span class="o">=</span> <span class="p">[</span><span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; thetaM[</span><span class="si">%d</span><span class="s2">]&quot;</span> <span class="o">%</span> <span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">thetaM</span><span class="p">)]</span>
+
+<div class="viewcode-block" id="MagnetismTwist.parameters">
+<a class="viewcode-back" href="../../refl1d.magnetism.html#refl1d.magnetism.MagnetismTwist.parameters">[docs]</a>
+    <span class="k">def</span> <span class="nf">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">parameters</span> <span class="o">=</span> <span class="n">BaseMagnetism</span><span class="o">.</span><span class="n">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">parameters</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">rhoM</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rhoM</span><span class="p">,</span> <span class="n">thetaM</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">thetaM</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">parameters</span></div>
+
+
+<div class="viewcode-block" id="MagnetismTwist.to_dict">
+<a class="viewcode-back" href="../../refl1d.magnetism.html#refl1d.magnetism.MagnetismTwist.to_dict">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">BaseMagnetism</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="s2">&quot;rhoM&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rhoM</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="s2">&quot;thetaM&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thetaM</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="MagnetismTwist.render">
+<a class="viewcode-back" href="../../refl1d.magnetism.html#refl1d.magnetism.MagnetismTwist.render">[docs]</a>
+    <span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">probe</span><span class="p">,</span> <span class="n">slabs</span><span class="p">,</span> <span class="n">thickness</span><span class="p">,</span> <span class="n">anchor</span><span class="p">,</span> <span class="n">sigma</span><span class="p">):</span>
+        <span class="n">w</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="n">slabs</span><span class="o">.</span><span class="n">microslabs</span><span class="p">(</span><span class="n">thickness</span><span class="p">)</span>
+        <span class="n">rhoM</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rhoM</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhoM</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">z</span><span class="p">))</span>
+        <span class="n">thetaM</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thetaM</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">thetaM</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">z</span><span class="p">))</span>
+        <span class="n">slabs</span><span class="o">.</span><span class="n">add_magnetism</span><span class="p">(</span><span class="n">anchor</span><span class="o">=</span><span class="n">anchor</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="p">,</span> <span class="n">rhoM</span><span class="o">=</span><span class="n">rhoM</span><span class="p">,</span> <span class="n">thetaM</span><span class="o">=</span><span class="n">thetaM</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;twist(</span><span class="si">%g</span><span class="s2">-&gt;</span><span class="si">%g</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rhoM</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhoM</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;MagneticTwist&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="FreeMagnetism">
+<a class="viewcode-back" href="../../refl1d.magnetism.html#refl1d.magnetism.FreeMagnetism">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">FreeMagnetism</span><span class="p">(</span><span class="n">BaseMagnetism</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Spline change in magnetism throughout layer.</span>
+
+<span class="sd">    Defines monotonic splines for rhoM and thetaM with shared knot positions.</span>
+
+<span class="sd">    *z* is position of the knot in [0, 1] relative to the magnetic layer</span>
+<span class="sd">    thickness.  The *z* coordinates are automatically sorted before</span>
+<span class="sd">    rendering, leading to multiple equivalent solutions if knots are swapped.</span>
+
+<span class="sd">    *rhoM* gives the magnetic scattering length density for each knot.</span>
+
+<span class="sd">    *thetaM* gives the magnetic angle for each knot.</span>
+
+<span class="sd">    *name* is the base name for the various layer parameters.</span>
+
+<span class="sd">    *dead_above* and *dead_below* define magnetically dead layers at the</span>
+<span class="sd">    nuclear boundaries.  These can be negative if magnetism extends beyond</span>
+<span class="sd">    the nuclear boundary.</span>
+
+<span class="sd">    *interface_above* and *interface_below* define the magnetic interface</span>
+<span class="sd">    at the boundaries, if it is different from the nuclear interface.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">z</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Parameter</span><span class="p">]</span>
+    <span class="n">rhoM</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Parameter</span><span class="p">]</span>
+    <span class="n">thetaM</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Parameter</span><span class="p">]</span>
+
+    <span class="n">magnetic</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="p">(),</span> <span class="n">rhoM</span><span class="o">=</span><span class="p">(),</span> <span class="n">thetaM</span><span class="o">=</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;LAYER&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="n">BaseMagnetism</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">parvec</span><span class="p">(</span><span class="n">vector</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">limits</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;[</span><span class="si">%d</span><span class="s2">]&quot;</span> <span class="o">%</span> <span class="n">i</span><span class="p">,</span> <span class="n">limits</span><span class="o">=</span><span class="n">limits</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">vector</span><span class="p">)]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">rhoM</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">thetaM</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">z</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">parvec</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="n">part</span><span class="p">,</span> <span class="n">limits</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">v</span><span class="p">,</span> <span class="n">part</span><span class="p">,</span> <span class="n">limits</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">((</span><span class="n">rhoM</span><span class="p">,</span> <span class="n">thetaM</span><span class="p">,</span> <span class="n">z</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;rhoM&quot;</span><span class="p">,</span> <span class="s2">&quot;thetaM&quot;</span><span class="p">,</span> <span class="s2">&quot;z&quot;</span><span class="p">),</span> <span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">360</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)))</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">z</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rhoM</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;must have one position z for each rhoM&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thetaM</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rhoM</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thetaM</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;must have one thetaM for each rhoM&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FreeMagnetism.parameters">
+<a class="viewcode-back" href="../../refl1d.magnetism.html#refl1d.magnetism.FreeMagnetism.parameters">[docs]</a>
+    <span class="k">def</span> <span class="nf">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">parameters</span> <span class="o">=</span> <span class="n">BaseMagnetism</span><span class="o">.</span><span class="n">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">parameters</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">rhoM</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rhoM</span><span class="p">,</span> <span class="n">thetaM</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">thetaM</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">z</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">parameters</span></div>
+
+
+<div class="viewcode-block" id="FreeMagnetism.to_dict">
+<a class="viewcode-back" href="../../refl1d.magnetism.html#refl1d.magnetism.FreeMagnetism.to_dict">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">BaseMagnetism</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="s2">&quot;z&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">z</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="s2">&quot;rhoM&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rhoM</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="s2">&quot;thetaM&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thetaM</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="FreeMagnetism.profile">
+<a class="viewcode-back" href="../../refl1d.magnetism.html#refl1d.magnetism.FreeMagnetism.profile">[docs]</a>
+    <span class="k">def</span> <span class="nf">profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Pz</span><span class="p">,</span> <span class="n">thickness</span><span class="p">):</span>
+        <span class="n">mbelow</span><span class="p">,</span> <span class="n">tbelow</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thetaM</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">thetaM</span> <span class="k">else</span> <span class="n">DEFAULT_THETA_M</span><span class="p">)</span>
+        <span class="n">mabove</span><span class="p">,</span> <span class="n">tabove</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thetaM</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">thetaM</span> <span class="k">else</span> <span class="n">DEFAULT_THETA_M</span><span class="p">)</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">([</span><span class="mf">0.0</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">z</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">])</span> <span class="o">*</span> <span class="n">thickness</span>
+
+        <span class="n">rhoM</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">mbelow</span><span class="p">,</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhoM</span><span class="p">],</span> <span class="n">mabove</span><span class="p">))</span>
+        <span class="n">PrhoM</span> <span class="o">=</span> <span class="n">monospline</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">rhoM</span><span class="p">,</span> <span class="n">Pz</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">PrhoM</span><span class="p">)):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;in mono with bad PrhoM&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;z </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">z</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;p </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">z</span><span class="p">]))</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thetaM</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">thetaM</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">tbelow</span><span class="p">,</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">thetaM</span><span class="p">],</span> <span class="n">tabove</span><span class="p">))</span>
+            <span class="n">PthetaM</span> <span class="o">=</span> <span class="n">monospline</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">thetaM</span><span class="p">,</span> <span class="n">Pz</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thetaM</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">PthetaM</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thetaM</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">PrhoM</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">PthetaM</span> <span class="o">=</span> <span class="n">DEFAULT_THETA_M</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">PrhoM</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">PrhoM</span><span class="p">,</span> <span class="n">PthetaM</span></div>
+
+
+<div class="viewcode-block" id="FreeMagnetism.render">
+<a class="viewcode-back" href="../../refl1d.magnetism.html#refl1d.magnetism.FreeMagnetism.render">[docs]</a>
+    <span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">probe</span><span class="p">,</span> <span class="n">slabs</span><span class="p">,</span> <span class="n">thickness</span><span class="p">,</span> <span class="n">anchor</span><span class="p">,</span> <span class="n">sigma</span><span class="p">):</span>
+        <span class="n">Pw</span><span class="p">,</span> <span class="n">Pz</span> <span class="o">=</span> <span class="n">slabs</span><span class="o">.</span><span class="n">microslabs</span><span class="p">(</span><span class="n">thickness</span><span class="p">)</span>
+        <span class="n">rhoM</span><span class="p">,</span> <span class="n">thetaM</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">(</span><span class="n">Pz</span><span class="p">,</span> <span class="n">thickness</span><span class="p">)</span>
+        <span class="n">slabs</span><span class="o">.</span><span class="n">add_magnetism</span><span class="p">(</span><span class="n">anchor</span><span class="o">=</span><span class="n">anchor</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="n">Pw</span><span class="p">,</span> <span class="n">rhoM</span><span class="o">=</span><span class="n">rhoM</span><span class="p">,</span> <span class="n">thetaM</span><span class="o">=</span><span class="n">thetaM</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;freemag(</span><span class="si">%d</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rhoM</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;FreeMagnetism&quot;</span></div>
+
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+refl1d.snsdata module
+=====================
+
+.. automodule:: refl1d.snsdata
+   :members:
+   :undoc-members:
+   :show-inheritance:

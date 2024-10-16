@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Hard material structures &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <script src="../../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Soft material structures" href="PEMU.html" />
+    <link rel="prev" title="Superlattice Models" href="readme.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>Hard material structures</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        «&#160;&#160;<a href="readme.html">Superlattice Models</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="PEMU.html">Soft material structures</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="hard-material-structures">
+<h1>Hard material structures<a class="headerlink" href="#hard-material-structures" title="Link to this heading">¶</a></h1>
+<p>Here is an example of a multilayer system in the literature:</p>
+<blockquote>
+<div><p>Singh, S., Basu, S., Bhatt, P., Poswal, A.K.,
+Phys. Rev. B, 79, 195435 (2009)</p>
+</div></blockquote>
+<p>In this paper, the authors are interested in the interdiffusion properties
+of Ni into Ti through x-ray and neutron reflectivity measurements. The
+question of alloying at metal-metal interfaces at elevated temperatures is
+critically important for device fabrication and reliability.</p>
+<p>The model is defined in <a class="reference download internal" download="" href="../../_downloads/482d996387c18833182218329b10eb7b/NiTi.py"><code class="xref download docutils literal notranslate"><span class="pre">NiTi.py</span></code></a>.</p>
+<p>(<a class="reference download internal" download="" href="../../_downloads/6c7f146a819a2ddc3a4e424e7907ab22/NiTi-1.py"><code class="xref download docutils literal notranslate"><span class="pre">Source</span> <span class="pre">code</span></code></a>, <a class="reference download internal" download="" href="../../_downloads/8b9e0f42a495269b864f52610c2207a6/NiTi-1.png"><code class="xref download docutils literal notranslate"><span class="pre">png</span></code></a>, <a class="reference download internal" download="" href="../../_downloads/201e1a62a6d39a6d6f9ab192e1c03190/NiTi-1.hires.png"><code class="xref download docutils literal notranslate"><span class="pre">hires.png</span></code></a>, <a class="reference download internal" download="" href="../../_downloads/2f23deca2e74e42f5eb09fc43df5bf4e/NiTi-1.pdf"><code class="xref download docutils literal notranslate"><span class="pre">pdf</span></code></a>)</p>
+<figure class="align-default">
+<img alt="../../_images/NiTi-1.png" class="plot-directive" src="../../_images/NiTi-1.png" />
+</figure>
+<p>First define the materials we will use</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">refl1d.names</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">nickel</span> <span class="o">=</span> <span class="n">Material</span><span class="p">(</span><span class="s2">&quot;Ni&quot;</span><span class="p">)</span>
+<span class="n">titanium</span> <span class="o">=</span> <span class="n">Material</span><span class="p">(</span><span class="s2">&quot;Ti&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Next we will compose nickel and titanium into a bilayer and use that
+bilayer to define a stack with 10 repeats.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Superlattice description</span>
+<span class="n">bilayer</span> <span class="o">=</span> <span class="n">nickel</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span> <span class="o">|</span> <span class="n">titanium</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<span class="n">sample</span> <span class="o">=</span> <span class="n">silicon</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span> <span class="o">|</span> <span class="n">bilayer</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">|</span> <span class="n">air</span>
+</pre></div>
+</div>
+<p>We allow the thickness to vary by +/- 100%</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Fitting parameters</span>
+<span class="n">bilayer</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">thickness</span><span class="o">.</span><span class="n">pmp</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">bilayer</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">thickness</span><span class="o">.</span><span class="n">pmp</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The interfaces vary between 0 and 30 Å. The interface between repeats is
+defined by the interface at the top of the repeating stack, which in this case
+is the Ti interface.  The interface between the superlattice and the next
+layer is an independent parameter, whose value defaults to the same initial
+value as the interface between the repeats.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">bilayer</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span>
+<span class="n">bilayer</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span>
+<span class="n">sample</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span>
+<span class="n">sample</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If we wanted to have the interface for Ti between repeats identical to
+the interface between Ti and air, we could have tied the parameters
+together, but we won’t in this example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># sample[1].interface = bilayer[1].interface</span>
+</pre></div>
+</div>
+<p>If instead we wanted to keep the roughness independent, but start with
+a different initial value, we could simply set the interface parameter
+value.  In this case, we are setting it to 10 Å</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># sample[1].interface.value = 10</span>
+</pre></div>
+</div>
+<p>We can also fit the number of repeats.  This is not realistic in this
+example (the sample grower surely knows the number of layers in a
+sample like this), so we do so only to demonstrate how it works.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sample</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">repeat</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">15</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Before we can view the reflectivity, we must define the Q range over
+which we want to simulate, and combine this probe with the sample.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">T</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">probe</span> <span class="o">=</span> <span class="n">XrayProbe</span><span class="p">(</span><span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="n">dT</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">L</span><span class="o">=</span><span class="mf">4.75</span><span class="p">,</span> <span class="n">dL</span><span class="o">=</span><span class="mf">0.0475</span><span class="p">)</span>
+<span class="n">M</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">probe</span><span class="o">=</span><span class="n">probe</span><span class="p">,</span> <span class="n">sample</span><span class="o">=</span><span class="n">sample</span><span class="p">)</span>
+<span class="n">M</span><span class="o">.</span><span class="n">simulate_data</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">problem</span> <span class="o">=</span> <span class="n">FitProblem</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        «&#160;&#160;<a href="readme.html">Superlattice Models</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="PEMU.html">Soft material structures</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

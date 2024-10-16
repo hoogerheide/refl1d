@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>refl1d.webview.server.profile_uncertainty &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/plot_directive.css" />
+    <script src="../../../../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../../../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>refl1d.webview.server.profile_uncertainty</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        <a class="uplink" href="../../../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <h1>Source code for refl1d.webview.server.profile_uncertainty</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">plotly.graph_objs</span> <span class="k">as</span> <span class="nn">go</span>
+
+<span class="kn">from</span> <span class="nn">refl1d.errors</span> <span class="kn">import</span> <span class="n">align_profiles</span><span class="p">,</span> <span class="n">form_quantiles</span><span class="p">,</span> <span class="n">_find_offset</span>
+<span class="kn">from</span> <span class="nn">.colors</span> <span class="kn">import</span> <span class="n">COLORS</span>
+
+<span class="n">ErrorType</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span>
+    <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]],</span>  <span class="c1"># profiles</span>
+    <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>  <span class="c1"># slabs</span>
+    <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>  <span class="c1"># Q</span>
+    <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>  <span class="c1"># residuals</span>
+<span class="p">]</span>
+
+<span class="n">CONTOURS</span> <span class="o">=</span> <span class="p">(</span><span class="mi">68</span><span class="p">,</span> <span class="mi">95</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="get_color">
+<a class="viewcode-back" href="../../../../refl1d.webview.server.profile_uncertainty.html#refl1d.webview.server.profile_uncertainty.get_color">[docs]</a>
+<span class="k">def</span> <span class="nf">get_color</span><span class="p">(</span><span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">COLORS</span><span class="p">[</span><span class="n">index</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">COLORS</span><span class="p">)]</span></div>
+
+
+
+<div class="viewcode-block" id="show_errors">
+<a class="viewcode-back" href="../../../../refl1d.webview.server.profile_uncertainty.html#refl1d.webview.server.profile_uncertainty.show_errors">[docs]</a>
+<span class="k">def</span> <span class="nf">show_errors</span><span class="p">(</span><span class="n">errors</span><span class="p">:</span> <span class="n">ErrorType</span><span class="p">,</span> <span class="n">npoints</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">align</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">residuals</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+    <span class="kn">from</span> <span class="nn">plotly.subplots</span> <span class="kn">import</span> <span class="n">make_subplots</span>
+
+    <span class="n">specs</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">[[{</span><span class="s2">&quot;secondary_y&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;rowspan&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}],</span> <span class="p">[{}]]</span> <span class="k">if</span> <span class="n">residuals</span> <span class="k">else</span> <span class="p">[[{</span><span class="s2">&quot;secondary_y&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;rowspan&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}],</span> <span class="p">[</span><span class="kc">None</span><span class="p">]]</span>
+    <span class="p">)</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">make_subplots</span><span class="p">(</span><span class="n">rows</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">cols</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">specs</span><span class="o">=</span><span class="n">specs</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span><span class="n">template</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">contour_data</span> <span class="o">=</span> <span class="n">show_profiles</span><span class="p">(</span><span class="n">errors</span><span class="p">,</span> <span class="n">align</span><span class="p">,</span> <span class="n">CONTOURS</span><span class="p">,</span> <span class="n">npoints</span><span class="p">,</span> <span class="n">fig</span><span class="o">=</span><span class="n">fig</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">residuals</span><span class="p">:</span>
+        <span class="n">show_residuals</span><span class="p">(</span><span class="n">errors</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">fig</span><span class="o">=</span><span class="n">fig</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">fig</span><span class="o">=</span><span class="n">fig</span><span class="p">,</span> <span class="n">contour_data</span><span class="o">=</span><span class="n">contour_data</span><span class="p">,</span> <span class="n">contours</span><span class="o">=</span><span class="n">CONTOURS</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="show_profiles">
+<a class="viewcode-back" href="../../../../refl1d.webview.server.profile_uncertainty.html#refl1d.webview.server.profile_uncertainty.show_profiles">[docs]</a>
+<span class="k">def</span> <span class="nf">show_profiles</span><span class="p">(</span>
+    <span class="n">errors</span><span class="p">:</span> <span class="n">ErrorType</span><span class="p">,</span>
+    <span class="n">align</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">contours</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span>
+    <span class="n">npoints</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">fig</span><span class="p">:</span> <span class="s2">&quot;go.Figure&quot;</span><span class="p">,</span>
+    <span class="n">row</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">col</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;go.Figure&quot;</span><span class="p">:</span>
+    <span class="n">profiles</span><span class="p">,</span> <span class="n">slabs</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">errors</span>
+    <span class="k">if</span> <span class="n">align</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">profiles</span> <span class="o">=</span> <span class="n">align_profiles</span><span class="p">(</span><span class="n">profiles</span><span class="p">,</span> <span class="n">slabs</span><span class="p">,</span> <span class="n">align</span><span class="p">)</span>
+
+    <span class="n">contour_data</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">contours</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">contour_data</span> <span class="o">=</span> <span class="n">_profiles_contour</span><span class="p">(</span><span class="n">profiles</span><span class="p">,</span> <span class="n">contours</span><span class="p">,</span> <span class="n">npoints</span><span class="p">,</span> <span class="n">fig</span><span class="o">=</span><span class="n">fig</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_profiles_overplot</span><span class="p">(</span><span class="n">profiles</span><span class="p">,</span> <span class="n">fig</span><span class="o">=</span><span class="n">fig</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">align</span> <span class="o">!=</span> <span class="s2">&quot;auto&quot;</span><span class="p">:</span>
+        <span class="n">_profiles_draw_align_lines</span><span class="p">(</span><span class="n">profiles</span><span class="p">,</span> <span class="n">slabs</span><span class="p">,</span> <span class="n">align</span><span class="p">,</span> <span class="n">fig</span><span class="o">=</span><span class="n">fig</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">contour_data</span></div>
+
+
+
+<div class="viewcode-block" id="show_residuals">
+<a class="viewcode-back" href="../../../../refl1d.webview.server.profile_uncertainty.html#refl1d.webview.server.profile_uncertainty.show_residuals">[docs]</a>
+<span class="k">def</span> <span class="nf">show_residuals</span><span class="p">(</span>
+    <span class="n">errors</span><span class="p">:</span> <span class="n">ErrorType</span><span class="p">,</span>
+    <span class="n">contours</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span>
+    <span class="n">fig</span><span class="p">:</span> <span class="s2">&quot;go.Figure&quot;</span><span class="p">,</span>
+    <span class="n">row</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">col</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">residuals</span> <span class="o">=</span> <span class="n">errors</span>
+
+    <span class="k">if</span> <span class="n">contours</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_residuals_contour</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">residuals</span><span class="p">,</span> <span class="n">contours</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_residuals_overplot</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">residuals</span><span class="p">,</span> <span class="n">fig</span><span class="o">=</span><span class="n">fig</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">_profiles_overplot</span><span class="p">(</span>
+    <span class="n">profiles</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]],</span> <span class="n">fig</span><span class="p">:</span> <span class="s2">&quot;go.Figure&quot;</span><span class="p">,</span> <span class="n">row</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">col</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">):</span>
+    <span class="n">has_magnetism</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">for</span> <span class="n">model_index</span><span class="p">,</span> <span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">group</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">profiles</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">name</span>
+        <span class="n">absorbing</span> <span class="o">=</span> <span class="nb">any</span><span class="p">((</span><span class="n">L</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="mf">1e-4</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">()</span> <span class="k">for</span> <span class="n">L</span> <span class="ow">in</span> <span class="n">group</span><span class="p">)</span>
+        <span class="n">magnetic</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">group</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">3</span>
+        <span class="c1"># Note: Use 3 colours per dataset for consistency</span>
+        <span class="n">color_index</span> <span class="o">=</span> <span class="n">model_index</span> <span class="o">*</span> <span class="mi">4</span>
+        <span class="n">_draw_overplot</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; rho&quot;</span><span class="p">,</span> <span class="n">fig</span><span class="o">=</span><span class="n">fig</span><span class="p">,</span> <span class="n">color_index</span><span class="o">=</span><span class="n">color_index</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">,</span> <span class="n">secondary_y</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">absorbing</span><span class="p">:</span>
+            <span class="n">_draw_overplot</span><span class="p">(</span>
+                <span class="n">group</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; irho&quot;</span><span class="p">,</span> <span class="n">fig</span><span class="o">=</span><span class="n">fig</span><span class="p">,</span> <span class="n">color_index</span><span class="o">=</span><span class="n">color_index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">,</span> <span class="n">secondary_y</span><span class="o">=</span><span class="kc">False</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">magnetic</span><span class="p">:</span>
+            <span class="n">has_magnetism</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">_draw_overplot</span><span class="p">(</span>
+                <span class="n">group</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; rhoM&quot;</span><span class="p">,</span> <span class="n">fig</span><span class="o">=</span><span class="n">fig</span><span class="p">,</span> <span class="n">color_index</span><span class="o">=</span><span class="n">color_index</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">,</span> <span class="n">secondary_y</span><span class="o">=</span><span class="kc">False</span>
+            <span class="p">)</span>
+            <span class="n">_draw_overplot</span><span class="p">(</span>
+                <span class="n">group</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; thetaM&quot;</span><span class="p">,</span> <span class="n">fig</span><span class="o">=</span><span class="n">fig</span><span class="p">,</span> <span class="n">color_index</span><span class="o">=</span><span class="n">color_index</span> <span class="o">+</span> <span class="mi">3</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">,</span> <span class="n">secondary_y</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
+    <span class="n">_profile_labels</span><span class="p">(</span><span class="n">fig</span><span class="o">=</span><span class="n">fig</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">,</span> <span class="n">magnetic</span><span class="o">=</span><span class="n">has_magnetism</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_draw_overplot</span><span class="p">(</span>
+    <span class="n">group</span><span class="p">,</span>
+    <span class="n">index</span><span class="p">,</span>
+    <span class="n">label</span><span class="p">,</span>
+    <span class="n">fig</span><span class="p">:</span> <span class="s2">&quot;go.Figure&quot;</span><span class="p">,</span>
+    <span class="n">color_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">row</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">col</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">secondary_y</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="n">color</span> <span class="o">=</span> <span class="n">get_color</span><span class="p">(</span><span class="n">color_index</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">L</span> <span class="ow">in</span> <span class="n">group</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">add_scattergl</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">=</span><span class="n">L</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">y</span><span class="o">=</span><span class="n">L</span><span class="p">[</span><span class="n">index</span><span class="p">],</span>
+            <span class="n">opacity</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+            <span class="n">showlegend</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;lines&quot;</span><span class="p">,</span>
+            <span class="n">line</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="n">color</span><span class="p">},</span>
+            <span class="n">hoverinfo</span><span class="o">=</span><span class="s2">&quot;skip&quot;</span><span class="p">,</span>
+            <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span>
+            <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">,</span>
+            <span class="n">secondary_y</span><span class="o">=</span><span class="n">secondary_y</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="c1"># Plot best</span>
+    <span class="n">L</span> <span class="o">=</span> <span class="n">group</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">add_scattergl</span><span class="p">(</span>
+        <span class="n">x</span><span class="o">=</span><span class="n">L</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="n">y</span><span class="o">=</span><span class="n">L</span><span class="p">[</span><span class="n">index</span><span class="p">],</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
+        <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;lines&quot;</span><span class="p">,</span>
+        <span class="n">line</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="n">color</span><span class="p">},</span>
+        <span class="n">hoverinfo</span><span class="o">=</span><span class="s2">&quot;skip&quot;</span><span class="p">,</span>
+        <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span>
+        <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">,</span>
+        <span class="n">secondary_y</span><span class="o">=</span><span class="n">secondary_y</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_profiles_contour</span><span class="p">(</span>
+    <span class="n">profiles</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]],</span>
+    <span class="n">contours</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span>
+    <span class="n">npoints</span><span class="p">,</span>
+    <span class="n">fig</span><span class="p">:</span> <span class="s2">&quot;go.Figure&quot;</span><span class="p">,</span>
+    <span class="n">row</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">col</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="n">contour_data</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">has_magnetism</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">for</span> <span class="n">model_index</span><span class="p">,</span> <span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">group</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">profiles</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;Model </span><span class="si">{</span><span class="n">model_index</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">contour_data</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">model_index</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">contour_data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">absorbing</span> <span class="o">=</span> <span class="nb">any</span><span class="p">((</span><span class="n">L</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">1e-4</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">()</span> <span class="k">for</span> <span class="n">L</span> <span class="ow">in</span> <span class="n">group</span><span class="p">)</span>
+        <span class="n">magnetic</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">group</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">3</span>
+        <span class="c1"># Find limits of all profiles</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">group</span><span class="p">])</span>
+        <span class="n">zp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">z</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">z</span><span class="p">),</span> <span class="n">npoints</span><span class="p">)</span>
+        <span class="n">contour_data</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s2">&quot;z&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">zp</span>
+        <span class="n">contour_data</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s2">&quot;data&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1"># Note: Use 4 colours per dataset for consistency</span>
+        <span class="n">color_index</span> <span class="o">=</span> <span class="n">model_index</span> <span class="o">*</span> <span class="mi">4</span>
+        <span class="n">contour_data</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s2">&quot;data&quot;</span><span class="p">][</span><span class="s2">&quot;rho&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_draw_contours</span><span class="p">(</span>
+            <span class="n">group</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; rho&quot;</span><span class="p">,</span> <span class="n">zp</span><span class="p">,</span> <span class="n">contours</span><span class="p">,</span> <span class="n">fig</span><span class="o">=</span><span class="n">fig</span><span class="p">,</span> <span class="n">color_index</span><span class="o">=</span><span class="n">color_index</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">,</span> <span class="n">secondary_y</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">absorbing</span><span class="p">:</span>
+            <span class="n">contour_data</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s2">&quot;data&quot;</span><span class="p">][</span><span class="s2">&quot;irho&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_draw_contours</span><span class="p">(</span>
+                <span class="n">group</span><span class="p">,</span>
+                <span class="mi">2</span><span class="p">,</span>
+                <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; irho&quot;</span><span class="p">,</span>
+                <span class="n">zp</span><span class="p">,</span>
+                <span class="n">contours</span><span class="p">,</span>
+                <span class="n">fig</span><span class="o">=</span><span class="n">fig</span><span class="p">,</span>
+                <span class="n">color_index</span><span class="o">=</span><span class="n">color_index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span>
+                <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">,</span>
+                <span class="n">secondary_y</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">magnetic</span><span class="p">:</span>
+            <span class="n">has_magnetism</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">contour_data</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s2">&quot;data&quot;</span><span class="p">][</span><span class="s2">&quot;rhoM&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_draw_contours</span><span class="p">(</span>
+                <span class="n">group</span><span class="p">,</span>
+                <span class="mi">3</span><span class="p">,</span>
+                <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; rhoM&quot;</span><span class="p">,</span>
+                <span class="n">zp</span><span class="p">,</span>
+                <span class="n">contours</span><span class="p">,</span>
+                <span class="n">fig</span><span class="o">=</span><span class="n">fig</span><span class="p">,</span>
+                <span class="n">color_index</span><span class="o">=</span><span class="n">color_index</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span>
+                <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span>
+                <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">,</span>
+                <span class="n">secondary_y</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">contour_data</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s2">&quot;data&quot;</span><span class="p">][</span><span class="s2">&quot;thetaM&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_draw_contours</span><span class="p">(</span>
+                <span class="n">group</span><span class="p">,</span>
+                <span class="mi">4</span><span class="p">,</span>
+                <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; thetaM&quot;</span><span class="p">,</span>
+                <span class="n">zp</span><span class="p">,</span>
+                <span class="n">contours</span><span class="p">,</span>
+                <span class="n">fig</span><span class="o">=</span><span class="n">fig</span><span class="p">,</span>
+                <span class="n">color_index</span><span class="o">=</span><span class="n">color_index</span> <span class="o">+</span> <span class="mi">3</span><span class="p">,</span>
+                <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span>
+                <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">,</span>
+                <span class="n">secondary_y</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="n">_profile_labels</span><span class="p">(</span><span class="n">fig</span><span class="o">=</span><span class="n">fig</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">,</span> <span class="n">magnetic</span><span class="o">=</span><span class="n">has_magnetism</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">contour_data</span>
+
+
+<span class="k">def</span> <span class="nf">_draw_contours</span><span class="p">(</span>
+    <span class="n">group</span><span class="p">,</span>
+    <span class="n">index</span><span class="p">,</span>
+    <span class="n">label</span><span class="p">,</span>
+    <span class="n">zp</span><span class="p">,</span>
+    <span class="n">contours</span><span class="p">,</span>
+    <span class="n">fig</span><span class="p">:</span> <span class="s2">&quot;go.Figure&quot;</span><span class="p">,</span>
+    <span class="n">color_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">row</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">col</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">secondary_y</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="c1"># Interpolate on common z</span>
+    <span class="n">fp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">zp</span><span class="p">,</span> <span class="n">L</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">L</span><span class="p">[</span><span class="n">index</span><span class="p">])</span> <span class="k">for</span> <span class="n">L</span> <span class="ow">in</span> <span class="n">group</span><span class="p">])</span>
+    <span class="c1"># Plot the quantiles</span>
+    <span class="n">color</span> <span class="o">=</span> <span class="n">get_color</span><span class="p">(</span><span class="n">color_index</span><span class="p">)</span>
+    <span class="n">legendgroup</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;group_</span><span class="si">{</span><span class="n">color_index</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">add_scattergl</span><span class="p">(</span>
+        <span class="n">x</span><span class="o">=</span><span class="n">zp</span><span class="p">,</span>
+        <span class="n">y</span><span class="o">=</span><span class="n">fp</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;lines&quot;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
+        <span class="n">line</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">),</span>
+        <span class="n">legendgroup</span><span class="o">=</span><span class="n">legendgroup</span><span class="p">,</span>
+        <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span>
+        <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">,</span>
+        <span class="n">secondary_y</span><span class="o">=</span><span class="n">secondary_y</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">_plot_quantiles</span><span class="p">(</span>
+        <span class="n">zp</span><span class="p">,</span> <span class="n">fp</span><span class="p">,</span> <span class="n">contours</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fig</span><span class="o">=</span><span class="n">fig</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">,</span> <span class="n">legendgroup</span><span class="o">=</span><span class="n">legendgroup</span><span class="p">,</span> <span class="n">secondary_y</span><span class="o">=</span><span class="n">secondary_y</span>
+    <span class="p">)</span>
+    <span class="c1"># Plot the best</span>
+    <span class="c1"># axes.plot(zp, fp[0], &#39;-&#39;, label=label, color=dark(color))</span>
+    <span class="k">return</span> <span class="n">q</span>
+
+
+<span class="k">def</span> <span class="nf">_profile_labels</span><span class="p">(</span><span class="n">fig</span><span class="p">:</span> <span class="s2">&quot;go.Figure&quot;</span><span class="p">,</span> <span class="n">row</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">col</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">magnetic</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_xaxes</span><span class="p">(</span><span class="n">title_text</span><span class="o">=</span><span class="s2">&quot;z (Å)&quot;</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">,</span> <span class="n">showline</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">zeroline</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_yaxes</span><span class="p">(</span><span class="n">title_text</span><span class="o">=</span><span class="s2">&quot;SLD (10⁻⁶/Å²)&quot;</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">,</span> <span class="n">showline</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">secondary_y</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">side</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">magnetic</span><span class="p">:</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">update_yaxes</span><span class="p">(</span>
+            <span class="n">automargin</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">showgrid</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">title_text</span><span class="o">=</span><span class="s2">&quot;Magnetic Angle θ&lt;sub&gt;M&lt;/sub&gt; / °&quot;</span><span class="p">,</span>
+            <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span>
+            <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">,</span>
+            <span class="n">showline</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">secondary_y</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">side</span><span class="o">=</span><span class="s2">&quot;right&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_residuals_overplot</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">residuals</span><span class="p">,</span> <span class="n">fig</span><span class="p">:</span> <span class="s2">&quot;go.Figure&quot;</span><span class="p">,</span> <span class="n">row</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">col</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.6</span>
+    <span class="n">shift</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">m_index</span><span class="p">,</span> <span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">residuals</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+        <span class="n">color_index</span> <span class="o">=</span> <span class="n">m_index</span> <span class="o">*</span> <span class="mi">4</span>
+        <span class="n">color</span> <span class="o">=</span> <span class="n">get_color</span><span class="p">(</span><span class="n">color_index</span><span class="p">)</span>
+        <span class="n">pop_size</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">qq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">Q</span><span class="p">[</span><span class="n">m</span><span class="p">],</span> <span class="n">pop_size</span><span class="p">)</span>
+        <span class="n">rr</span> <span class="o">=</span> <span class="n">shift</span> <span class="o">+</span> <span class="n">r</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="s2">&quot;F&quot;</span><span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">add_scattergl</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">=</span><span class="n">qq</span><span class="p">,</span>
+            <span class="n">y</span><span class="o">=</span><span class="n">rr</span><span class="p">,</span>
+            <span class="n">showlegend</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;markers&quot;</span><span class="p">,</span>
+            <span class="n">marker</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+            <span class="n">opacity</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span>
+            <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span>
+            <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">,</span>
+            <span class="n">hoverinfo</span><span class="o">=</span><span class="s2">&quot;skip&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">add_scattergl</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">=</span><span class="n">Q</span><span class="p">[</span><span class="n">m</span><span class="p">],</span>
+            <span class="n">y</span><span class="o">=</span><span class="n">shift</span> <span class="o">+</span> <span class="n">r</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;markers&quot;</span><span class="p">,</span>
+            <span class="n">marker</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">3</span><span class="p">),</span>
+            <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span>
+            <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">,</span>
+            <span class="n">hoverinfo</span><span class="o">=</span><span class="s2">&quot;skip&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">shift</span> <span class="o">+=</span> <span class="mi">5</span>
+    <span class="n">_residuals_labels</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_residuals_contour</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">residuals</span><span class="p">,</span> <span class="n">contours</span><span class="p">,</span> <span class="n">fig</span><span class="p">:</span> <span class="s2">&quot;go.Figure&quot;</span><span class="p">,</span> <span class="n">row</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">col</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="n">shift</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">model_index</span><span class="p">,</span> <span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">residuals</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+        <span class="n">color_index</span> <span class="o">=</span> <span class="n">model_index</span> <span class="o">*</span> <span class="mi">4</span>
+        <span class="n">color</span> <span class="o">=</span> <span class="n">get_color</span><span class="p">(</span><span class="n">color_index</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">Q</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+        <span class="c1"># residuals x may not be sorted:</span>
+        <span class="n">sort_order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">sorted_x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">sort_order</span><span class="p">]</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">add_scattergl</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">=</span><span class="n">sorted_x</span><span class="p">,</span>
+            <span class="n">y</span><span class="o">=</span><span class="n">shift</span> <span class="o">+</span> <span class="n">r</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span>
+            <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;markers&quot;</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">marker</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">3</span><span class="p">),</span>
+            <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span>
+            <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">_plot_quantiles</span><span class="p">(</span><span class="n">sorted_x</span><span class="p">,</span> <span class="n">shift</span> <span class="o">+</span> <span class="n">r</span><span class="o">.</span><span class="n">T</span><span class="p">[:,</span> <span class="n">sort_order</span><span class="p">],</span> <span class="n">contours</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fig</span><span class="o">=</span><span class="n">fig</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">)</span>
+        <span class="c1"># Plot the best</span>
+        <span class="n">shift</span> <span class="o">+=</span> <span class="mi">5</span>
+    <span class="n">_residuals_labels</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_residuals_labels</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_xaxes</span><span class="p">(</span><span class="n">title_text</span><span class="o">=</span><span class="s2">&quot;Q (1/Å)&quot;</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">,</span> <span class="n">showline</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">zeroline</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_yaxes</span><span class="p">(</span><span class="n">title_text</span><span class="o">=</span><span class="s2">&quot;Residuals&quot;</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">,</span> <span class="n">showline</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_profiles_draw_align_lines</span><span class="p">(</span>
+    <span class="n">profiles</span><span class="p">,</span> <span class="n">slabs</span><span class="p">,</span> <span class="n">align</span><span class="p">,</span> <span class="n">fig</span><span class="p">:</span> <span class="s2">&quot;go.Figure&quot;</span><span class="p">,</span> <span class="n">row</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">col</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">):</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">profiles</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+        <span class="n">t1_offset</span> <span class="o">=</span> <span class="n">_find_offset</span><span class="p">(</span><span class="n">slabs</span><span class="p">[</span><span class="n">m</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">align</span><span class="p">)</span> <span class="k">if</span> <span class="n">align</span> <span class="o">!=</span> <span class="s2">&quot;auto&quot;</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">t1_offset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fig</span><span class="o">.</span><span class="n">add_vline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">t1_offset</span><span class="p">,</span> <span class="n">line</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">dash</span><span class="o">=</span><span class="s2">&quot;dash&quot;</span><span class="p">),</span> <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_plot_quantiles</span><span class="p">(</span>
+    <span class="n">x</span><span class="p">,</span>
+    <span class="n">y</span><span class="p">,</span>
+    <span class="n">contours</span><span class="p">,</span>
+    <span class="n">color</span><span class="p">,</span>
+    <span class="n">alpha</span><span class="p">,</span>
+    <span class="n">fig</span><span class="p">:</span> <span class="s2">&quot;go.Figure&quot;</span><span class="p">,</span>
+    <span class="n">row</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">col</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">legendgroup</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">secondary_y</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Plot quantile curves for a set of lines.</span>
+
+<span class="sd">    *x* is the x coordinates for all lines.</span>
+
+<span class="sd">    *y* is the y coordinates, one row for each line.</span>
+
+<span class="sd">    *contours* is a list of confidence intervals expressed as percents.</span>
+
+<span class="sd">    *color* is the color to use for the quantiles.  Quantiles are draw as</span>
+<span class="sd">    a filled region with alpha transparency.  Higher probability regions</span>
+<span class="sd">    will be covered with multiple contours, which will make them lighter</span>
+<span class="sd">    and more saturated.</span>
+
+<span class="sd">    *alpha* is the transparency level to use for all fill regions.  The</span>
+<span class="sd">    default value, alpha=2./(#contours+1), works pretty well.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">q</span> <span class="o">=</span> <span class="n">form_quantiles</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">contours</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">alpha</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">/</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">q</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="ow">in</span> <span class="n">q</span><span class="p">:</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">add_scattergl</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span>
+            <span class="n">y</span><span class="o">=</span><span class="n">lo</span><span class="p">,</span>
+            <span class="n">showlegend</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;lines&quot;</span><span class="p">,</span>
+            <span class="n">line</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">opacity</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span>
+            <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span>
+            <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">,</span>
+            <span class="n">hoverinfo</span><span class="o">=</span><span class="s2">&quot;skip&quot;</span><span class="p">,</span>
+            <span class="n">legendgroup</span><span class="o">=</span><span class="n">legendgroup</span><span class="p">,</span>
+            <span class="n">secondary_y</span><span class="o">=</span><span class="n">secondary_y</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">add_scattergl</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span>
+            <span class="n">y</span><span class="o">=</span><span class="n">hi</span><span class="p">,</span>
+            <span class="n">showlegend</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;lines&quot;</span><span class="p">,</span>
+            <span class="n">line</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">fill</span><span class="o">=</span><span class="s2">&quot;tonexty&quot;</span><span class="p">,</span>
+            <span class="n">opacity</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span>
+            <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span>
+            <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">,</span>
+            <span class="n">hoverinfo</span><span class="o">=</span><span class="s2">&quot;skip&quot;</span><span class="p">,</span>
+            <span class="n">legendgroup</span><span class="o">=</span><span class="n">legendgroup</span><span class="p">,</span>
+            <span class="n">secondary_y</span><span class="o">=</span><span class="n">secondary_y</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">q</span>
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        <a class="uplink" href="../../../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

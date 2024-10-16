@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>cheby - Freeform - Chebyshev model &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
+    <script src="../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="dist - Non-uniform samples" href="dist.html" />
+    <link rel="prev" title="anstodata - Reader for ANSTO data format" href="anstodata.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>cheby - Freeform - Chebyshev model</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        «&#160;&#160;<a href="anstodata.html">anstodata - Reader for ANSTO data format</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="dist.html">dist - Non-uniform samples</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="cheby-freeform-chebyshev-model">
+<h1>cheby - Freeform - Chebyshev model<a class="headerlink" href="#cheby-freeform-chebyshev-model" title="Link to this heading">¶</a></h1>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../refl1d.cheby.html#refl1d.cheby.ChebyVF" title="refl1d.cheby.ChebyVF"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ChebyVF</span></code></a></p></td>
+<td><p>Material in a solvent</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../refl1d.cheby.html#refl1d.cheby.FreeformCheby" title="refl1d.cheby.FreeformCheby"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FreeformCheby</span></code></a></p></td>
+<td><p>A freeform section of the sample modeled with Chebyshev polynomials.</p></td>
+</tr>
+</tbody>
+</table>
+<p id="module-refl1d.cheby">Freeform modeling with Chebyshev polynomials</p>
+<p><a class="reference external" href="http://en.wikipedia.org/wiki/Chebyshev_polynomials">Chebyshev polynomials</a>
+<span class="math notranslate nohighlight">\(T_k\)</span> form a basis set for functions over <span class="math notranslate nohighlight">\([-1, 1]\)</span>.  The truncated
+interpolating polynomial <span class="math notranslate nohighlight">\(P_n\)</span> is a weighted sum of Chebyshev polynomials
+up to degree <span class="math notranslate nohighlight">\(n\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[f(x) \approx P_n(x) = \sum_{k=0}^n c_i T_k(x)\]</div>
+<p>The interpolating polynomial exactly matches <span class="math notranslate nohighlight">\(f(x)\)</span> at the chebyshev
+nodes <span class="math notranslate nohighlight">\(z_k\)</span> and is near the optimal polynomial approximation to <span class="math notranslate nohighlight">\(f\)</span>
+of degree <span class="math notranslate nohighlight">\(n\)</span> under the maximum norm.  For well behaved functions,
+the coefficients <span class="math notranslate nohighlight">\(c_k\)</span> decrease rapidly, and furthermore are independent
+of the degree <span class="math notranslate nohighlight">\(n\)</span> of the polynomial.</p>
+<p><a class="reference internal" href="../refl1d.cheby.html#refl1d.cheby.FreeformCheby" title="refl1d.cheby.FreeformCheby"><code class="xref py py-class docutils literal notranslate"><span class="pre">FreeformCheby</span></code></a> models the scattering length density profile
+of the material within a layer, and <a class="reference internal" href="../refl1d.cheby.html#refl1d.cheby.ChebyVF" title="refl1d.cheby.ChebyVF"><code class="xref py py-class docutils literal notranslate"><span class="pre">ChebyVF</span></code></a> models the volume
+fraction profile of two materials mixed in the layer.</p>
+<p>The models can either be defined directly in terms of the Chebyshev
+coefficients <span class="math notranslate nohighlight">\(c_k\)</span> with <em>method</em> = ‘direct’, or in terms of control
+points <span class="math notranslate nohighlight">\((z_k, f(z_k))\)</span> at the Chebyshev nodes <code class="xref py py-func docutils literal notranslate"><span class="pre">cheby_points()</span></code>
+with <em>method</em> = ‘interp’.  Bounds on the parameters are easier to
+control using ‘interp’, but the function may oscillate wildly outside
+the bounds.  Bounds on the oscillation are easier to control using
+‘direct’, but the shape of the profile is difficult to control.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="refl1d.cheby.ChebyVF">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">refl1d.cheby.</span></span><span class="sig-name descname"><span class="pre">ChebyVF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">thickness</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interface</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">material</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solvent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ChebyVF'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'interp'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/cheby.html#ChebyVF"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.cheby.ChebyVF" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../refl1d.model.html#refl1d.model.Layer" title="refl1d.model.Layer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Layer</span></code></a></p>
+<p>Material in a solvent</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><em>thickness</em><span class="classifier">float | Angstrom</span></dt><dd><p>the thickness of the solvent layer</p>
+</dd>
+<dt><em>interface</em><span class="classifier">float | Angstrom</span></dt><dd><p>the rms roughness of the solvent surface</p>
+</dd>
+<dt><em>material</em><span class="classifier">Material</span></dt><dd><p>the material of interest</p>
+</dd>
+<dt><em>solvent</em><span class="classifier">Material</span></dt><dd><p>the solvent or vacuum</p>
+</dd>
+<dt><em>vf</em><span class="classifier">[float]</span></dt><dd><p>the control points for volume fraction</p>
+</dd>
+<dt><em>method</em> = ‘interp’<span class="classifier">string | ‘direct’ or ‘interp’</span></dt><dd><p>freeform profile method</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p><em>method</em> is ‘direct’ if the <em>vf</em> values refer to chebyshev
+polynomial coefficients or ‘interp’ if <em>vf</em> values refer to
+control points located at <span class="math notranslate nohighlight">\(z_k\)</span>.</p>
+<p>The control point <span class="math notranslate nohighlight">\(k\)</span> is located at <span class="math notranslate nohighlight">\(z_k \in [0, L]\)</span> for layer
+thickness <span class="math notranslate nohighlight">\(L\)</span>, as returned by <code class="xref py py-func docutils literal notranslate"><span class="pre">cheby_points()</span></code> called with
+n=len(<em>vf</em>) and range=<span class="math notranslate nohighlight">\([0, L]\)</span>.</p>
+<p>The materials can either use the scattering length density directly,
+such as PDMS = SLD(0.063, 0.00006) or they can use chemical composition
+and material density such as PDMS=Material(“C2H6OSi”, density=0.965).</p>
+<p>These parameters combine in the following profile formula:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sld</span><span class="p">(</span><span class="n">z</span><span class="p">)</span> <span class="o">=</span> <span class="n">material</span><span class="o">.</span><span class="n">sld</span> <span class="o">*</span> <span class="n">profile</span><span class="p">(</span><span class="n">z</span><span class="p">)</span> <span class="o">+</span> <span class="n">solvent</span><span class="o">.</span><span class="n">sld</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">profile</span><span class="p">(</span><span class="n">z</span><span class="p">))</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.cheby.ChebyVF.constraints">
+<span class="sig-name descname"><span class="pre">constraints</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.cheby.ChebyVF.constraints" title="Link to this definition">¶</a></dt>
+<dd><p>Constraints</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.cheby.ChebyVF.find">
+<span class="sig-name descname"><span class="pre">find</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.cheby.ChebyVF.find" title="Link to this definition">¶</a></dt>
+<dd><p>Find the layer at depth z.</p>
+<p>Returns layer, start, end</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.cheby.ChebyVF.interface">
+<span class="sig-name descname"><span class="pre">interface</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#refl1d.cheby.ChebyVF.interface" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="refl1d.cheby.ChebyVF.ismagnetic">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ismagnetic</span></span><a class="headerlink" href="#refl1d.cheby.ChebyVF.ismagnetic" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.cheby.ChebyVF.layer_parameters">
+<span class="sig-name descname"><span class="pre">layer_parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.cheby.ChebyVF.layer_parameters" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.cheby.ChebyVF.magnetism">
+<span class="sig-name descname"><span class="pre">magnetism</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../refl1d.magnetism.html#refl1d.magnetism.BaseMagnetism" title="refl1d.magnetism.BaseMagnetism"><span class="pre">BaseMagnetism</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#refl1d.cheby.ChebyVF.magnetism" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.cheby.ChebyVF.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#refl1d.cheby.ChebyVF.name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.cheby.ChebyVF.parameters">
+<span class="sig-name descname"><span class="pre">parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/cheby.html#ChebyVF.parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.cheby.ChebyVF.parameters" title="Link to this definition">¶</a></dt>
+<dd><p>Returns a dictionary of parameters specific to the layer.  These will
+be added to the dictionary containing interface, thickness and magnetism
+parameters.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.cheby.ChebyVF.penalty">
+<span class="sig-name descname"><span class="pre">penalty</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.cheby.ChebyVF.penalty" title="Link to this definition">¶</a></dt>
+<dd><p>Return a penalty value associated with the layer.  This should be
+zero if the parameters are valid, and increasing as the parameters
+become more invalid.  For example, if total volume fraction exceeds
+unity, then the penalty would be the amount by which it exceeds
+unity, or if z values must be sorted, then penalty would be the
+amount by which they are unsorted.</p>
+<p>Note that penalties are handled separately from any probability of
+seeing a combination of layer parameters; the final solution to the
+problem should not include any penalized points.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.cheby.ChebyVF.render">
+<span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">probe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slabs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/cheby.html#ChebyVF.render"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.cheby.ChebyVF.render" title="Link to this definition">¶</a></dt>
+<dd><p>Use the probe to render the layer into a microslab representation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.cheby.ChebyVF.thickness">
+<span class="sig-name descname"><span class="pre">thickness</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span></em><a class="headerlink" href="#refl1d.cheby.ChebyVF.thickness" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.cheby.ChebyVF.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/cheby.html#ChebyVF.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.cheby.ChebyVF.to_dict" title="Link to this definition">¶</a></dt>
+<dd><p>Return a dictionary representation of the Slab object</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="refl1d.cheby.FreeformCheby">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">refl1d.cheby.</span></span><span class="sig-name descname"><span class="pre">FreeformCheby</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">thickness</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interface</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">irho</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Cheby'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'interp'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/cheby.html#FreeformCheby"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.cheby.FreeformCheby" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../refl1d.model.html#refl1d.model.Layer" title="refl1d.model.Layer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Layer</span></code></a></p>
+<p>A freeform section of the sample modeled with Chebyshev polynomials.</p>
+<p>sld (rho) and imaginary sld (irho) can be modeled with a separate
+polynomial orders.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.cheby.FreeformCheby.constraints">
+<span class="sig-name descname"><span class="pre">constraints</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.cheby.FreeformCheby.constraints" title="Link to this definition">¶</a></dt>
+<dd><p>Constraints</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.cheby.FreeformCheby.find">
+<span class="sig-name descname"><span class="pre">find</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.cheby.FreeformCheby.find" title="Link to this definition">¶</a></dt>
+<dd><p>Find the layer at depth z.</p>
+<p>Returns layer, start, end</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.cheby.FreeformCheby.interface">
+<span class="sig-name descname"><span class="pre">interface</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#refl1d.cheby.FreeformCheby.interface" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="refl1d.cheby.FreeformCheby.ismagnetic">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ismagnetic</span></span><a class="headerlink" href="#refl1d.cheby.FreeformCheby.ismagnetic" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.cheby.FreeformCheby.layer_parameters">
+<span class="sig-name descname"><span class="pre">layer_parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.cheby.FreeformCheby.layer_parameters" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.cheby.FreeformCheby.magnetism">
+<span class="sig-name descname"><span class="pre">magnetism</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../refl1d.magnetism.html#refl1d.magnetism.BaseMagnetism" title="refl1d.magnetism.BaseMagnetism"><span class="pre">BaseMagnetism</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#refl1d.cheby.FreeformCheby.magnetism" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.cheby.FreeformCheby.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#refl1d.cheby.FreeformCheby.name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.cheby.FreeformCheby.parameters">
+<span class="sig-name descname"><span class="pre">parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/cheby.html#FreeformCheby.parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.cheby.FreeformCheby.parameters" title="Link to this definition">¶</a></dt>
+<dd><p>Return parameters used to define layer</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.cheby.FreeformCheby.penalty">
+<span class="sig-name descname"><span class="pre">penalty</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.cheby.FreeformCheby.penalty" title="Link to this definition">¶</a></dt>
+<dd><p>Return a penalty value associated with the layer.  This should be
+zero if the parameters are valid, and increasing as the parameters
+become more invalid.  For example, if total volume fraction exceeds
+unity, then the penalty would be the amount by which it exceeds
+unity, or if z values must be sorted, then penalty would be the
+amount by which they are unsorted.</p>
+<p>Note that penalties are handled separately from any probability of
+seeing a combination of layer parameters; the final solution to the
+problem should not include any penalized points.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.cheby.FreeformCheby.render">
+<span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">probe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slabs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/cheby.html#FreeformCheby.render"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.cheby.FreeformCheby.render" title="Link to this definition">¶</a></dt>
+<dd><p>Render slabs for use with the given probe</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.cheby.FreeformCheby.thickness">
+<span class="sig-name descname"><span class="pre">thickness</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span></em><a class="headerlink" href="#refl1d.cheby.FreeformCheby.thickness" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.cheby.FreeformCheby.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/cheby.html#FreeformCheby.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.cheby.FreeformCheby.to_dict" title="Link to this definition">¶</a></dt>
+<dd><p>Return a dictionary representation of the Slab object</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        «&#160;&#160;<a href="anstodata.html">anstodata - Reader for ANSTO data format</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="dist.html">dist - Non-uniform samples</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

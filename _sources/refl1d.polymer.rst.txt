@@ -1,0 +1,7 @@
+refl1d.polymer module
+=====================
+
+.. automodule:: refl1d.polymer
+   :members:
+   :undoc-members:
+   :show-inheritance:

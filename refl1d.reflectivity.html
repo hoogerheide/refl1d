@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>refl1d.reflectivity module &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="_static/plot_directive.css" />
+    <script src="_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>refl1d.reflectivity module</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="module-refl1d.reflectivity">
+<span id="refl1d-reflectivity-module"></span><h1>refl1d.reflectivity module<a class="headerlink" href="#module-refl1d.reflectivity" title="Link to this heading">¶</a></h1>
+<p>Basic reflectometry calculations</p>
+<p>Slab model reflectivity calculator with optional absorption and roughness.
+The function reflectivity_amplitude returns the complex waveform.
+Slab model with supporting magnetic scattering.  The function
+magnetic_reflectivity returns the complex reflection for the four
+spin polarization cross sections [++, +-, -+, –].  The function
+unpolarized_magnetic returns the expected magnitude for a measurement
+of the magnetic scattering using an unpolarized beam.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.reflectivity.convolve">
+<span class="sig-prename descclassname"><span class="pre">refl1d.reflectivity.</span></span><span class="sig-name descname"><span class="pre">convolve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'normal'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/reflectivity.html#convolve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.reflectivity.convolve" title="Link to this definition">¶</a></dt>
+<dd><p>Apply x-dependent gaussian resolution to the theory.</p>
+<p>Returns convolution y[k] of width dx[k] at points x[k].</p>
+<p>The theory function is a piece-wise linear spline which does not need to
+be uniformly sampled.  The theory calculation points <em>xi</em> should be dense
+enough to capture the “wiggle” in the theory function, and should extend
+beyond the ends of the data measurement points <em>x</em>. Convolution at the
+tails is truncated and normalized to area of overlap between the resolution
+function in case the theory does not extend far enough.</p>
+<p><em>resolution</em> is ‘normal’ (default) or ‘uniform’. Note that the uniform
+distribution uses the <span class="math notranslate nohighlight">\(1-\sigma\)</span> equivalent distribution width which is
+<span class="math notranslate nohighlight">\(1/\sqrt{3}\)</span> times the width of the rectangle.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.reflectivity.magnetic_amplitude">
+<span class="sig-prename descclassname"><span class="pre">refl1d.reflectivity.</span></span><span class="sig-name descname"><span class="pre">magnetic_amplitude</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kz</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">irho</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rhoM</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thetaM</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Aguide</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-90</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">H</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/reflectivity.html#magnetic_amplitude"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.reflectivity.magnetic_amplitude" title="Link to this definition">¶</a></dt>
+<dd><p>Returns the complex magnetic reflectivity waveform.</p>
+<p>See <a class="reference internal" href="#refl1d.reflectivity.magnetic_reflectivity" title="refl1d.reflectivity.magnetic_reflectivity"><code class="xref py py-class docutils literal notranslate"><span class="pre">magnetic_reflectivity</span></code></a> for details.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.reflectivity.magnetic_reflectivity">
+<span class="sig-prename descclassname"><span class="pre">refl1d.reflectivity.</span></span><span class="sig-name descname"><span class="pre">magnetic_reflectivity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/reflectivity.html#magnetic_reflectivity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.reflectivity.magnetic_reflectivity" title="Link to this definition">¶</a></dt>
+<dd><p>Magnetic reflectivity for slab models.</p>
+<p>Returns the expected values for the four polarization cross
+sections (++, +-, -+, –).
+Return reflectivity R^2 from slab model with sharp interfaces.
+returns reflectivities.</p>
+<p>The parameters are as follows:</p>
+<dl class="simple">
+<dt>kz (Å<sup>-1</sup>)</dt><dd><p>points at which to evaluate the reflectivity</p>
+</dd>
+<dt>depth (Å)</dt><dd><p>thickness of the individual layers (incident and substrate
+depths are ignored)</p>
+</dd>
+<dt>rho (10<sup>-6</sup>Å<sup>-2</sup>)</dt><dd><p>Scattering length density.</p>
+</dd>
+<dt>irho (10<sup>-6</sup>Å<sup>-2</sup>)</dt><dd><p>absorption. Defaults to 0.</p>
+</dd>
+<dt>rho_m (microNb)</dt><dd><p>Magnetic scattering length density correction.</p>
+</dd>
+<dt>theta_m (degrees)</dt><dd><p>Angle of the magnetism within the layer.</p>
+</dd>
+<dt>sigma (Å)</dt><dd><p>Interface roughness between the current layer and the next.
+The final layer is ignored.  This may be a scalar for fixed
+roughness on every layer, or None if there is no roughness.</p>
+</dd>
+<dt>wavelength (Å)</dt><dd><p>Incident wavelength (only affects absorption).  May be a vector.
+Defaults to 1.</p>
+</dd>
+<dt>Aguide (degrees)</dt><dd><p>Angle of the guide field; -90 is the usual case</p>
+</dd>
+</dl>
+<p>This function does not compute any instrument resolution corrections.
+Interface diffusion, if present, uses the Nevot-Croce approximation.</p>
+<p>Use magnetic_amplitude to return the complex waveform.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.reflectivity.reflectivity">
+<span class="sig-prename descclassname"><span class="pre">refl1d.reflectivity.</span></span><span class="sig-name descname"><span class="pre">reflectivity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/reflectivity.html#reflectivity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.reflectivity.reflectivity" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate reflectivity <span class="math notranslate nohighlight">\(|r(k_z)|^2\)</span> from slab model.</p>
+<dl>
+<dt>:Parameters :</dt><dd><dl>
+<dt><em>depth</em><span class="classifier">float[N] | Å</span></dt><dd><p>Thickness of the individual layers (incident and substrate
+depths are ignored)</p>
+</dd>
+<dt><em>sigma</em><span class="classifier">float OR float[N-1] | Å</span></dt><dd><p>Interface roughness between the current layer and the next.
+The final layer is ignored.  This may be a scalar for fixed
+roughness on every layer, or None if there is no roughness.</p>
+</dd>
+<dt><em>rho</em>, <em>irho</em><span class="classifier">float[N] OR float[N, K] | 10<sup>-6</sup>Å<sup>-2</sup></span></dt><dd><p>Real and imaginary scattering length density.  Use multiple
+columns when you have kz-dependent scattering length densities,
+and set rho_offset to select the appropriate one.  Data should
+be stored in column order.</p>
+</dd>
+<dt><em>kz</em><span class="classifier">float[M] | Å<sup>-1</sup></span></dt><dd><p>Points at which to evaluate the reflectivity</p>
+</dd>
+<dt><em>rho_index</em><span class="classifier">integer[M]</span></dt><dd><p><em>rho</em> and <em>irho</em> columns to use for the various kz.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><em>R</em> | float[M]</dt><dd><p>Reflectivity magnitude.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>This function does not compute any instrument resolution corrections.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.reflectivity.reflectivity_amplitude">
+<span class="sig-prename descclassname"><span class="pre">refl1d.reflectivity.</span></span><span class="sig-name descname"><span class="pre">reflectivity_amplitude</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">irho</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/reflectivity.html#reflectivity_amplitude"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.reflectivity.reflectivity_amplitude" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate reflectivity amplitude <span class="math notranslate nohighlight">\(r(k_z)\)</span> from slab model.</p>
+<dl>
+<dt>:Parameters :</dt><dd><dl>
+<dt><em>depth</em><span class="classifier">float[N] | Å</span></dt><dd><p>Thickness of the individual layers (incident and substrate
+depths are ignored)</p>
+</dd>
+<dt><em>sigma</em> = 0<span class="classifier">float OR float[N-1] | Å</span></dt><dd><p>Interface roughness between the current layer and the next.
+The final layer is ignored.  This may be a scalar for fixed
+roughness on every layer, or None if there is no roughness.</p>
+</dd>
+<dt><em>rho</em>, <em>irho</em> = 0: float[N] OR float[N, K] | 10<sup>-6</sup>Å<sup>-2</sup></dt><dd><p>Real and imaginary scattering length density.  Use multiple
+columns when you have kz-dependent scattering length densities,
+and set <em>rho_index</em> to select amongst them.  Data should be
+stored in column order.</p>
+</dd>
+<dt><em>kz</em><span class="classifier">float[M] | Å<sup>-1</sup></span></dt><dd><p>Points at which to evaluate the reflectivity</p>
+</dd>
+<dt><em>rho_index</em> = 0<span class="classifier">integer[M]</span></dt><dd><p><em>rho</em> and <em>irho</em> columns to use for the various kz.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><em>r</em> | complex[M]</dt><dd><p>Complex reflectivity waveform.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>This function does not compute any instrument resolution corrections.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.reflectivity.unpolarized_magnetic">
+<span class="sig-prename descclassname"><span class="pre">refl1d.reflectivity.</span></span><span class="sig-name descname"><span class="pre">unpolarized_magnetic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/reflectivity.html#unpolarized_magnetic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.reflectivity.unpolarized_magnetic" title="Link to this definition">¶</a></dt>
+<dd><p>Returns the average of magnetic reflectivity for all cross-sections.</p>
+<p>See <a class="reference internal" href="#refl1d.reflectivity.magnetic_reflectivity" title="refl1d.reflectivity.magnetic_reflectivity"><code class="xref py py-class docutils literal notranslate"><span class="pre">magnetic_reflectivity</span></code></a> for details.</p>
+</dd></dl>
+
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

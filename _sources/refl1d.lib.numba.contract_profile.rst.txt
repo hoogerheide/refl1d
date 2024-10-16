@@ -1,0 +1,7 @@
+refl1d.lib.numba.contract\_profile module
+=========================================
+
+.. automodule:: refl1d.lib.numba.contract_profile
+   :members:
+   :undoc-members:
+   :show-inheritance:

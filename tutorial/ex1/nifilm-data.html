@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Attaching data &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <script src="../../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Performing a fit" href="nifilm-fit.html" />
+    <link rel="prev" title="Choosing an instrument" href="nifilm-tof.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>Attaching data</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        «&#160;&#160;<a href="nifilm-tof.html">Choosing an instrument</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="nifilm-fit.html">Performing a fit</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="attaching-data">
+<h1>Attaching data<a class="headerlink" href="#attaching-data" title="Link to this heading">¶</a></h1>
+<p>Simulating data is great for seeing how models might look when measured
+by a reflectometer, but mostly we are going to use the program to fit
+measured data.  We saved the simulated data from above into files named
+<a class="reference download internal" download="" href="../../_downloads/cf4801c4dccb533bdefa32c3dd105928/nifilm-tof-1.dat"><code class="xref download docutils literal notranslate"><span class="pre">nifilm-tof-1.dat</span></code></a>, <a class="reference download internal" download="" href="../../_downloads/124b3f30a8e7650f38c9b44e2ab25dc8/nifilm-tof-2.dat"><code class="xref download docutils literal notranslate"><span class="pre">nifilm-tof-2.dat</span></code></a>,
+<a class="reference download internal" download="" href="../../_downloads/c5461d002632dacf5280df166f1e7bb0/nifilm-tof-3.dat"><code class="xref download docutils literal notranslate"><span class="pre">nifilm-tof-3.dat</span></code></a> and <a class="reference download internal" download="" href="../../_downloads/7eba8a98304ce1afe16345d50baf00e2/nifilm-tof-4.dat"><code class="xref download docutils literal notranslate"><span class="pre">nifilm-tof-4.dat</span></code></a>.
+We can load these datasets into a new model using
+<a class="reference download internal" download="" href="../../_downloads/85703860168bd005079a24b12b7de6fe/nifilm-data.py"><code class="xref download docutils literal notranslate"><span class="pre">nifilm-data.py</span></code></a>.</p>
+<p>The sample and instrument definition is the same as before:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">refl1d.names</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">nickel</span> <span class="o">=</span> <span class="n">Material</span><span class="p">(</span><span class="s2">&quot;Ni&quot;</span><span class="p">)</span>
+<span class="n">sample</span> <span class="o">=</span> <span class="n">silicon</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span> <span class="o">|</span> <span class="n">nickel</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span> <span class="o">|</span> <span class="n">air</span>
+
+<span class="n">instrument</span> <span class="o">=</span> <span class="n">SNS</span><span class="o">.</span><span class="n">Liquids</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>In this case we are loading multiple data sets into the same
+<a class="reference internal" href="../../refl1d.probe.html#refl1d.probe.ProbeSet" title="refl1d.probe.ProbeSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProbeSet</span></code></a> object.  If your
+reduction program stitches together the data for you, then you can simply
+use <code class="docutils literal notranslate"><span class="pre">probe=instrument.load('file')</span></code>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;nifilm-tof-</span><span class="si">%d</span><span class="s2">.dat&quot;</span> <span class="o">%</span> <span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)]</span>
+<span class="n">probe</span> <span class="o">=</span> <span class="n">ProbeSet</span><span class="p">(</span><span class="n">instrument</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">files</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The data and sample are combined into an
+<a class="reference internal" href="../../refl1d.experiment.html#refl1d.experiment.Experiment" title="refl1d.experiment.Experiment"><code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment</span></code></a>,
+which again is bundled as a
+<code class="xref py py-class docutils literal notranslate"><span class="pre">FitProblem</span></code>
+for the fitting program.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">M</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">probe</span><span class="o">=</span><span class="n">probe</span><span class="p">,</span> <span class="n">sample</span><span class="o">=</span><span class="n">sample</span><span class="p">)</span>
+
+<span class="n">problem</span> <span class="o">=</span> <span class="n">FitProblem</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The plot remains the same:</p>
+<p>(<a class="reference download internal" download="" href="../../_downloads/bfcb444d66e569e43056a0fb650721e3/nifilm-data-1.py"><code class="xref download docutils literal notranslate"><span class="pre">Source</span> <span class="pre">code</span></code></a>, <a class="reference download internal" download="" href="../../_downloads/0440a509915f61bf0584d8881a6221e9/nifilm-data-1.png"><code class="xref download docutils literal notranslate"><span class="pre">png</span></code></a>, <a class="reference download internal" download="" href="../../_downloads/f796d694d1e54eebe4d16ed717b403a3/nifilm-data-1.hires.png"><code class="xref download docutils literal notranslate"><span class="pre">hires.png</span></code></a>, <a class="reference download internal" download="" href="../../_downloads/270b73a18ce79c2f65d3274b575a16b0/nifilm-data-1.pdf"><code class="xref download docutils literal notranslate"><span class="pre">pdf</span></code></a>)</p>
+<figure class="align-default">
+<img alt="../../_images/nifilm-data-1.png" class="plot-directive" src="../../_images/nifilm-data-1.png" />
+</figure>
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        «&#160;&#160;<a href="nifilm-tof.html">Choosing an instrument</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="nifilm-fit.html">Performing a fit</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

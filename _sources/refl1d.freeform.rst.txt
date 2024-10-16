@@ -1,0 +1,7 @@
+refl1d.freeform module
+======================
+
+.. automodule:: refl1d.freeform
+   :members:
+   :undoc-members:
+   :show-inheritance:

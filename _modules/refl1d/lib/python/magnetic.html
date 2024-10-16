@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>refl1d.lib.python.magnetic &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/plot_directive.css" />
+    <script src="../../../../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../../../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>refl1d.lib.python.magnetic</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        <a class="uplink" href="../../../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <h1>Source code for refl1d.lib.python.magnetic</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">pi</span><span class="p">,</span> <span class="n">sin</span><span class="p">,</span> <span class="n">cos</span><span class="p">,</span> <span class="n">conj</span><span class="p">,</span> <span class="n">radians</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">exp</span><span class="p">,</span> <span class="n">fabs</span>
+
+<span class="n">EPS</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">float_info</span><span class="o">.</span><span class="n">epsilon</span>
+<span class="n">M_PI</span> <span class="o">=</span> <span class="n">pi</span>
+<span class="n">PI4</span> <span class="o">=</span> <span class="mf">4.0e-6</span> <span class="o">*</span> <span class="n">pi</span>
+<span class="n">B2SLD</span> <span class="o">=</span> <span class="mf">2.31604654</span>  <span class="c1"># Scattering factor for B field 1e-6</span>
+
+<span class="n">prange</span> <span class="o">=</span> <span class="nb">range</span>
+
+
+<div class="viewcode-block" id="calculate_U1_U3_single">
+<a class="viewcode-back" href="../../../../refl1d.lib.python.magnetic.html#refl1d.lib.numba.calculate_U1_U3_single">[docs]</a>
+<span class="k">def</span> <span class="nf">calculate_U1_U3_single</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">rhoM</span><span class="p">,</span> <span class="n">thetaM</span><span class="p">,</span> <span class="n">Aguide</span><span class="p">,</span> <span class="n">U1</span><span class="p">,</span> <span class="n">U3</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+    <span class="c1"># thetaM should be in radians,</span>
+    <span class="c1"># Aguide in degrees.</span>
+    <span class="c1"># phiH = (Aguide - 270.0)*M_PI/180.0;</span>
+    <span class="n">AG</span> <span class="o">=</span> <span class="n">Aguide</span> <span class="o">*</span> <span class="n">M_PI</span> <span class="o">/</span> <span class="mf">180.0</span>  <span class="c1"># Aguide in radians</span>
+    <span class="c1"># thetaH = M_PI_2; # by convention, H is in y-z plane so theta = pi/2</span>
+
+    <span class="n">sld_h</span> <span class="o">=</span> <span class="n">B2SLD</span> <span class="o">*</span> <span class="n">H</span>
+    <span class="n">sld_m_x</span> <span class="o">=</span> <span class="n">rhoM</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">thetaM</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
+    <span class="n">sld_m_y</span> <span class="o">=</span> <span class="n">rhoM</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">thetaM</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
+    <span class="n">sld_m_z</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c1"># by Maxwell&#39;s equations, H_demag = mz so we&#39;ll just cancel it here</span>
+    <span class="c1"># The purpose of AGUIDE is to rotate the z-axis of the sample coordinate</span>
+    <span class="c1"># system so that it is aligned with the quantization axis z, defined to be</span>
+    <span class="c1"># the direction of the magnetic field outside the sample.</span>
+
+    <span class="n">new_my</span> <span class="o">=</span> <span class="n">sld_m_z</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">AG</span><span class="p">)</span> <span class="o">+</span> <span class="n">sld_m_y</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">AG</span><span class="p">)</span>
+    <span class="n">new_mz</span> <span class="o">=</span> <span class="n">sld_m_z</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">AG</span><span class="p">)</span> <span class="o">-</span> <span class="n">sld_m_y</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">AG</span><span class="p">)</span>
+    <span class="n">sld_m_y</span> <span class="o">=</span> <span class="n">new_my</span>
+    <span class="n">sld_m_z</span> <span class="o">=</span> <span class="n">new_mz</span>
+    <span class="n">sld_h_x</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">sld_h_y</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">sld_h_z</span> <span class="o">=</span> <span class="n">sld_h</span>
+    <span class="c1"># Then, don&#39;t rotate the transfer matrix!!</span>
+    <span class="c1"># Aguide = 0.0;</span>
+
+    <span class="n">sld_b_x</span> <span class="o">=</span> <span class="n">sld_h_x</span> <span class="o">+</span> <span class="n">sld_m_x</span>
+    <span class="n">sld_b_y</span> <span class="o">=</span> <span class="n">sld_h_y</span> <span class="o">+</span> <span class="n">sld_m_y</span>
+    <span class="n">sld_b_z</span> <span class="o">=</span> <span class="n">sld_h_z</span> <span class="o">+</span> <span class="n">sld_m_z</span>
+
+    <span class="c1"># avoid divide-by-zero:</span>
+    <span class="n">sld_b_x</span> <span class="o">+=</span> <span class="n">EPS</span> <span class="o">*</span> <span class="p">(</span><span class="n">sld_b_x</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">sld_b_y</span> <span class="o">+=</span> <span class="n">EPS</span> <span class="o">*</span> <span class="p">(</span><span class="n">sld_b_y</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># add epsilon to y, to avoid divide by zero errors?</span>
+    <span class="n">sld_b</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="nb">pow</span><span class="p">(</span><span class="n">sld_b_x</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="nb">pow</span><span class="p">(</span><span class="n">sld_b_y</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="nb">pow</span><span class="p">(</span><span class="n">sld_b_z</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="n">u1_num</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="n">sld_b</span> <span class="o">+</span> <span class="n">sld_b_x</span> <span class="o">-</span> <span class="n">sld_b_z</span><span class="p">,</span> <span class="n">sld_b_y</span><span class="p">)</span>
+    <span class="n">u1_den</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="n">sld_b</span> <span class="o">+</span> <span class="n">sld_b_x</span> <span class="o">+</span> <span class="n">sld_b_z</span><span class="p">,</span> <span class="o">-</span><span class="n">sld_b_y</span><span class="p">)</span>
+    <span class="n">u3_num</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="o">-</span><span class="n">sld_b</span> <span class="o">+</span> <span class="n">sld_b_x</span> <span class="o">-</span> <span class="n">sld_b_z</span><span class="p">,</span> <span class="n">sld_b_y</span><span class="p">)</span>
+    <span class="n">u3_den</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="o">-</span><span class="n">sld_b</span> <span class="o">+</span> <span class="n">sld_b_x</span> <span class="o">+</span> <span class="n">sld_b_z</span><span class="p">,</span> <span class="o">-</span><span class="n">sld_b_y</span><span class="p">)</span>
+
+    <span class="n">U1</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">u1_num</span> <span class="o">/</span> <span class="n">u1_den</span>
+    <span class="n">U3</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">u3_num</span> <span class="o">/</span> <span class="n">u3_den</span>
+    <span class="n">rhoM</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">sld_b</span></div>
+
+
+
+<div class="viewcode-block" id="calculate_u1_u3">
+<a class="viewcode-back" href="../../../../refl1d.lib.python.magnetic.html#refl1d.lib.numba.calculate_u1_u3">[docs]</a>
+<span class="k">def</span> <span class="nf">calculate_u1_u3</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">rhoM</span><span class="p">,</span> <span class="n">thetaM</span><span class="p">,</span> <span class="n">Aguide</span><span class="p">,</span> <span class="n">u1</span><span class="p">,</span> <span class="n">u3</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    array version - rhoM, thetaM, u1 and u3 are arrays</span>
+<span class="sd">    rhoM, u1 and u3 are modified in-place</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rhoM</span><span class="p">)):</span>
+        <span class="n">calculate_U1_U3_single</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">rhoM</span><span class="p">,</span> <span class="n">thetaM</span><span class="p">,</span> <span class="n">Aguide</span><span class="p">,</span> <span class="n">u1</span><span class="p">,</span> <span class="n">u3</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span></div>
+
+
+
+<span class="n">B2SLD</span> <span class="o">=</span> <span class="mf">2.31604654</span>  <span class="c1"># Scattering factor for B field 1e-6</span>
+
+
+<div class="viewcode-block" id="Cr4xa">
+<a class="viewcode-back" href="../../../../refl1d.lib.python.magnetic.html#refl1d.lib.numba.Cr4xa">[docs]</a>
+<span class="k">def</span> <span class="nf">Cr4xa</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">SIGMA</span><span class="p">,</span> <span class="n">IP</span><span class="p">,</span> <span class="n">RHO</span><span class="p">,</span> <span class="n">IRHO</span><span class="p">,</span> <span class="n">RHOM</span><span class="p">,</span> <span class="n">U1</span><span class="p">,</span> <span class="n">U3</span><span class="p">,</span> <span class="n">KZ</span><span class="p">,</span> <span class="n">POINT</span><span class="p">,</span> <span class="n">YA</span><span class="p">,</span> <span class="n">YB</span><span class="p">,</span> <span class="n">YC</span><span class="p">,</span> <span class="n">YD</span><span class="p">):</span>
+    <span class="n">EPS</span> <span class="o">=</span> <span class="mf">1e-10</span>
+
+    <span class="k">if</span> <span class="n">KZ</span> <span class="o">&lt;=</span> <span class="o">-</span><span class="mf">1.0e-10</span><span class="p">:</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="n">N</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">STEP</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="n">SIGMA_OFFSET</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">elif</span> <span class="n">KZ</span> <span class="o">&gt;=</span> <span class="mf">1.0e-10</span><span class="p">:</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">STEP</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">SIGMA_OFFSET</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">YA</span><span class="p">[</span><span class="n">POINT</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span>
+        <span class="n">YB</span><span class="p">[</span><span class="n">POINT</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">YC</span><span class="p">[</span><span class="n">POINT</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">YD</span><span class="p">[</span><span class="n">POINT</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span>
+        <span class="k">return</span>
+
+    <span class="c1">#    Changing the target KZ is equivalent to subtracting the fronting</span>
+    <span class="c1">#    medium SLD.</span>
+
+    <span class="c1"># IP = 1 specifies polarization of the incident beam I+</span>
+    <span class="c1"># IP = -1 specifies polarization of the incident beam I-</span>
+    <span class="n">E0</span> <span class="o">=</span> <span class="n">KZ</span> <span class="o">*</span> <span class="n">KZ</span> <span class="o">+</span> <span class="n">PI4</span> <span class="o">*</span> <span class="p">(</span><span class="n">RHO</span><span class="p">[</span><span class="n">L</span><span class="p">]</span> <span class="o">+</span> <span class="n">IP</span> <span class="o">*</span> <span class="n">RHOM</span><span class="p">[</span><span class="n">L</span><span class="p">])</span>
+
+    <span class="n">Z</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="k">if</span> <span class="n">N</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="c1"># chi in layer 1</span>
+        <span class="n">LP</span> <span class="o">=</span> <span class="n">L</span> <span class="o">+</span> <span class="n">STEP</span>
+        <span class="c1"># Branch selection:  the -sqrt below for S1 and S3 will be</span>
+        <span class="c1">#     +Imag for KZ &gt; Kcrit,</span>
+        <span class="c1">#     -Real for KZ &lt; Kcrit</span>
+        <span class="c1"># which covers the S1, S3 waves allowed by the boundary conditions in the</span>
+        <span class="c1"># fronting and backing medium:</span>
+        <span class="c1"># either traveling forward (+Imag) or decaying exponentially forward (-Real).</span>
+        <span class="c1"># The decaying exponential only occurs for the transmitted forward wave in the backing:</span>
+        <span class="c1"># the root +iKz is automatically chosen for the incident wave in the fronting.</span>
+        <span class="c1">#</span>
+        <span class="c1"># In the fronting, the -S1 and -S3 waves are either traveling waves backward (-Imag)</span>
+        <span class="c1"># or decaying along the -z reflection direction (-Real) * (-z) = (+Real*z).</span>
+        <span class="c1"># NB: This decaying reflection only occurs when the reflected wave is below Kcrit</span>
+        <span class="c1"># while the incident wave is above Kcrit, so it only happens for spin-flip from</span>
+        <span class="c1"># minus to plus (lower to higher potential energy) and the observed R-+ will</span>
+        <span class="c1"># actually be zero at large distances from the interface.</span>
+        <span class="c1">#</span>
+        <span class="c1"># In the backing, the -S1 and -S3 waves are explicitly set to be zero amplitude</span>
+        <span class="c1"># by the boundary conditions (neutrons only incident in the fronting medium - no</span>
+        <span class="c1"># source of neutrons below).</span>
+        <span class="c1">#</span>
+        <span class="n">S1L</span> <span class="o">=</span> <span class="o">-</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">complex</span><span class="p">(</span><span class="n">PI4</span> <span class="o">*</span> <span class="p">(</span><span class="n">RHO</span><span class="p">[</span><span class="n">L</span><span class="p">]</span> <span class="o">+</span> <span class="n">RHOM</span><span class="p">[</span><span class="n">L</span><span class="p">])</span> <span class="o">-</span> <span class="n">E0</span><span class="p">,</span> <span class="o">-</span><span class="n">PI4</span> <span class="o">*</span> <span class="p">(</span><span class="n">fabs</span><span class="p">(</span><span class="n">IRHO</span><span class="p">[</span><span class="n">L</span><span class="p">])</span> <span class="o">+</span> <span class="n">EPS</span><span class="p">)))</span>
+        <span class="n">S3L</span> <span class="o">=</span> <span class="o">-</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">complex</span><span class="p">(</span><span class="n">PI4</span> <span class="o">*</span> <span class="p">(</span><span class="n">RHO</span><span class="p">[</span><span class="n">L</span><span class="p">]</span> <span class="o">-</span> <span class="n">RHOM</span><span class="p">[</span><span class="n">L</span><span class="p">])</span> <span class="o">-</span> <span class="n">E0</span><span class="p">,</span> <span class="o">-</span><span class="n">PI4</span> <span class="o">*</span> <span class="p">(</span><span class="n">fabs</span><span class="p">(</span><span class="n">IRHO</span><span class="p">[</span><span class="n">L</span><span class="p">])</span> <span class="o">+</span> <span class="n">EPS</span><span class="p">)))</span>
+        <span class="n">S1LP</span> <span class="o">=</span> <span class="o">-</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">complex</span><span class="p">(</span><span class="n">PI4</span> <span class="o">*</span> <span class="p">(</span><span class="n">RHO</span><span class="p">[</span><span class="n">LP</span><span class="p">]</span> <span class="o">+</span> <span class="n">RHOM</span><span class="p">[</span><span class="n">LP</span><span class="p">])</span> <span class="o">-</span> <span class="n">E0</span><span class="p">,</span> <span class="o">-</span><span class="n">PI4</span> <span class="o">*</span> <span class="p">(</span><span class="n">fabs</span><span class="p">(</span><span class="n">IRHO</span><span class="p">[</span><span class="n">LP</span><span class="p">])</span> <span class="o">+</span> <span class="n">EPS</span><span class="p">)))</span>
+        <span class="n">S3LP</span> <span class="o">=</span> <span class="o">-</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">complex</span><span class="p">(</span><span class="n">PI4</span> <span class="o">*</span> <span class="p">(</span><span class="n">RHO</span><span class="p">[</span><span class="n">LP</span><span class="p">]</span> <span class="o">-</span> <span class="n">RHOM</span><span class="p">[</span><span class="n">LP</span><span class="p">])</span> <span class="o">-</span> <span class="n">E0</span><span class="p">,</span> <span class="o">-</span><span class="n">PI4</span> <span class="o">*</span> <span class="p">(</span><span class="n">fabs</span><span class="p">(</span><span class="n">IRHO</span><span class="p">[</span><span class="n">LP</span><span class="p">])</span> <span class="o">+</span> <span class="n">EPS</span><span class="p">)))</span>
+        <span class="n">SIGMAL</span> <span class="o">=</span> <span class="n">SIGMA</span><span class="p">[</span><span class="n">L</span> <span class="o">+</span> <span class="n">SIGMA_OFFSET</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">U1</span><span class="p">[</span><span class="n">L</span><span class="p">])</span> <span class="o">&lt;=</span> <span class="mf">1.0</span><span class="p">:</span>
+            <span class="c1"># then Bz &gt;= 0</span>
+            <span class="c1"># BL and GL are zero in the fronting.</span>
+            <span class="k">pass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># then Bz &lt; 0: flip!</span>
+            <span class="c1"># This is probably impossible, since Bz defines the +z direction</span>
+            <span class="c1"># in the fronting medium, but just in case...</span>
+            <span class="n">SSWAP</span> <span class="o">=</span> <span class="n">S1L</span>
+            <span class="n">S1L</span> <span class="o">=</span> <span class="n">S3L</span>
+            <span class="n">S3L</span> <span class="o">=</span> <span class="n">SSWAP</span>  <span class="c1"># swap S3 and S1</span>
+
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">U1</span><span class="p">[</span><span class="n">LP</span><span class="p">])</span> <span class="o">&lt;=</span> <span class="mf">1.0</span><span class="p">:</span>
+            <span class="c1"># then Bz &gt;= 0</span>
+            <span class="n">BLP</span> <span class="o">=</span> <span class="n">U1</span><span class="p">[</span><span class="n">LP</span><span class="p">]</span>
+            <span class="n">GLP</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">U3</span><span class="p">[</span><span class="n">LP</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># then Bz &lt; 0: flip!</span>
+            <span class="n">BLP</span> <span class="o">=</span> <span class="n">U3</span><span class="p">[</span><span class="n">LP</span><span class="p">]</span>
+            <span class="n">GLP</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">U1</span><span class="p">[</span><span class="n">LP</span><span class="p">]</span>
+            <span class="n">SSWAP</span> <span class="o">=</span> <span class="n">S1LP</span>
+            <span class="n">S1LP</span> <span class="o">=</span> <span class="n">S3LP</span>
+            <span class="n">S3LP</span> <span class="o">=</span> <span class="n">SSWAP</span>  <span class="c1"># swap S3 and S1</span>
+
+        <span class="n">DELTA</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="p">(</span><span class="n">BLP</span> <span class="o">*</span> <span class="n">GLP</span><span class="p">))</span>
+
+        <span class="n">FS1S1</span> <span class="o">=</span> <span class="n">S1L</span> <span class="o">/</span> <span class="n">S1LP</span>
+        <span class="n">FS1S3</span> <span class="o">=</span> <span class="n">S1L</span> <span class="o">/</span> <span class="n">S3LP</span>
+        <span class="n">FS3S1</span> <span class="o">=</span> <span class="n">S3L</span> <span class="o">/</span> <span class="n">S1LP</span>
+        <span class="n">FS3S3</span> <span class="o">=</span> <span class="n">S3L</span> <span class="o">/</span> <span class="n">S3LP</span>
+
+        <span class="n">B11</span> <span class="o">=</span> <span class="n">DELTA</span> <span class="o">*</span> <span class="mf">1.0</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">FS1S1</span><span class="p">)</span>
+        <span class="n">B12</span> <span class="o">=</span> <span class="n">DELTA</span> <span class="o">*</span> <span class="mf">1.0</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">FS1S1</span><span class="p">)</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">S1L</span> <span class="o">*</span> <span class="n">S1LP</span> <span class="o">*</span> <span class="n">SIGMAL</span> <span class="o">*</span> <span class="n">SIGMAL</span><span class="p">)</span>
+        <span class="n">B13</span> <span class="o">=</span> <span class="n">DELTA</span> <span class="o">*</span> <span class="o">-</span><span class="n">GLP</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">FS3S1</span><span class="p">)</span>
+        <span class="n">B14</span> <span class="o">=</span> <span class="n">DELTA</span> <span class="o">*</span> <span class="o">-</span><span class="n">GLP</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">FS3S1</span><span class="p">)</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">S3L</span> <span class="o">*</span> <span class="n">S1LP</span> <span class="o">*</span> <span class="n">SIGMAL</span> <span class="o">*</span> <span class="n">SIGMAL</span><span class="p">)</span>
+
+        <span class="n">B21</span> <span class="o">=</span> <span class="n">DELTA</span> <span class="o">*</span> <span class="mf">1.0</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">FS1S1</span><span class="p">)</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">S1L</span> <span class="o">*</span> <span class="n">S1LP</span> <span class="o">*</span> <span class="n">SIGMAL</span> <span class="o">*</span> <span class="n">SIGMAL</span><span class="p">)</span>
+        <span class="n">B22</span> <span class="o">=</span> <span class="n">DELTA</span> <span class="o">*</span> <span class="mf">1.0</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">FS1S1</span><span class="p">)</span>
+        <span class="n">B23</span> <span class="o">=</span> <span class="n">DELTA</span> <span class="o">*</span> <span class="o">-</span><span class="n">GLP</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">FS3S1</span><span class="p">)</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">S3L</span> <span class="o">*</span> <span class="n">S1LP</span> <span class="o">*</span> <span class="n">SIGMAL</span> <span class="o">*</span> <span class="n">SIGMAL</span><span class="p">)</span>
+        <span class="n">B24</span> <span class="o">=</span> <span class="n">DELTA</span> <span class="o">*</span> <span class="o">-</span><span class="n">GLP</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">FS3S1</span><span class="p">)</span>
+
+        <span class="n">B31</span> <span class="o">=</span> <span class="n">DELTA</span> <span class="o">*</span> <span class="o">-</span><span class="n">BLP</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">FS1S3</span><span class="p">)</span>
+        <span class="n">B32</span> <span class="o">=</span> <span class="n">DELTA</span> <span class="o">*</span> <span class="o">-</span><span class="n">BLP</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">FS1S3</span><span class="p">)</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">S1L</span> <span class="o">*</span> <span class="n">S3LP</span> <span class="o">*</span> <span class="n">SIGMAL</span> <span class="o">*</span> <span class="n">SIGMAL</span><span class="p">)</span>
+        <span class="n">B33</span> <span class="o">=</span> <span class="n">DELTA</span> <span class="o">*</span> <span class="mf">1.0</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">FS3S3</span><span class="p">)</span>
+        <span class="n">B34</span> <span class="o">=</span> <span class="n">DELTA</span> <span class="o">*</span> <span class="mf">1.0</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">FS3S3</span><span class="p">)</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">S3L</span> <span class="o">*</span> <span class="n">S3LP</span> <span class="o">*</span> <span class="n">SIGMAL</span> <span class="o">*</span> <span class="n">SIGMAL</span><span class="p">)</span>
+
+        <span class="n">B41</span> <span class="o">=</span> <span class="n">DELTA</span> <span class="o">*</span> <span class="o">-</span><span class="n">BLP</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">FS1S3</span><span class="p">)</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">S1L</span> <span class="o">*</span> <span class="n">S3LP</span> <span class="o">*</span> <span class="n">SIGMAL</span> <span class="o">*</span> <span class="n">SIGMAL</span><span class="p">)</span>
+        <span class="n">B42</span> <span class="o">=</span> <span class="n">DELTA</span> <span class="o">*</span> <span class="o">-</span><span class="n">BLP</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">FS1S3</span><span class="p">)</span>
+        <span class="n">B43</span> <span class="o">=</span> <span class="n">DELTA</span> <span class="o">*</span> <span class="mf">1.0</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">FS3S3</span><span class="p">)</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">S3L</span> <span class="o">*</span> <span class="n">S3LP</span> <span class="o">*</span> <span class="n">SIGMAL</span> <span class="o">*</span> <span class="n">SIGMAL</span><span class="p">)</span>
+        <span class="n">B44</span> <span class="o">=</span> <span class="n">DELTA</span> <span class="o">*</span> <span class="mf">1.0</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">FS3S3</span><span class="p">)</span>
+
+        <span class="n">Z</span> <span class="o">+=</span> <span class="n">D</span><span class="p">[</span><span class="n">LP</span><span class="p">]</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="n">LP</span>
+
+    <span class="c1">#    Process the loop once for each interior layer, either from</span>
+    <span class="c1">#    front to back or back to front.</span>
+    <span class="k">for</span> <span class="n">I</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">N</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">LP</span> <span class="o">=</span> <span class="n">L</span> <span class="o">+</span> <span class="n">STEP</span>
+        <span class="n">S1L</span> <span class="o">=</span> <span class="n">S1LP</span>  <span class="c1"># copy from the layer before</span>
+        <span class="n">S3L</span> <span class="o">=</span> <span class="n">S3LP</span>
+        <span class="n">GL</span> <span class="o">=</span> <span class="n">GLP</span>
+        <span class="n">BL</span> <span class="o">=</span> <span class="n">BLP</span>
+        <span class="n">S1LP</span> <span class="o">=</span> <span class="o">-</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">complex</span><span class="p">(</span><span class="n">PI4</span> <span class="o">*</span> <span class="p">(</span><span class="n">RHO</span><span class="p">[</span><span class="n">LP</span><span class="p">]</span> <span class="o">+</span> <span class="n">RHOM</span><span class="p">[</span><span class="n">LP</span><span class="p">])</span> <span class="o">-</span> <span class="n">E0</span><span class="p">,</span> <span class="o">-</span><span class="n">PI4</span> <span class="o">*</span> <span class="p">(</span><span class="n">fabs</span><span class="p">(</span><span class="n">IRHO</span><span class="p">[</span><span class="n">LP</span><span class="p">])</span> <span class="o">+</span> <span class="n">EPS</span><span class="p">)))</span>
+        <span class="n">S3LP</span> <span class="o">=</span> <span class="o">-</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">complex</span><span class="p">(</span><span class="n">PI4</span> <span class="o">*</span> <span class="p">(</span><span class="n">RHO</span><span class="p">[</span><span class="n">LP</span><span class="p">]</span> <span class="o">-</span> <span class="n">RHOM</span><span class="p">[</span><span class="n">LP</span><span class="p">])</span> <span class="o">-</span> <span class="n">E0</span><span class="p">,</span> <span class="o">-</span><span class="n">PI4</span> <span class="o">*</span> <span class="p">(</span><span class="n">fabs</span><span class="p">(</span><span class="n">IRHO</span><span class="p">[</span><span class="n">LP</span><span class="p">])</span> <span class="o">+</span> <span class="n">EPS</span><span class="p">)))</span>
+        <span class="n">SIGMAL</span> <span class="o">=</span> <span class="n">SIGMA</span><span class="p">[</span><span class="n">L</span> <span class="o">+</span> <span class="n">SIGMA_OFFSET</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">U1</span><span class="p">[</span><span class="n">LP</span><span class="p">])</span> <span class="o">&lt;=</span> <span class="mf">1.0</span><span class="p">:</span>
+            <span class="c1"># then Bz &gt;= 0</span>
+            <span class="n">BLP</span> <span class="o">=</span> <span class="n">U1</span><span class="p">[</span><span class="n">LP</span><span class="p">]</span>
+            <span class="n">GLP</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">U3</span><span class="p">[</span><span class="n">LP</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># then Bz &lt; 0: flip!</span>
+            <span class="n">BLP</span> <span class="o">=</span> <span class="n">U3</span><span class="p">[</span><span class="n">LP</span><span class="p">]</span>
+            <span class="n">GLP</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">U1</span><span class="p">[</span><span class="n">LP</span><span class="p">]</span>
+            <span class="n">SSWAP</span> <span class="o">=</span> <span class="n">S1LP</span>
+            <span class="n">S1LP</span> <span class="o">=</span> <span class="n">S3LP</span>
+            <span class="n">S3LP</span> <span class="o">=</span> <span class="n">SSWAP</span>  <span class="c1"># swap S3 and S1</span>
+
+        <span class="n">DELTA</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="p">(</span><span class="n">BLP</span> <span class="o">*</span> <span class="n">GLP</span><span class="p">))</span>
+        <span class="n">DBB</span> <span class="o">=</span> <span class="p">(</span><span class="n">BL</span> <span class="o">-</span> <span class="n">BLP</span><span class="p">)</span> <span class="o">*</span> <span class="n">DELTA</span>  <span class="c1"># multiply by delta here?</span>
+        <span class="n">DBG</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">BL</span> <span class="o">*</span> <span class="n">GLP</span><span class="p">)</span> <span class="o">*</span> <span class="n">DELTA</span>
+        <span class="n">DGB</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">GL</span> <span class="o">*</span> <span class="n">BLP</span><span class="p">)</span> <span class="o">*</span> <span class="n">DELTA</span>
+        <span class="n">DGG</span> <span class="o">=</span> <span class="p">(</span><span class="n">GL</span> <span class="o">-</span> <span class="n">GLP</span><span class="p">)</span> <span class="o">*</span> <span class="n">DELTA</span>
+
+        <span class="n">ES1L</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="n">S1L</span> <span class="o">*</span> <span class="n">Z</span><span class="p">)</span>
+        <span class="n">ENS1L</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">ES1L</span>
+        <span class="n">ES1LP</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="n">S1LP</span> <span class="o">*</span> <span class="n">Z</span><span class="p">)</span>
+        <span class="n">ENS1LP</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">ES1LP</span>
+        <span class="n">ES3L</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="n">S3L</span> <span class="o">*</span> <span class="n">Z</span><span class="p">)</span>
+        <span class="n">ENS3L</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">ES3L</span>
+        <span class="n">ES3LP</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="n">S3LP</span> <span class="o">*</span> <span class="n">Z</span><span class="p">)</span>
+        <span class="n">ENS3LP</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">ES3LP</span>
+
+        <span class="n">FS1S1</span> <span class="o">=</span> <span class="n">S1L</span> <span class="o">/</span> <span class="n">S1LP</span>
+        <span class="n">FS1S3</span> <span class="o">=</span> <span class="n">S1L</span> <span class="o">/</span> <span class="n">S3LP</span>
+        <span class="n">FS3S1</span> <span class="o">=</span> <span class="n">S3L</span> <span class="o">/</span> <span class="n">S1LP</span>
+        <span class="n">FS3S3</span> <span class="o">=</span> <span class="n">S3L</span> <span class="o">/</span> <span class="n">S3LP</span>
+
+        <span class="n">A11</span> <span class="o">=</span> <span class="n">A22</span> <span class="o">=</span> <span class="n">DBG</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">FS1S1</span><span class="p">)</span>
+        <span class="n">A11</span> <span class="o">*=</span> <span class="n">ES1L</span> <span class="o">*</span> <span class="n">ENS1LP</span>
+        <span class="n">A22</span> <span class="o">*=</span> <span class="n">ENS1L</span> <span class="o">*</span> <span class="n">ES1LP</span>
+        <span class="n">A12</span> <span class="o">=</span> <span class="n">A21</span> <span class="o">=</span> <span class="n">DBG</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">FS1S1</span><span class="p">)</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">S1L</span> <span class="o">*</span> <span class="n">S1LP</span> <span class="o">*</span> <span class="n">SIGMAL</span> <span class="o">*</span> <span class="n">SIGMAL</span><span class="p">)</span>
+        <span class="n">A12</span> <span class="o">*=</span> <span class="n">ENS1L</span> <span class="o">*</span> <span class="n">ENS1LP</span>
+        <span class="n">A21</span> <span class="o">*=</span> <span class="n">ES1L</span> <span class="o">*</span> <span class="n">ES1LP</span>
+        <span class="n">A13</span> <span class="o">=</span> <span class="n">A24</span> <span class="o">=</span> <span class="n">DGG</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">FS3S1</span><span class="p">)</span>
+        <span class="n">A13</span> <span class="o">*=</span> <span class="n">ES3L</span> <span class="o">*</span> <span class="n">ENS1LP</span>
+        <span class="n">A24</span> <span class="o">*=</span> <span class="n">ENS3L</span> <span class="o">*</span> <span class="n">ES1LP</span>
+        <span class="n">A14</span> <span class="o">=</span> <span class="n">A23</span> <span class="o">=</span> <span class="n">DGG</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">FS3S1</span><span class="p">)</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">S3L</span> <span class="o">*</span> <span class="n">S1LP</span> <span class="o">*</span> <span class="n">SIGMAL</span> <span class="o">*</span> <span class="n">SIGMAL</span><span class="p">)</span>
+        <span class="n">A14</span> <span class="o">*=</span> <span class="n">ENS3L</span> <span class="o">*</span> <span class="n">ENS1LP</span>
+        <span class="n">A23</span> <span class="o">*=</span> <span class="n">ES3L</span> <span class="o">*</span> <span class="n">ES1LP</span>
+
+        <span class="n">A31</span> <span class="o">=</span> <span class="n">A42</span> <span class="o">=</span> <span class="n">DBB</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">FS1S3</span><span class="p">)</span>
+        <span class="n">A31</span> <span class="o">*=</span> <span class="n">ES1L</span> <span class="o">*</span> <span class="n">ENS3LP</span>
+        <span class="n">A42</span> <span class="o">*=</span> <span class="n">ENS1L</span> <span class="o">*</span> <span class="n">ES3LP</span>
+        <span class="n">A32</span> <span class="o">=</span> <span class="n">A41</span> <span class="o">=</span> <span class="n">DBB</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">FS1S3</span><span class="p">)</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">S1L</span> <span class="o">*</span> <span class="n">S3LP</span> <span class="o">*</span> <span class="n">SIGMAL</span> <span class="o">*</span> <span class="n">SIGMAL</span><span class="p">)</span>
+        <span class="n">A32</span> <span class="o">*=</span> <span class="n">ENS1L</span> <span class="o">*</span> <span class="n">ENS3LP</span>
+        <span class="n">A41</span> <span class="o">*=</span> <span class="n">ES1L</span> <span class="o">*</span> <span class="n">ES3LP</span>
+        <span class="n">A33</span> <span class="o">=</span> <span class="n">A44</span> <span class="o">=</span> <span class="n">DGB</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">FS3S3</span><span class="p">)</span>
+        <span class="n">A33</span> <span class="o">*=</span> <span class="n">ES3L</span> <span class="o">*</span> <span class="n">ENS3LP</span>
+        <span class="n">A44</span> <span class="o">*=</span> <span class="n">ENS3L</span> <span class="o">*</span> <span class="n">ES3LP</span>
+        <span class="n">A34</span> <span class="o">=</span> <span class="n">A43</span> <span class="o">=</span> <span class="n">DGB</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">FS3S3</span><span class="p">)</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">S3L</span> <span class="o">*</span> <span class="n">S3LP</span> <span class="o">*</span> <span class="n">SIGMAL</span> <span class="o">*</span> <span class="n">SIGMAL</span><span class="p">)</span>
+        <span class="n">A34</span> <span class="o">*=</span> <span class="n">ENS3L</span> <span class="o">*</span> <span class="n">ENS3LP</span>
+        <span class="n">A43</span> <span class="o">*=</span> <span class="n">ES3L</span> <span class="o">*</span> <span class="n">ES3LP</span>
+
+        <span class="c1">#    Matrix update B=A*B</span>
+        <span class="n">C1</span> <span class="o">=</span> <span class="n">A11</span> <span class="o">*</span> <span class="n">B11</span> <span class="o">+</span> <span class="n">A12</span> <span class="o">*</span> <span class="n">B21</span> <span class="o">+</span> <span class="n">A13</span> <span class="o">*</span> <span class="n">B31</span> <span class="o">+</span> <span class="n">A14</span> <span class="o">*</span> <span class="n">B41</span>
+        <span class="n">C2</span> <span class="o">=</span> <span class="n">A21</span> <span class="o">*</span> <span class="n">B11</span> <span class="o">+</span> <span class="n">A22</span> <span class="o">*</span> <span class="n">B21</span> <span class="o">+</span> <span class="n">A23</span> <span class="o">*</span> <span class="n">B31</span> <span class="o">+</span> <span class="n">A24</span> <span class="o">*</span> <span class="n">B41</span>
+        <span class="n">C3</span> <span class="o">=</span> <span class="n">A31</span> <span class="o">*</span> <span class="n">B11</span> <span class="o">+</span> <span class="n">A32</span> <span class="o">*</span> <span class="n">B21</span> <span class="o">+</span> <span class="n">A33</span> <span class="o">*</span> <span class="n">B31</span> <span class="o">+</span> <span class="n">A34</span> <span class="o">*</span> <span class="n">B41</span>
+        <span class="n">C4</span> <span class="o">=</span> <span class="n">A41</span> <span class="o">*</span> <span class="n">B11</span> <span class="o">+</span> <span class="n">A42</span> <span class="o">*</span> <span class="n">B21</span> <span class="o">+</span> <span class="n">A43</span> <span class="o">*</span> <span class="n">B31</span> <span class="o">+</span> <span class="n">A44</span> <span class="o">*</span> <span class="n">B41</span>
+        <span class="n">B11</span> <span class="o">=</span> <span class="n">C1</span>
+        <span class="n">B21</span> <span class="o">=</span> <span class="n">C2</span>
+        <span class="n">B31</span> <span class="o">=</span> <span class="n">C3</span>
+        <span class="n">B41</span> <span class="o">=</span> <span class="n">C4</span>
+
+        <span class="n">C1</span> <span class="o">=</span> <span class="n">A11</span> <span class="o">*</span> <span class="n">B12</span> <span class="o">+</span> <span class="n">A12</span> <span class="o">*</span> <span class="n">B22</span> <span class="o">+</span> <span class="n">A13</span> <span class="o">*</span> <span class="n">B32</span> <span class="o">+</span> <span class="n">A14</span> <span class="o">*</span> <span class="n">B42</span>
+        <span class="n">C2</span> <span class="o">=</span> <span class="n">A21</span> <span class="o">*</span> <span class="n">B12</span> <span class="o">+</span> <span class="n">A22</span> <span class="o">*</span> <span class="n">B22</span> <span class="o">+</span> <span class="n">A23</span> <span class="o">*</span> <span class="n">B32</span> <span class="o">+</span> <span class="n">A24</span> <span class="o">*</span> <span class="n">B42</span>
+        <span class="n">C3</span> <span class="o">=</span> <span class="n">A31</span> <span class="o">*</span> <span class="n">B12</span> <span class="o">+</span> <span class="n">A32</span> <span class="o">*</span> <span class="n">B22</span> <span class="o">+</span> <span class="n">A33</span> <span class="o">*</span> <span class="n">B32</span> <span class="o">+</span> <span class="n">A34</span> <span class="o">*</span> <span class="n">B42</span>
+        <span class="n">C4</span> <span class="o">=</span> <span class="n">A41</span> <span class="o">*</span> <span class="n">B12</span> <span class="o">+</span> <span class="n">A42</span> <span class="o">*</span> <span class="n">B22</span> <span class="o">+</span> <span class="n">A43</span> <span class="o">*</span> <span class="n">B32</span> <span class="o">+</span> <span class="n">A44</span> <span class="o">*</span> <span class="n">B42</span>
+        <span class="n">B12</span> <span class="o">=</span> <span class="n">C1</span>
+        <span class="n">B22</span> <span class="o">=</span> <span class="n">C2</span>
+        <span class="n">B32</span> <span class="o">=</span> <span class="n">C3</span>
+        <span class="n">B42</span> <span class="o">=</span> <span class="n">C4</span>
+
+        <span class="n">C1</span> <span class="o">=</span> <span class="n">A11</span> <span class="o">*</span> <span class="n">B13</span> <span class="o">+</span> <span class="n">A12</span> <span class="o">*</span> <span class="n">B23</span> <span class="o">+</span> <span class="n">A13</span> <span class="o">*</span> <span class="n">B33</span> <span class="o">+</span> <span class="n">A14</span> <span class="o">*</span> <span class="n">B43</span>
+        <span class="n">C2</span> <span class="o">=</span> <span class="n">A21</span> <span class="o">*</span> <span class="n">B13</span> <span class="o">+</span> <span class="n">A22</span> <span class="o">*</span> <span class="n">B23</span> <span class="o">+</span> <span class="n">A23</span> <span class="o">*</span> <span class="n">B33</span> <span class="o">+</span> <span class="n">A24</span> <span class="o">*</span> <span class="n">B43</span>
+        <span class="n">C3</span> <span class="o">=</span> <span class="n">A31</span> <span class="o">*</span> <span class="n">B13</span> <span class="o">+</span> <span class="n">A32</span> <span class="o">*</span> <span class="n">B23</span> <span class="o">+</span> <span class="n">A33</span> <span class="o">*</span> <span class="n">B33</span> <span class="o">+</span> <span class="n">A34</span> <span class="o">*</span> <span class="n">B43</span>
+        <span class="n">C4</span> <span class="o">=</span> <span class="n">A41</span> <span class="o">*</span> <span class="n">B13</span> <span class="o">+</span> <span class="n">A42</span> <span class="o">*</span> <span class="n">B23</span> <span class="o">+</span> <span class="n">A43</span> <span class="o">*</span> <span class="n">B33</span> <span class="o">+</span> <span class="n">A44</span> <span class="o">*</span> <span class="n">B43</span>
+        <span class="n">B13</span> <span class="o">=</span> <span class="n">C1</span>
+        <span class="n">B23</span> <span class="o">=</span> <span class="n">C2</span>
+        <span class="n">B33</span> <span class="o">=</span> <span class="n">C3</span>
+        <span class="n">B43</span> <span class="o">=</span> <span class="n">C4</span>
+
+        <span class="n">C1</span> <span class="o">=</span> <span class="n">A11</span> <span class="o">*</span> <span class="n">B14</span> <span class="o">+</span> <span class="n">A12</span> <span class="o">*</span> <span class="n">B24</span> <span class="o">+</span> <span class="n">A13</span> <span class="o">*</span> <span class="n">B34</span> <span class="o">+</span> <span class="n">A14</span> <span class="o">*</span> <span class="n">B44</span>
+        <span class="n">C2</span> <span class="o">=</span> <span class="n">A21</span> <span class="o">*</span> <span class="n">B14</span> <span class="o">+</span> <span class="n">A22</span> <span class="o">*</span> <span class="n">B24</span> <span class="o">+</span> <span class="n">A23</span> <span class="o">*</span> <span class="n">B34</span> <span class="o">+</span> <span class="n">A24</span> <span class="o">*</span> <span class="n">B44</span>
+        <span class="n">C3</span> <span class="o">=</span> <span class="n">A31</span> <span class="o">*</span> <span class="n">B14</span> <span class="o">+</span> <span class="n">A32</span> <span class="o">*</span> <span class="n">B24</span> <span class="o">+</span> <span class="n">A33</span> <span class="o">*</span> <span class="n">B34</span> <span class="o">+</span> <span class="n">A34</span> <span class="o">*</span> <span class="n">B44</span>
+        <span class="n">C4</span> <span class="o">=</span> <span class="n">A41</span> <span class="o">*</span> <span class="n">B14</span> <span class="o">+</span> <span class="n">A42</span> <span class="o">*</span> <span class="n">B24</span> <span class="o">+</span> <span class="n">A43</span> <span class="o">*</span> <span class="n">B34</span> <span class="o">+</span> <span class="n">A44</span> <span class="o">*</span> <span class="n">B44</span>
+        <span class="n">B14</span> <span class="o">=</span> <span class="n">C1</span>
+        <span class="n">B24</span> <span class="o">=</span> <span class="n">C2</span>
+        <span class="n">B34</span> <span class="o">=</span> <span class="n">C3</span>
+        <span class="n">B44</span> <span class="o">=</span> <span class="n">C4</span>
+
+        <span class="n">Z</span> <span class="o">+=</span> <span class="n">D</span><span class="p">[</span><span class="n">LP</span><span class="p">]</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="n">LP</span>
+
+    <span class="c1">#    Done computing B = A(N)*...*A(2)*A(1)*I</span>
+    <span class="n">DETW</span> <span class="o">=</span> <span class="n">B44</span> <span class="o">*</span> <span class="n">B22</span> <span class="o">-</span> <span class="n">B24</span> <span class="o">*</span> <span class="n">B42</span>
+
+    <span class="c1">#    Calculate reflectivity coefficients specified by POLSTAT</span>
+    <span class="c1"># IP = +1 fills in ++, +-, -+, --; IP = -1 only fills in -+, --.</span>
+    <span class="k">if</span> <span class="n">IP</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">YA</span><span class="p">[</span><span class="n">POINT</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">B24</span> <span class="o">*</span> <span class="n">B41</span> <span class="o">-</span> <span class="n">B21</span> <span class="o">*</span> <span class="n">B44</span><span class="p">)</span> <span class="o">/</span> <span class="n">DETW</span>  <span class="c1"># ++</span>
+        <span class="n">YB</span><span class="p">[</span><span class="n">POINT</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">B21</span> <span class="o">*</span> <span class="n">B42</span> <span class="o">-</span> <span class="n">B41</span> <span class="o">*</span> <span class="n">B22</span><span class="p">)</span> <span class="o">/</span> <span class="n">DETW</span>  <span class="c1"># +-</span>
+    <span class="n">YC</span><span class="p">[</span><span class="n">POINT</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">B24</span> <span class="o">*</span> <span class="n">B43</span> <span class="o">-</span> <span class="n">B23</span> <span class="o">*</span> <span class="n">B44</span><span class="p">)</span> <span class="o">/</span> <span class="n">DETW</span>  <span class="c1"># -+</span>
+    <span class="n">YD</span><span class="p">[</span><span class="n">POINT</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">B23</span> <span class="o">*</span> <span class="n">B42</span> <span class="o">-</span> <span class="n">B43</span> <span class="o">*</span> <span class="n">B22</span><span class="p">)</span> <span class="o">/</span> <span class="n">DETW</span>  <span class="c1"># --</span></div>
+
+
+
+<div class="viewcode-block" id="magnetic_amplitude">
+<a class="viewcode-back" href="../../../../refl1d.lib.python.magnetic.html#refl1d.lib.numba.magnetic_amplitude">[docs]</a>
+<span class="k">def</span> <span class="nf">magnetic_amplitude</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">rho</span><span class="p">,</span> <span class="n">irho</span><span class="p">,</span> <span class="n">rhoM</span><span class="p">,</span> <span class="n">u1</span><span class="p">,</span> <span class="n">u3</span><span class="p">,</span> <span class="n">KZ</span><span class="p">,</span> <span class="n">rho_index</span><span class="p">,</span> <span class="n">Ra</span><span class="p">,</span> <span class="n">Rb</span><span class="p">,</span> <span class="n">Rc</span><span class="p">,</span> <span class="n">Rd</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    python version of calculation</span>
+<span class="sd">    implicit returns: Ra, Rb, Rc, Rd</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># assert rho_index is None</span>
+    <span class="n">layers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+    <span class="n">points</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">KZ</span><span class="p">)</span>
+
+    <span class="c1"># plus polarization must be before minus polarization because it</span>
+    <span class="c1"># fills in all R++, R+-, R-+, R--, but minus polarization only fills</span>
+    <span class="c1"># in R-+, R--.</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">prange</span><span class="p">(</span><span class="n">points</span><span class="p">):</span>
+        <span class="n">Cr4xa</span><span class="p">(</span><span class="n">layers</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">rho</span><span class="p">,</span> <span class="n">irho</span><span class="p">,</span> <span class="n">rhoM</span><span class="p">,</span> <span class="n">u1</span><span class="p">,</span> <span class="n">u3</span><span class="p">,</span> <span class="n">KZ</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">i</span><span class="p">,</span> <span class="n">Ra</span><span class="p">,</span> <span class="n">Rb</span><span class="p">,</span> <span class="n">Rc</span><span class="p">,</span> <span class="n">Rd</span><span class="p">)</span>
+
+    <span class="c1"># minus polarization</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">prange</span><span class="p">(</span><span class="n">points</span><span class="p">):</span>
+        <span class="n">Cr4xa</span><span class="p">(</span><span class="n">layers</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">rho</span><span class="p">,</span> <span class="n">irho</span><span class="p">,</span> <span class="n">rhoM</span><span class="p">,</span> <span class="n">u1</span><span class="p">,</span> <span class="n">u3</span><span class="p">,</span> <span class="n">KZ</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">i</span><span class="p">,</span> <span class="n">Ra</span><span class="p">,</span> <span class="n">Rb</span><span class="p">,</span> <span class="n">Rc</span><span class="p">,</span> <span class="n">Rd</span><span class="p">)</span></div>
+
+
+
+<span class="n">BASE_GUIDE_ANGLE</span> <span class="o">=</span> <span class="mf">270.0</span>
+
+
+<div class="viewcode-block" id="calculate_u1_u3_py">
+<a class="viewcode-back" href="../../../../refl1d.lib.python.magnetic.html#refl1d.lib.numba.calculate_u1_u3_py">[docs]</a>
+<span class="k">def</span> <span class="nf">calculate_u1_u3_py</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">rhoM</span><span class="p">,</span> <span class="n">thetaM</span><span class="p">,</span> <span class="n">Aguide</span><span class="p">):</span>
+    <span class="n">rotate_M</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="n">thetaM</span> <span class="o">=</span> <span class="n">radians</span><span class="p">(</span><span class="n">thetaM</span><span class="p">)</span>
+    <span class="n">phiH</span> <span class="o">=</span> <span class="n">radians</span><span class="p">(</span><span class="n">Aguide</span> <span class="o">-</span> <span class="n">BASE_GUIDE_ANGLE</span><span class="p">)</span>
+    <span class="n">thetaH</span> <span class="o">=</span> <span class="n">pi</span> <span class="o">/</span> <span class="mf">2.0</span>  <span class="c1"># by convention, H is in y-z plane so theta = pi/2</span>
+
+    <span class="n">sld_h</span> <span class="o">=</span> <span class="n">B2SLD</span> <span class="o">*</span> <span class="n">H</span>
+    <span class="n">sld_m_x</span> <span class="o">=</span> <span class="n">rhoM</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">thetaM</span><span class="p">)</span>
+    <span class="n">sld_m_y</span> <span class="o">=</span> <span class="n">rhoM</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">thetaM</span><span class="p">)</span>
+    <span class="n">sld_m_z</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c1"># by Maxwell&#39;s equations, H_demag = mz so we&#39;ll just cancel it here</span>
+    <span class="c1"># The purpose of AGUIDE is to rotate the z-axis of the sample coordinate</span>
+    <span class="c1"># system so that it is aligned with the quantization axis z, defined to be</span>
+    <span class="c1"># the direction of the magnetic field outside the sample.</span>
+    <span class="k">if</span> <span class="n">rotate_M</span><span class="p">:</span>
+        <span class="c1"># rotate the M vector instead of the transfer matrix!</span>
+        <span class="c1"># First, rotate the M vector about the x axis:</span>
+        <span class="n">new_my</span> <span class="o">=</span> <span class="n">sld_m_z</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">radians</span><span class="p">(</span><span class="n">Aguide</span><span class="p">))</span> <span class="o">+</span> <span class="n">sld_m_y</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">radians</span><span class="p">(</span><span class="n">Aguide</span><span class="p">))</span>
+        <span class="n">new_mz</span> <span class="o">=</span> <span class="n">sld_m_z</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">radians</span><span class="p">(</span><span class="n">Aguide</span><span class="p">))</span> <span class="o">-</span> <span class="n">sld_m_y</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">radians</span><span class="p">(</span><span class="n">Aguide</span><span class="p">))</span>
+        <span class="n">sld_m_y</span><span class="p">,</span> <span class="n">sld_m_z</span> <span class="o">=</span> <span class="n">new_my</span><span class="p">,</span> <span class="n">new_mz</span>
+        <span class="n">sld_h_x</span> <span class="o">=</span> <span class="n">sld_h_y</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">sld_h_z</span> <span class="o">=</span> <span class="n">sld_h</span>
+        <span class="c1"># Then, don&#39;t rotate the transfer matrix</span>
+        <span class="n">Aguide</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">sld_h_x</span> <span class="o">=</span> <span class="n">sld_h</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">thetaH</span><span class="p">)</span>  <span class="c1"># zero</span>
+        <span class="n">sld_h_y</span> <span class="o">=</span> <span class="n">sld_h</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">thetaH</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">phiH</span><span class="p">)</span>
+        <span class="n">sld_h_z</span> <span class="o">=</span> <span class="n">sld_h</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">thetaH</span><span class="p">)</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">phiH</span><span class="p">)</span>
+
+    <span class="n">sld_b_x</span> <span class="o">=</span> <span class="n">sld_h_x</span> <span class="o">+</span> <span class="n">sld_m_x</span>
+    <span class="n">sld_b_y</span> <span class="o">=</span> <span class="n">sld_h_y</span> <span class="o">+</span> <span class="n">sld_m_y</span>
+    <span class="n">sld_b_z</span> <span class="o">=</span> <span class="n">sld_h_z</span> <span class="o">+</span> <span class="n">sld_m_z</span>
+
+    <span class="c1"># avoid divide-by-zero:</span>
+    <span class="n">sld_b_x</span> <span class="o">+=</span> <span class="n">EPS</span> <span class="o">*</span> <span class="p">(</span><span class="n">sld_b_x</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">sld_b_y</span> <span class="o">+=</span> <span class="n">EPS</span> <span class="o">*</span> <span class="p">(</span><span class="n">sld_b_y</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># add epsilon to y, to avoid divide by zero errors?</span>
+    <span class="n">sld_b</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">sld_b_x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">sld_b_y</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">sld_b_z</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">u1_num</span> <span class="o">=</span> <span class="o">+</span><span class="n">sld_b</span> <span class="o">+</span> <span class="n">sld_b_x</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">sld_b_y</span> <span class="o">-</span> <span class="n">sld_b_z</span>
+    <span class="n">u1_den</span> <span class="o">=</span> <span class="o">+</span><span class="n">sld_b</span> <span class="o">+</span> <span class="n">sld_b_x</span> <span class="o">-</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">sld_b_y</span> <span class="o">+</span> <span class="n">sld_b_z</span>
+    <span class="n">u3_num</span> <span class="o">=</span> <span class="o">-</span><span class="n">sld_b</span> <span class="o">+</span> <span class="n">sld_b_x</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">sld_b_y</span> <span class="o">-</span> <span class="n">sld_b_z</span>
+    <span class="n">u3_den</span> <span class="o">=</span> <span class="o">-</span><span class="n">sld_b</span> <span class="o">+</span> <span class="n">sld_b_x</span> <span class="o">-</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">sld_b_y</span> <span class="o">+</span> <span class="n">sld_b_z</span>
+
+    <span class="n">u1</span> <span class="o">=</span> <span class="n">u1_num</span> <span class="o">/</span> <span class="n">u1_den</span>
+    <span class="n">u3</span> <span class="o">=</span> <span class="n">u3_num</span> <span class="o">/</span> <span class="n">u3_den</span>
+    <span class="c1"># print &quot;u1&quot;, u1</span>
+    <span class="c1"># print &quot;u3&quot;, u3</span>
+    <span class="k">return</span> <span class="n">sld_b</span><span class="p">,</span> <span class="n">u1</span><span class="p">,</span> <span class="n">u3</span></div>
+
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        <a class="uplink" href="../../../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

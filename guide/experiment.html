@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Experiment &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
+    <script src="../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Fitting" href="fitting.html" />
+    <link rel="prev" title="Sample Representation" href="sample.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>Experiment</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        «&#160;&#160;<a href="sample.html">Sample Representation</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="fitting.html">Fitting</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="experiment">
+<span id="experiment-guide"></span><h1>Experiment<a class="headerlink" href="#experiment" title="Link to this heading">¶</a></h1>
+<nav class="contents local" id="contents">
+<ul class="simple">
+<li><p><a class="reference internal" href="#direct-calculation" id="id1">Direct Calculation</a></p></li>
+</ul>
+</nav>
+<p>The <a class="reference internal" href="../refl1d.experiment.html#refl1d.experiment.Experiment" title="refl1d.experiment.Experiment"><code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment</span></code></a> object links a
+<a class="reference external" href="sample-guide">sample</a> with an experimental <a class="reference external" href="data-guide">probe</a>.
+The probe defines the Q values and the resolution of the individual
+measurements, and returns the scattering factors associated with the
+different materials in the sample.</p>
+<p>Because our models allow representation based on composition, it is no
+longer trivial to compute the reflectivity from the model.  We now have
+to look up the effective scattering density based on the probe type and
+probe energy.  You’ve already seen this in <a class="reference internal" href="sample.html#new-layers"><span class="std std-ref">Subclassing Layer</span></a>:
+the render method for the layer requires the probe to look up the material
+scattering factors.</p>
+<section id="direct-calculation">
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Direct Calculation</a><a class="headerlink" href="#direct-calculation" title="Link to this heading">¶</a></h2>
+<p>Rather than using <code class="xref py py-class docutils literal notranslate"><span class="pre">Stack</span> <span class="pre">&lt;refl1d.model.Stack</span></code>,
+<a class="reference internal" href="../refl1d.probe.html#refl1d.probe.Probe" title="refl1d.probe.Probe"><code class="xref py py-class docutils literal notranslate"><span class="pre">Probe</span></code></a> and
+class:<cite>Experiment &lt;refl1d.experiment.Experiment</cite>,
+we  can compute reflectivities directly with the functions in
+<a class="reference internal" href="../refl1d.reflectivity.html#module-refl1d.reflectivity" title="refl1d.reflectivity"><code class="xref py py-mod docutils literal notranslate"><span class="pre">refl1d.reflectivity</span></code></a>.  These routines provide the raw
+calculation engines for the optical matrix formalism, converting
+microslab models of the sample into complex reflectivity amplitudes,
+and convolving the resulting reflectivity with the instrument resolution.</p>
+<p>The following performs a complete calculation for a silicon
+substrate with 5 Å roughness using neutrons.  The theory is sampled
+at intervals of 0.001, which is convolved with a 1% <span class="math notranslate nohighlight">\(\Delta Q/Q\)</span> resolution
+function to yield reflectivities at intervals of 0.01.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">arange</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">refl1d.reflectivity</span> <span class="kn">import</span> <span class="n">reflectivity_amplitude</span> <span class="k">as</span> <span class="n">reflamp</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">refl1d.reflectivity</span> <span class="kn">import</span> <span class="n">convolve</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Qin</span> <span class="o">=</span> <span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mf">0.21</span><span class="p">,</span><span class="mf">0.001</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">w</span><span class="p">,</span><span class="n">rho</span><span class="p">,</span><span class="n">irho</span><span class="p">,</span><span class="n">sigma</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span><span class="mf">2.07</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">5</span><span class="p">),(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># the last layer has no interface</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">r</span> <span class="o">=</span> <span class="n">reflamp</span><span class="p">(</span><span class="n">kz</span><span class="o">=</span><span class="n">Qin</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="n">w</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="n">rho</span><span class="p">,</span> <span class="n">irho</span><span class="o">=</span><span class="n">irho</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Rin</span> <span class="o">=</span> <span class="p">(</span><span class="n">r</span><span class="o">*</span><span class="n">r</span><span class="o">.</span><span class="n">conj</span><span class="p">())</span><span class="o">.</span><span class="n">real</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Q</span> <span class="o">=</span> <span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mf">0.2</span><span class="p">,</span><span class="mf">0.01</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dQ</span> <span class="o">=</span> <span class="n">Q</span><span class="o">*</span><span class="mf">0.01</span> <span class="c1"># resolution dQ/Q = 0.01</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">R</span> <span class="o">=</span> <span class="n">convolve</span><span class="p">(</span><span class="n">Qin</span><span class="p">,</span> <span class="n">Rin</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">dQ</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;Q: </span><span class="si">%.2f</span><span class="s2">  R: </span><span class="si">%.5e</span><span class="s2">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">Qi</span><span class="p">,</span><span class="n">Ri</span><span class="p">)</span> <span class="k">for</span> <span class="n">Qi</span><span class="p">,</span><span class="n">Ri</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span><span class="n">R</span><span class="p">)))</span>
+<span class="go">Q: 0.00  R: 1.00000e+00</span>
+<span class="go">Q: 0.01  R: 3.11332e-02</span>
+<span class="go">Q: 0.02  R: 3.30684e-03</span>
+<span class="go">...</span>
+<span class="go">Q: 0.19  R: 2.10084e-07</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        «&#160;&#160;<a href="sample.html">Sample Representation</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="fitting.html">Fitting</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

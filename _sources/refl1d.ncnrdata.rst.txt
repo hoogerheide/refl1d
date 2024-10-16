@@ -1,0 +1,7 @@
+refl1d.ncnrdata module
+======================
+
+.. automodule:: refl1d.ncnrdata
+   :members:
+   :undoc-members:
+   :show-inheritance:

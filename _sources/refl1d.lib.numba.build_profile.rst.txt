@@ -1,0 +1,7 @@
+refl1d.lib.numba.build\_profile module
+======================================
+
+.. automodule:: refl1d.lib.numba.build_profile
+   :members:
+   :undoc-members:
+   :show-inheritance:

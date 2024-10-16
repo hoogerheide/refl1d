@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>refl1d.dist &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <script src="../../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>refl1d.dist</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <h1>Source code for refl1d.dist</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Inhomogeneous samples</span>
+
+<span class="sd">In the presence of samples with short range order on scale of the coherence</span>
+<span class="sd">length of the probe in the plane, but long range disorder following some</span>
+<span class="sd">distribution of parameter values, the reflectivity can be computed from</span>
+<span class="sd">a weighted incoherent sum of the reflectivities for different values of</span>
+<span class="sd">the parameter.</span>
+
+<span class="sd">DistristributionExperiment allows the model to be computed for a single</span>
+<span class="sd">varying parameter.  Multi-parameter dispersion models are not available.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">bumps.parameter</span> <span class="kn">import</span> <span class="n">Parameter</span><span class="p">,</span> <span class="n">to_dict</span>
+
+<span class="kn">from</span> <span class="nn">.experiment</span> <span class="kn">import</span> <span class="n">ExperimentBase</span>
+
+
+<div class="viewcode-block" id="Weights">
+<a class="viewcode-back" href="../../refl1d.dist.html#refl1d.dist.Weights">[docs]</a>
+<span class="k">class</span> <span class="nc">Weights</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parameterized distribution for use in DistributionExperiment.</span>
+
+<span class="sd">    To support non-uniform experiments, we must bin the possible values</span>
+<span class="sd">    for the parameter and compute the theory function for one parameter</span>
+<span class="sd">    value per bin.  The weighted sum of the resulting theory functions</span>
+<span class="sd">    is the value that we compare to the data.</span>
+
+<span class="sd">    Performing this analysis requires a cumulative density function which</span>
+<span class="sd">    can return the integrated value of the probability density from -inf</span>
+<span class="sd">    to x.  The total density in each bin is then the difference between</span>
+<span class="sd">    the cumulative densities at the edges.  If the distribution is wider</span>
+<span class="sd">    than the range, then the tails need to be truncated and the bins</span>
+<span class="sd">    reweighted to a total density of 1, or the tail density can be added</span>
+<span class="sd">    to the first and last bins.  Weights of zero are not returned.  Note</span>
+<span class="sd">    that if the tails are truncated, this may result in no weights being</span>
+<span class="sd">    returned.</span>
+
+<span class="sd">    The vector *edges* contains the bin edges for the distribution.  The</span>
+<span class="sd">    function *cdf* returns the cumulative density function at the edges.</span>
+<span class="sd">    The *cdf* function must implement the scipy.stats interface, with</span>
+<span class="sd">    function signature f(x, a1, a2, ..., loc=0, scale=1).  The list *args*</span>
+<span class="sd">    defines the arguments a1, a2, etc.  The underlying parameters are</span>
+<span class="sd">    available as args[i].  Similarly, *loc* and *scale* define the</span>
+<span class="sd">    distribution center and width.  Use *truncated=False* if you want</span>
+<span class="sd">    the distribution tails to be included in the weights.</span>
+
+<span class="sd">    SciPy distribution D is used by specifying cdf=scipy.stats.D.cdf.</span>
+<span class="sd">    Useful distributions include::</span>
+
+<span class="sd">        norm      Gaussian distribution.</span>
+<span class="sd">        halfnorm  Right half of a gaussian.</span>
+<span class="sd">        triang    Triangle distribution from loc up to loc+args[0]*scale</span>
+<span class="sd">                  and down to loc+scale.  Use loc=edges[0], scale=edges[-1]</span>
+<span class="sd">                  and args=[0.5] to define a symmetric triangle in the range</span>
+<span class="sd">                  of parameter P.</span>
+<span class="sd">        uniform   Flat from loc to loc+scale. Use loc=edges[0], scale=edges[-1]</span>
+<span class="sd">                  to define P as uniform over the range.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">edges</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cdf</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(),</span> <span class="n">loc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">truncated</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">edges</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cdf</span> <span class="o">=</span> <span class="n">cdf</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">truncated</span> <span class="o">=</span> <span class="n">truncated</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">loc</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">loc</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">scale</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span><span class="p">]</span>
+
+<div class="viewcode-block" id="Weights.parameters">
+<a class="viewcode-back" href="../../refl1d.dist.html#refl1d.dist.Weights.parameters">[docs]</a>
+    <span class="k">def</span> <span class="nf">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;args&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;loc&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">loc</span><span class="p">,</span> <span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="Weights.to_dict">
+<a class="viewcode-back" href="../../refl1d.dist.html#refl1d.dist.Weights.to_dict">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">to_dict</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="s2">&quot;edges&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">edges</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+                <span class="s2">&quot;cdf&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cdf</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>  <span class="c1"># TODO: can&#39;t lookup name</span>
+                <span class="s2">&quot;args&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span>
+                <span class="s2">&quot;loc&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">loc</span><span class="p">,</span>
+                <span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">,</span>
+                <span class="s2">&quot;truncated&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">truncated</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Find weights and normalize the sum to 1</span>
+        <span class="n">centers</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">loc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loc</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">scale</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">]</span>
+        <span class="n">cumulative_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">edges</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="n">loc</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">truncated</span><span class="p">:</span>
+            <span class="n">cumulative_weights</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">cumulative_weights</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span>
+        <span class="n">relative_weights</span> <span class="o">=</span> <span class="n">cumulative_weights</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="n">cumulative_weights</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">total_weight</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">relative_weights</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">total_weight</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">iter</span><span class="p">([])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">weights</span> <span class="o">=</span> <span class="n">relative_weights</span> <span class="o">/</span> <span class="n">total_weight</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="n">weights</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">centers</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">weights</span><span class="p">[</span><span class="n">idx</span><span class="p">]))</span></div>
+
+
+
+<div class="viewcode-block" id="DistributionExperiment">
+<a class="viewcode-back" href="../../refl1d.dist.html#refl1d.dist.DistributionExperiment">[docs]</a>
+<span class="k">class</span> <span class="nc">DistributionExperiment</span><span class="p">(</span><span class="n">ExperimentBase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute reflectivity from a non-uniform sample.</span>
+
+<span class="sd">    *P* is the target parameter for the model, which takes on the values</span>
+<span class="sd">    from *distribution* in the context of the *experiment*.  The result</span>
+<span class="sd">    is the weighted sum of the theory curves after setting *P.value* to</span>
+<span class="sd">    each distribution value. Clearly, *P* should not be a fitted parameter,</span>
+<span class="sd">    but the remaining experiment parameters can be fitted, as can the</span>
+<span class="sd">    parameters of the distribution.</span>
+
+<span class="sd">    If *coherent* is true, then the reflectivity of the mixture is computed</span>
+<span class="sd">    from the coherent sum rather than the incoherent sum.</span>
+
+<span class="sd">    See :class:`Weights` for a description of how to set up the distribution.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiment</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">P</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">coherent</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">P</span> <span class="o">=</span> <span class="n">P</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span> <span class="o">=</span> <span class="n">distribution</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">experiment</span> <span class="o">=</span> <span class="n">experiment</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">probe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiment</span><span class="o">.</span><span class="n">probe</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coherent</span> <span class="o">=</span> <span class="n">coherent</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_substrate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiment</span><span class="o">.</span><span class="n">sample</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">material</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_surface</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiment</span><span class="o">.</span><span class="n">sample</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">material</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># Cache calculated profiles/reflectivities</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="DistributionExperiment.parameters">
+<a class="viewcode-back" href="../../refl1d.dist.html#refl1d.dist.DistributionExperiment.parameters">[docs]</a>
+    <span class="k">def</span> <span class="nf">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;distribution&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span>
+            <span class="s2">&quot;experiment&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiment</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="DistributionExperiment.to_dict">
+<a class="viewcode-back" href="../../refl1d.dist.html#refl1d.dist.DistributionExperiment.to_dict">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">to_dict</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="s2">&quot;P&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">,</span>  <span class="c1"># Note: use parameter id to restore</span>
+                <span class="s2">&quot;distribution&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="p">,</span>
+                <span class="s2">&quot;experiment&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiment</span><span class="p">,</span>
+                <span class="c1"># Don&#39;t need self.probe since it is the experiment probe.</span>
+                <span class="s2">&quot;coherent&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">coherent</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DistributionExperiment.reflectivity">
+<a class="viewcode-back" href="../../refl1d.dist.html#refl1d.dist.DistributionExperiment.reflectivity">[docs]</a>
+    <span class="k">def</span> <span class="nf">reflectivity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;reflectivity&quot;</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="n">interpolation</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">:</span>
+            <span class="n">calc_R</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">w</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">w</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">x</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">experiment</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+                    <span class="n">Qx</span><span class="p">,</span> <span class="n">Rx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiment</span><span class="o">.</span><span class="n">_reflamp</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">coherent</span><span class="p">:</span>
+                        <span class="n">calc_R</span> <span class="o">+=</span> <span class="n">w</span> <span class="o">*</span> <span class="n">Rx</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">calc_R</span> <span class="o">+=</span> <span class="n">w</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">Rx</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">coherent</span><span class="p">:</span>
+                <span class="n">calc_R</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">calc_R</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+            <span class="n">Q</span><span class="p">,</span> <span class="n">R</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">probe</span><span class="o">.</span><span class="n">apply_beam</span><span class="p">(</span><span class="n">Qx</span><span class="p">,</span> <span class="n">calc_R</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="n">resolution</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="n">interpolation</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">Q</span><span class="p">,</span> <span class="n">R</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_max_P</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="p">)</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+
+<div class="viewcode-block" id="DistributionExperiment.smooth_profile">
+<a class="viewcode-back" href="../../refl1d.dist.html#refl1d.dist.DistributionExperiment.smooth_profile">[docs]</a>
+    <span class="k">def</span> <span class="nf">smooth_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dz</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute a density profile for the material</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="s2">&quot;smooth_profile&quot;</span><span class="p">,</span> <span class="n">dz</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">:</span>
+            <span class="n">P</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max_P</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="o">.</span><span class="n">value</span> <span class="o">!=</span> <span class="n">P</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">P</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">experiment</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiment</span><span class="o">.</span><span class="n">smooth_profile</span><span class="p">(</span><span class="n">dz</span><span class="o">=</span><span class="n">dz</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="DistributionExperiment.step_profile">
+<a class="viewcode-back" href="../../refl1d.dist.html#refl1d.dist.DistributionExperiment.step_profile">[docs]</a>
+    <span class="k">def</span> <span class="nf">step_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute a scattering length density profile</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="s2">&quot;step_profile&quot;</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">:</span>
+            <span class="n">P</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max_P</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="o">.</span><span class="n">value</span> <span class="o">!=</span> <span class="n">P</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">P</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">experiment</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiment</span><span class="o">.</span><span class="n">step_profile</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="DistributionExperiment.plot_profile">
+<a class="viewcode-back" href="../../refl1d.dist.html#refl1d.dist.DistributionExperiment.plot_profile">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plot_shift</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
+        <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+        <span class="kn">from</span> <span class="nn">bumps.plotutil</span> <span class="kn">import</span> <span class="n">auto_shift</span>
+
+        <span class="n">trans</span> <span class="o">=</span> <span class="n">auto_shift</span><span class="p">(</span><span class="n">plot_shift</span><span class="p">)</span>
+        <span class="n">z</span><span class="p">,</span> <span class="n">rho</span><span class="p">,</span> <span class="n">irho</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">step_profile</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">rho</span><span class="p">,</span> <span class="s2">&quot;-g&quot;</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">irho</span><span class="p">,</span> <span class="s2">&quot;-b&quot;</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">trans</span><span class="p">)</span>
+        <span class="n">z</span><span class="p">,</span> <span class="n">rho</span><span class="p">,</span> <span class="n">irho</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smooth_profile</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">rho</span><span class="p">,</span> <span class="s2">&quot;:g&quot;</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">irho</span><span class="p">,</span> <span class="s2">&quot;:b&quot;</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">trans</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">([</span><span class="s2">&quot;rho&quot;</span><span class="p">,</span> <span class="s2">&quot;irho&quot;</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="DistributionExperiment.plot_weights">
+<a class="viewcode-back" href="../../refl1d.dist.html#refl1d.dist.DistributionExperiment.plot_weights">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+        <span class="n">x</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">stem</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">100</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">w</span><span class="p">))</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Weight distribution&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Percentage&quot;</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

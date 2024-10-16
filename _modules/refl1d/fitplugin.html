@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>refl1d.fitplugin &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <script src="../../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>refl1d.fitplugin</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <h1>Source code for refl1d.fitplugin</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Reflectivity plugin for fitting GUI.</span>
+
+<span class="sd">Note that the fitting infrastructure is still heavily tied to the reflectivity</span>
+<span class="sd">modeling program, and this represents only the first tiny steps to separating</span>
+<span class="sd">the two.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;data_view&quot;</span><span class="p">,</span> <span class="s2">&quot;model_view&quot;</span><span class="p">,</span> <span class="s2">&quot;new_model&quot;</span><span class="p">,</span> <span class="s2">&quot;calc_errors&quot;</span><span class="p">,</span> <span class="s2">&quot;show_errors&quot;</span><span class="p">]</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">names</span> <span class="k">as</span> <span class="n">refl</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">__version__</span>
+<span class="kn">from</span> <span class="nn">.errors</span> <span class="kn">import</span> <span class="n">calc_errors</span><span class="p">,</span> <span class="n">show_errors</span>
+
+<span class="c1"># List of modules that contain dataclasses for the saved json file format</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">names</span><span class="p">,</span> <span class="n">material</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">magnetism</span><span class="p">,</span> <span class="n">probe</span><span class="p">,</span> <span class="n">experiment</span>
+
+
+<span class="c1"># These are names used by the driver</span>
+<div class="viewcode-block" id="data_view">
+<a class="viewcode-back" href="../../refl1d.fitplugin.html#refl1d.fitplugin.data_view">[docs]</a>
+<span class="k">def</span> <span class="nf">data_view</span><span class="p">():</span>
+    <span class="kn">from</span> <span class="nn">.view.data_view</span> <span class="kn">import</span> <span class="n">DataView</span>
+
+    <span class="k">return</span> <span class="n">DataView</span></div>
+
+
+
+<div class="viewcode-block" id="model_view">
+<a class="viewcode-back" href="../../refl1d.fitplugin.html#refl1d.fitplugin.model_view">[docs]</a>
+<span class="k">def</span> <span class="nf">model_view</span><span class="p">():</span>
+    <span class="kn">from</span> <span class="nn">.view.model_view</span> <span class="kn">import</span> <span class="n">ModelView</span>
+
+    <span class="k">return</span> <span class="n">ModelView</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">load_model</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+    <span class="c1"># TODO: bumps plugin api needs to allow options for loader</span>
+    <span class="n">options</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">filename</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.so&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">filename</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.dll&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">filename</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.dyld&quot;</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">garefl</span>
+
+        <span class="n">problem</span> <span class="o">=</span> <span class="n">garefl</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">problem</span>
+    <span class="k">elif</span> <span class="n">filename</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.staj&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">filename</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.sta&quot;</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">.stajconvert</span> <span class="kn">import</span> <span class="n">load_mlayer</span>
+
+        <span class="k">return</span> <span class="n">refl</span><span class="o">.</span><span class="n">FitProblem</span><span class="p">(</span><span class="n">load_mlayer</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span>
+        <span class="c1"># fit_all(problem.fitness, pmp=20)</span>
+    <span class="k">elif</span> <span class="n">filename</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.zip&quot;</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">bumps.fitproblem</span> <span class="kn">import</span> <span class="n">load_problem</span>
+
+        <span class="c1"># Note: bumps.vfs.vfs_init() must be called very early</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">bumps.vfs</span> <span class="kn">import</span> <span class="n">ZipFS</span>
+        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;need newer bumps to load model from zip&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">ZipFS</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span> <span class="k">as</span> <span class="n">zf</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">zf</span><span class="o">.</span><span class="n">filelist</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">filename</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.py&quot;</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="n">load_problem</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">filename</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.json&quot;</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">bumps.serialize</span> <span class="kn">import</span> <span class="n">load</span>
+
+        <span class="k">return</span> <span class="n">load</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span> <span class="nf">save_json</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">basename</span><span class="p">):</span>
+    <span class="kn">from</span> <span class="nn">bumps.serialize</span> <span class="kn">import</span> <span class="n">save</span>
+
+    <span class="n">json_filename</span> <span class="o">=</span> <span class="n">basename</span> <span class="o">+</span> <span class="s2">&quot;-expt.json&quot;</span>
+    <span class="n">save</span><span class="p">(</span><span class="n">json_filename</span><span class="p">,</span> <span class="n">problem</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="new_model">
+<a class="viewcode-back" href="../../refl1d.fitplugin.html#refl1d.fitplugin.new_model">[docs]</a>
+<span class="k">def</span> <span class="nf">new_model</span><span class="p">():</span>
+    <span class="n">stack</span> <span class="o">=</span> <span class="n">refl</span><span class="o">.</span><span class="n">silicon</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span> <span class="o">|</span> <span class="n">refl</span><span class="o">.</span><span class="n">air</span>
+    <span class="n">instrument</span> <span class="o">=</span> <span class="n">refl</span><span class="o">.</span><span class="n">NCNR</span><span class="o">.</span><span class="n">NG1</span><span class="p">()</span>
+    <span class="n">probe</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">probe</span><span class="p">(</span><span class="n">T</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">200</span><span class="p">),</span> <span class="n">Tlo</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">slits_at_Tlo</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="n">refl</span><span class="o">.</span><span class="n">Experiment</span><span class="p">(</span><span class="n">sample</span><span class="o">=</span><span class="n">stack</span><span class="p">,</span> <span class="n">probe</span><span class="o">=</span><span class="n">probe</span><span class="p">)</span>
+    <span class="n">problem</span> <span class="o">=</span> <span class="n">refl</span><span class="o">.</span><span class="n">FitProblem</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">problem</span></div>
+
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

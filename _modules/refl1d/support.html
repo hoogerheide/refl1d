@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>refl1d.support &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <script src="../../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>refl1d.support</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <h1>Source code for refl1d.support</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Support files for the application.</span>
+
+<span class="sd">This includes tools to help with testing, documentation, command line</span>
+<span class="sd">parsing, etc. which are specific to this application, rather than general</span>
+<span class="sd">utilities.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+
+
+<div class="viewcode-block" id="get_data_path">
+<a class="viewcode-back" href="../../refl1d.support.html#refl1d.support.get_data_path">[docs]</a>
+<span class="k">def</span> <span class="nf">get_data_path</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Locate the examples directory.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Check for data path in the environment</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="s2">&quot;REFL1D_DATA&quot;</span>
+    <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Path in environment </span><span class="si">%s</span><span class="s2"> not a directory&quot;</span> <span class="o">%</span> <span class="n">key</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">path</span>
+
+    <span class="c1"># Check for data next to the package.</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">&quot;doc/examples&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Could not find sample data&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="n">_REGISTRY</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="c1"># List the example datasets that are needed for demos and doctests.</span>
+    <span class="c1"># Each line looks like:</span>
+    <span class="c1">#</span>
+    <span class="c1">#     &#39;dataset&#39;: [&#39;subdirectory&#39;, &#39;filename&#39;],</span>
+    <span class="c1">#</span>
+    <span class="s2">&quot;spin_valve01.refl&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;spinvalve&quot;</span><span class="p">,</span> <span class="s2">&quot;spin_valve01.refl&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;chale207.refl&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;polymer&quot;</span><span class="p">,</span> <span class="s2">&quot;10ndt001.refl&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;10ndt001.refl&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;polymer&quot;</span><span class="p">,</span> <span class="s2">&quot;10ndt001.refl&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;lha03_255G.refl&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;spinvalve&quot;</span><span class="p">,</span> <span class="s2">&quot;n101Gc1.refl&quot;</span><span class="p">],</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="sample_data">
+<a class="viewcode-back" href="../../refl1d.support.html#refl1d.support.sample_data">[docs]</a>
+<span class="k">def</span> <span class="nf">sample_data</span><span class="p">(</span><span class="n">file</span><span class="p">):</span>
+    <span class="n">examples</span> <span class="o">=</span> <span class="n">get_data_path</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">_REGISTRY</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">examples</span><span class="p">,</span> <span class="o">*</span><span class="n">_REGISTRY</span><span class="p">[</span><span class="n">file</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sample dataset </span><span class="si">%s</span><span class="s2"> not available&quot;</span> <span class="o">%</span> <span class="n">file</span><span class="p">)</span></div>
+
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

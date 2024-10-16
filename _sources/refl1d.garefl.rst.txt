@@ -1,0 +1,7 @@
+refl1d.garefl module
+====================
+
+.. automodule:: refl1d.garefl
+   :members:
+   :undoc-members:
+   :show-inheritance:

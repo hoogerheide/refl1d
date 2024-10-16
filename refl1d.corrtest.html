@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>refl1d.corrtest module &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="_static/plot_directive.css" />
+    <script src="_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>refl1d.corrtest module</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="module-refl1d.corrtest">
+<span id="refl1d-corrtest-module"></span><h1>refl1d.corrtest module<a class="headerlink" href="#module-refl1d.corrtest" title="Link to this heading">¶</a></h1>
+<p>Residual correlation test.</p>
+<p>INCOMPLETE UNUSED UNTESTED CODE</p>
+<p>Returns the probability of seeing the given structure in the residuals.</p>
+<p>The residuals are assumed to be e ~ N(0, 1).  Gross deviations from this
+form will already be accounted for in the chisq statistic, and can be
+ignored here.  We do this by translating the residual into a z-scored
+residual, which should be in</p>
+<p>Protects against an incorrect estimation of the uncertainty in the data,
+which is anyway already covered by the chisq cost function.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.corrtest.deriv">
+<span class="sig-prename descclassname"><span class="pre">refl1d.corrtest.</span></span><span class="sig-name descname"><span class="pre">deriv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">R</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dR</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">degree</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/corrtest.html#deriv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.corrtest.deriv" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.corrtest.plot">
+<span class="sig-prename descclassname"><span class="pre">refl1d.corrtest.</span></span><span class="sig-name descname"><span class="pre">plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/corrtest.html#plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.corrtest.plot" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.corrtest.plot_deriv">
+<span class="sig-prename descclassname"><span class="pre">refl1d.corrtest.</span></span><span class="sig-name descname"><span class="pre">plot_deriv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/corrtest.html#plot_deriv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.corrtest.plot_deriv" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.corrtest.plot_transform">
+<span class="sig-prename descclassname"><span class="pre">refl1d.corrtest.</span></span><span class="sig-name descname"><span class="pre">plot_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">substrate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surround</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/corrtest.html#plot_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.corrtest.plot_transform" title="Link to this definition">¶</a></dt>
+<dd><p>Plot the Fresnel-normalized reflectivity associated with the probe.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.corrtest.residual_nllf">
+<span class="sig-prename descclassname"><span class="pre">refl1d.corrtest.</span></span><span class="sig-name descname"><span class="pre">residual_nllf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/corrtest.html#residual_nllf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.corrtest.residual_nllf" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

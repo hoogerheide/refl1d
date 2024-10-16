@@ -1,0 +1,19 @@
+refl1d.lib package
+==================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   refl1d.lib.numba
+   refl1d.lib.python
+
+Module contents
+---------------
+
+.. automodule:: refl1d.lib
+   :members:
+   :undoc-members:
+   :show-inheritance:

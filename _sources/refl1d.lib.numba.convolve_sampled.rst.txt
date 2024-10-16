@@ -1,0 +1,7 @@
+refl1d.lib.numba.convolve\_sampled module
+=========================================
+
+.. automodule:: refl1d.lib.numba.convolve_sampled
+   :members:
+   :undoc-members:
+   :show-inheritance:

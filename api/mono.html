@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>mono - Freeform - Monotonic Spline &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
+    <script src="../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="names - Public API" href="names.html" />
+    <link rel="prev" title="model - Reflectivity Models" href="model.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>mono - Freeform - Monotonic Spline</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        «&#160;&#160;<a href="model.html">model - Reflectivity Models</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="names.html">names - Public API</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="mono-freeform-monotonic-spline">
+<h1>mono - Freeform - Monotonic Spline<a class="headerlink" href="#mono-freeform-monotonic-spline" title="Link to this heading">¶</a></h1>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../refl1d.mono.html#refl1d.mono.FreeInterface" title="refl1d.mono.FreeInterface"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FreeInterface</span></code></a></p></td>
+<td><p>A freeform section of the sample modeled with monotonic splines.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../refl1d.mono.html#refl1d.mono.FreeLayer" title="refl1d.mono.FreeLayer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FreeLayer</span></code></a></p></td>
+<td><p>A freeform section of the sample modeled with splines.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../refl1d.mono.html#refl1d.mono.inflections" title="refl1d.mono.inflections"><code class="xref py py-obj docutils literal notranslate"><span class="pre">inflections</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+<p id="module-refl1d.mono">Monotonic spline modeling for free interfaces</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="refl1d.mono.FreeInterface">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">refl1d.mono.</span></span><span class="sig-name descname"><span class="pre">FreeInterface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">thickness</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interface</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">below</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">above</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Interface'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/mono.html#FreeInterface"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.mono.FreeInterface" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../refl1d.model.html#refl1d.model.Layer" title="refl1d.model.Layer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Layer</span></code></a></p>
+<p>A freeform section of the sample modeled with monotonic splines.</p>
+<p>Layers have a slope of zero at the ends, so the automatically blend
+with slabs.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.mono.FreeInterface.above">
+<span class="sig-name descname"><span class="pre">above</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#refl1d.mono.FreeInterface.above" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.mono.FreeInterface.below">
+<span class="sig-name descname"><span class="pre">below</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#refl1d.mono.FreeInterface.below" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.mono.FreeInterface.constraints">
+<span class="sig-name descname"><span class="pre">constraints</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.mono.FreeInterface.constraints" title="Link to this definition">¶</a></dt>
+<dd><p>Constraints</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.mono.FreeInterface.dp">
+<span class="sig-name descname"><span class="pre">dp</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.mono.FreeInterface.dp" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.mono.FreeInterface.dz">
+<span class="sig-name descname"><span class="pre">dz</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.mono.FreeInterface.dz" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.mono.FreeInterface.find">
+<span class="sig-name descname"><span class="pre">find</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.mono.FreeInterface.find" title="Link to this definition">¶</a></dt>
+<dd><p>Find the layer at depth z.</p>
+<p>Returns layer, start, end</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.mono.FreeInterface.interface">
+<span class="sig-name descname"><span class="pre">interface</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#refl1d.mono.FreeInterface.interface" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="refl1d.mono.FreeInterface.ismagnetic">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ismagnetic</span></span><a class="headerlink" href="#refl1d.mono.FreeInterface.ismagnetic" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.mono.FreeInterface.layer_parameters">
+<span class="sig-name descname"><span class="pre">layer_parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.mono.FreeInterface.layer_parameters" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.mono.FreeInterface.magnetism">
+<span class="sig-name descname"><span class="pre">magnetism</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../refl1d.magnetism.html#refl1d.magnetism.BaseMagnetism" title="refl1d.magnetism.BaseMagnetism"><span class="pre">BaseMagnetism</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#refl1d.mono.FreeInterface.magnetism" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.mono.FreeInterface.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#refl1d.mono.FreeInterface.name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.mono.FreeInterface.parameters">
+<span class="sig-name descname"><span class="pre">parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/mono.html#FreeInterface.parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.mono.FreeInterface.parameters" title="Link to this definition">¶</a></dt>
+<dd><p>Returns a dictionary of parameters specific to the layer.  These will
+be added to the dictionary containing interface, thickness and magnetism
+parameters.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.mono.FreeInterface.penalty">
+<span class="sig-name descname"><span class="pre">penalty</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.mono.FreeInterface.penalty" title="Link to this definition">¶</a></dt>
+<dd><p>Return a penalty value associated with the layer.  This should be
+zero if the parameters are valid, and increasing as the parameters
+become more invalid.  For example, if total volume fraction exceeds
+unity, then the penalty would be the amount by which it exceeds
+unity, or if z values must be sorted, then penalty would be the
+amount by which they are unsorted.</p>
+<p>Note that penalties are handled separately from any probability of
+seeing a combination of layer parameters; the final solution to the
+problem should not include any penalized points.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.mono.FreeInterface.profile">
+<span class="sig-name descname"><span class="pre">profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Pz</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/mono.html#FreeInterface.profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.mono.FreeInterface.profile" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.mono.FreeInterface.render">
+<span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">probe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slabs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/mono.html#FreeInterface.render"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.mono.FreeInterface.render" title="Link to this definition">¶</a></dt>
+<dd><p>Use the probe to render the layer into a microslab representation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.mono.FreeInterface.thickness">
+<span class="sig-name descname"><span class="pre">thickness</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span></em><a class="headerlink" href="#refl1d.mono.FreeInterface.thickness" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.mono.FreeInterface.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/mono.html#FreeInterface.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.mono.FreeInterface.to_dict" title="Link to this definition">¶</a></dt>
+<dd><p>Return a dictionary representation of the Slab object</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="refl1d.mono.FreeLayer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">refl1d.mono.</span></span><span class="sig-name descname"><span class="pre">FreeLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">below</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">above</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thickness</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">irho</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Freeform'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/mono.html#FreeLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.mono.FreeLayer" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../refl1d.model.html#refl1d.model.Layer" title="refl1d.model.Layer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Layer</span></code></a></p>
+<p>A freeform section of the sample modeled with splines.</p>
+<p>sld (rho) and imaginary sld (irho) can be modeled with a separate
+number of control points. The control points can be equally spaced
+in the layers unless rhoz or irhoz are specified. If the z values
+are given, they must be in the range [0, 1].  One control point is
+anchored at either end, so there are two fewer z values than controls
+if z values are given.</p>
+<p>Layers have a slope of zero at the ends, so the automatically blend
+with slabs.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.mono.FreeLayer.constraints">
+<span class="sig-name descname"><span class="pre">constraints</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.mono.FreeLayer.constraints" title="Link to this definition">¶</a></dt>
+<dd><p>Constraints</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.mono.FreeLayer.find">
+<span class="sig-name descname"><span class="pre">find</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.mono.FreeLayer.find" title="Link to this definition">¶</a></dt>
+<dd><p>Find the layer at depth z.</p>
+<p>Returns layer, start, end</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.mono.FreeLayer.interface">
+<span class="sig-name descname"><span class="pre">interface</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#refl1d.mono.FreeLayer.interface" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="refl1d.mono.FreeLayer.ismagnetic">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ismagnetic</span></span><a class="headerlink" href="#refl1d.mono.FreeLayer.ismagnetic" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.mono.FreeLayer.layer_parameters">
+<span class="sig-name descname"><span class="pre">layer_parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.mono.FreeLayer.layer_parameters" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.mono.FreeLayer.magnetism">
+<span class="sig-name descname"><span class="pre">magnetism</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../refl1d.magnetism.html#refl1d.magnetism.BaseMagnetism" title="refl1d.magnetism.BaseMagnetism"><span class="pre">BaseMagnetism</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#refl1d.mono.FreeLayer.magnetism" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.mono.FreeLayer.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#refl1d.mono.FreeLayer.name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.mono.FreeLayer.parameters">
+<span class="sig-name descname"><span class="pre">parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/mono.html#FreeLayer.parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.mono.FreeLayer.parameters" title="Link to this definition">¶</a></dt>
+<dd><p>Returns a dictionary of parameters specific to the layer.  These will
+be added to the dictionary containing interface, thickness and magnetism
+parameters.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.mono.FreeLayer.penalty">
+<span class="sig-name descname"><span class="pre">penalty</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/mono.html#FreeLayer.penalty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.mono.FreeLayer.penalty" title="Link to this definition">¶</a></dt>
+<dd><p>Return a penalty value associated with the layer.  This should be
+zero if the parameters are valid, and increasing as the parameters
+become more invalid.  For example, if total volume fraction exceeds
+unity, then the penalty would be the amount by which it exceeds
+unity, or if z values must be sorted, then penalty would be the
+amount by which they are unsorted.</p>
+<p>Note that penalties are handled separately from any probability of
+seeing a combination of layer parameters; the final solution to the
+problem should not include any penalized points.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.mono.FreeLayer.profile">
+<span class="sig-name descname"><span class="pre">profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Pz</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">below</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">above</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/mono.html#FreeLayer.profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.mono.FreeLayer.profile" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.mono.FreeLayer.render">
+<span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">probe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slabs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/mono.html#FreeLayer.render"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.mono.FreeLayer.render" title="Link to this definition">¶</a></dt>
+<dd><p>Use the probe to render the layer into a microslab representation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.mono.FreeLayer.thickness">
+<span class="sig-name descname"><span class="pre">thickness</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span></em><a class="headerlink" href="#refl1d.mono.FreeLayer.thickness" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.mono.FreeLayer.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/mono.html#FreeLayer.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.mono.FreeLayer.to_dict" title="Link to this definition">¶</a></dt>
+<dd><p>Return a dictionary representation of the Slab object</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.mono.inflections">
+<span class="sig-prename descclassname"><span class="pre">refl1d.mono.</span></span><span class="sig-name descname"><span class="pre">inflections</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dy</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/mono.html#inflections"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.mono.inflections" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        «&#160;&#160;<a href="model.html">model - Reflectivity Models</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="names.html">names - Public API</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

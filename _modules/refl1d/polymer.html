@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>refl1d.polymer &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <script src="../../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>refl1d.polymer</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <h1>Source code for refl1d.polymer</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="c1"># This program is public domain</span>
+<span class="c1"># Authors Paul Kienzle, Richard Sheridan</span>
+<span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Layer models for polymer systems.</span>
+
+<span class="sd">Analytic Self-consistent Field (SCF) Brush profile\ [#Zhulina]_\ [#Karim]_</span>
+
+<span class="sd">Analytical Self-consistent Field (SCF) Mushroom Profile\ [#Adamuti-Trache]_</span>
+
+<span class="sd">Numerical Self-consistent Field (SCF) End-Tethered Polymer</span>
+<span class="sd">Profile\ [#Cosgrove]_\ [#deVos]_\ [#Sheridan]_</span>
+
+
+<span class="sd">.. [#Zhulina] Zhulina, EB; Borisov, OV; Pryamitsyn, VA; Birshtein, TM (1991)</span>
+<span class="sd">    &quot;Coil-Globule Type Transitions in Polymers. 1. Collapse of Layers</span>
+<span class="sd">    of Grafted Polymer Chains&quot;, Macromolecules 24, 140-149.</span>
+
+<span class="sd">.. [#Karim] Karim, A; Douglas, JF; Horkay, F; Fetters, LJ; Satija, SK (1996)</span>
+<span class="sd">    &quot;Comparative swelling of gels and polymer brush layers&quot;,</span>
+<span class="sd">    Physica B 221, 331-336. doi:10.1016/0921-4526(95)00946-9</span>
+
+<span class="sd">.. [#Adamuti-Trache] Adamuţi-Trache, M., McMullen, W. E. &amp; Douglas, J. F.</span>
+<span class="sd">    Segmental concentration profiles of end-tethered polymers with</span>
+<span class="sd">    excluded-volume and surface interactions. J. Chem. Phys. 105, 4798 (1996).</span>
+
+<span class="sd">.. [#Cosgrove] Cosgrove, T., Heath, T., Van Lent, B., Leermakers, F. A. M.,</span>
+<span class="sd">    &amp; Scheutjens, J. M. H. M. (1987). Configuration of terminally attached</span>
+<span class="sd">    chains at the solid/solvent interface: self-consistent field theory and</span>
+<span class="sd">    a Monte Carlo model. Macromolecules, 20(7), 1692–1696.</span>
+<span class="sd">    doi:10.1021/ma00173a041</span>
+
+<span class="sd">.. [#deVos] De Vos, W. M., &amp; Leermakers, F. A. M. (2009). Modeling the</span>
+<span class="sd">    structure of a polydisperse polymer brush. Polymer, 50(1), 305–316.</span>
+<span class="sd">    doi:10.1016/j.polymer.2008.10.025</span>
+
+<span class="sd">.. [#Sheridan] Sheridan, R. J., Orski, S. V., Jones, R. L., Satija, S.,</span>
+<span class="sd">    &amp; Beers, K. L. (2017). Surface interaction parameter measurement of</span>
+<span class="sd">    solvated polymers via model end-tethered chains. [Submitted]</span>
+
+<span class="sd">..  [#Vincent] Vincent, B., Edwards, J., Emmett, S., &amp; Croot, R. (1988).</span>
+<span class="sd">    Phase separation in dispersions of weakly-interacting particles in</span>
+<span class="sd">    solutions of non-adsorbing polymer. Colloids and Surfaces, 31, 267–298.</span>
+<span class="sd">    doi:10.1016/0166-6622(88)80200-2</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">unicode_literals</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;PolymerBrush&quot;</span><span class="p">,</span> <span class="s2">&quot;PolymerMushroom&quot;</span><span class="p">,</span> <span class="s2">&quot;EndTetheredPolymer&quot;</span><span class="p">,</span> <span class="s2">&quot;VolumeProfile&quot;</span><span class="p">,</span> <span class="s2">&quot;layer_thickness&quot;</span><span class="p">]</span>
+
+<span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">time</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">real</span><span class="p">,</span> <span class="n">imag</span><span class="p">,</span> <span class="n">exp</span><span class="p">,</span> <span class="n">log</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">pi</span><span class="p">,</span> <span class="n">hstack</span><span class="p">,</span> <span class="n">ones_like</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">numpy._core.multiarray</span> <span class="kn">import</span> <span class="n">correlate</span> <span class="k">as</span> <span class="n">old_correlate</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="c1"># cruft for numpy &lt; 2</span>
+    <span class="kn">from</span> <span class="nn">numpy.core.multiarray</span> <span class="kn">import</span> <span class="n">correlate</span> <span class="k">as</span> <span class="n">old_correlate</span>
+
+<span class="kn">from</span> <span class="nn">bumps.parameter</span> <span class="kn">import</span> <span class="n">Parameter</span><span class="p">,</span> <span class="n">to_dict</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">util</span>
+<span class="kn">from</span> <span class="nn">.model</span> <span class="kn">import</span> <span class="n">Layer</span>
+
+<span class="n">LAMBDA_1</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="mf">6.0</span>  <span class="c1"># always assume cubic lattice (1/6) for now</span>
+<span class="n">LAMBDA_0</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">LAMBDA_1</span>
+<span class="c1"># Use reverse order for LAMBDA_ARRAY if it is asymmetric since we are using</span>
+<span class="c1"># it with correlate().</span>
+<span class="n">LAMBDA_ARRAY</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">LAMBDA_1</span><span class="p">,</span> <span class="n">LAMBDA_0</span><span class="p">,</span> <span class="n">LAMBDA_1</span><span class="p">])</span>
+<span class="n">MINLAT</span> <span class="o">=</span> <span class="mi">25</span>
+<span class="n">MINBULK</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">SQRT_PI</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">pi</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="PolymerBrush">
+<a class="viewcode-back" href="../../refl1d.polymer.html#refl1d.polymer.PolymerBrush">[docs]</a>
+<span class="k">class</span> <span class="nc">PolymerBrush</span><span class="p">(</span><span class="n">Layer</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Polymer brushes in a solvent</span>
+
+<span class="sd">    :Parameters:</span>
+<span class="sd">        *thickness*</span>
+<span class="sd">            the thickness of the solvent layer</span>
+<span class="sd">        *interface*</span>
+<span class="sd">            the roughness of the solvent surface</span>
+<span class="sd">        *polymer*</span>
+<span class="sd">            the polymer material</span>
+<span class="sd">        *solvent*</span>
+<span class="sd">            the solvent material or vacuum</span>
+<span class="sd">        *base_vf*</span>
+<span class="sd">            volume fraction (%) of the polymer brush at the interface</span>
+<span class="sd">        *base*</span>
+<span class="sd">            the thickness of the brush interface (A)</span>
+<span class="sd">        *length*</span>
+<span class="sd">            the length of the brush above the interface (A)</span>
+<span class="sd">        *power*</span>
+<span class="sd">            the rate of brush thinning</span>
+<span class="sd">        *sigma*</span>
+<span class="sd">            rms brush roughness (A)</span>
+
+<span class="sd">    The materials can either use the scattering length density directly,</span>
+<span class="sd">    such as PDMS = SLD(0.063, 0.00006) or they can use chemical composition</span>
+<span class="sd">    and material density such as PDMS=Material(&quot;C2H6OSi&quot;, density=0.965).</span>
+
+<span class="sd">    These parameters combine in the following profile formula:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        V(z) &amp;= \left\{</span>
+<span class="sd">          \begin{array}{ll}</span>
+<span class="sd">            V_o                        &amp; \mbox{if } z &lt;= z_o \\</span>
+<span class="sd">            V_o (1 - ((z-z_o)/L)^2)^p  &amp; \mbox{if } z_o &lt; z &lt; z_o + L \\</span>
+<span class="sd">            0                          &amp; \mbox{if } z &gt;= z_o + L</span>
+<span class="sd">          \end{array}</span>
+<span class="sd">        \right. \\</span>
+<span class="sd">        V_\sigma(z)</span>
+<span class="sd">           &amp;= V(z) \star</span>
+<span class="sd">                 \frac{e^{-\frac{1}{2}(z/\sigma)^2}}{\sqrt{2\pi\sigma^2}} \\</span>
+<span class="sd">        \rho(z) &amp;= \rho_p V_\sigma(z) + \rho_s (1-V_\sigma(z))</span>
+
+<span class="sd">    where $V_\sigma(z)$ is volume fraction convoluted with brush</span>
+<span class="sd">    roughness $\sigma$ and $\rho(z)$ is the complex scattering</span>
+<span class="sd">    length density of the profile.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">thickness</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">interface</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;brush&quot;</span><span class="p">,</span>
+        <span class="n">polymer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">solvent</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">base_vf</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">base</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">length</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">power</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">sigma</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">prefix</span> <span class="o">=</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thickness</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">thickness</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">prefix</span> <span class="o">+</span> <span class="s2">&quot;thickness&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">interface</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">interface</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">prefix</span> <span class="o">+</span> <span class="s2">&quot;interface&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_vf</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">base_vf</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">prefix</span> <span class="o">+</span> <span class="s2">&quot;base_vf&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">prefix</span> <span class="o">+</span> <span class="s2">&quot;base&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">prefix</span> <span class="o">+</span> <span class="s2">&quot;length&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">power</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">power</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">prefix</span> <span class="o">+</span> <span class="s2">&quot;power&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">prefix</span> <span class="o">+</span> <span class="s2">&quot;sigma&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solvent</span> <span class="o">=</span> <span class="n">solvent</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">polymer</span> <span class="o">=</span> <span class="n">polymer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="c1"># Constraints:</span>
+        <span class="c1">#   base_vf in [0, 1]</span>
+        <span class="c1">#   base, length, sigma, thickness, interface &gt; 0</span>
+        <span class="c1">#   base + length + 3*sigma &lt;= thickness</span>
+
+<div class="viewcode-block" id="PolymerBrush.parameters">
+<a class="viewcode-back" href="../../refl1d.polymer.html#refl1d.polymer.PolymerBrush.parameters">[docs]</a>
+    <span class="k">def</span> <span class="nf">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;solvent&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">solvent</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span>
+            <span class="s2">&quot;polymer&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">polymer</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span>
+            <span class="s2">&quot;base_vf&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_vf</span><span class="p">,</span>
+            <span class="s2">&quot;base&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">base</span><span class="p">,</span>
+            <span class="s2">&quot;length&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">,</span>
+            <span class="s2">&quot;power&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">power</span><span class="p">,</span>
+            <span class="s2">&quot;sigma&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="PolymerBrush.to_dict">
+<a class="viewcode-back" href="../../refl1d.polymer.html#refl1d.polymer.PolymerBrush.to_dict">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">to_dict</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="s2">&quot;base_vf&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_vf</span><span class="p">,</span>
+                <span class="s2">&quot;base&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">base</span><span class="p">,</span>
+                <span class="s2">&quot;length&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">,</span>
+                <span class="s2">&quot;power&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">power</span><span class="p">,</span>
+                <span class="s2">&quot;sigma&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span>
+                <span class="s2">&quot;solvent&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">solvent</span><span class="p">,</span>
+                <span class="s2">&quot;polymer&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">polymer</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="PolymerBrush.profile">
+<a class="viewcode-back" href="../../refl1d.polymer.html#refl1d.polymer.PolymerBrush.profile">[docs]</a>
+    <span class="k">def</span> <span class="nf">profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+        <span class="n">base_vf</span><span class="p">,</span> <span class="n">base</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">power</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_vf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">base</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">power</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">base_vf</span> <span class="o">/=</span> <span class="mf">100.0</span>  <span class="c1"># % to fraction</span>
+        <span class="n">L0</span> <span class="o">=</span> <span class="n">base</span>  <span class="c1"># if base &lt; thickness else thickness</span>
+        <span class="n">L1</span> <span class="o">=</span> <span class="n">base</span> <span class="o">+</span> <span class="n">length</span>  <span class="c1"># if base+length &lt; thickness else thickness-L0</span>
+        <span class="k">if</span> <span class="n">length</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="p">((</span><span class="n">z</span> <span class="o">-</span> <span class="n">L0</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">L1</span> <span class="o">-</span> <span class="n">L0</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">v</span><span class="p">[</span><span class="n">z</span> <span class="o">&lt;</span> <span class="n">L0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">v</span><span class="p">[</span><span class="n">z</span> <span class="o">&gt;</span> <span class="n">L1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">brush_profile</span> <span class="o">=</span> <span class="n">base_vf</span> <span class="o">*</span> <span class="n">v</span><span class="o">**</span><span class="n">power</span>
+        <span class="c1"># TODO: we could use Nevot-Croce rather than smearing the profile</span>
+        <span class="n">vf</span> <span class="o">=</span> <span class="n">smear</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">brush_profile</span><span class="p">,</span> <span class="n">sigma</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">vf</span></div>
+
+
+<div class="viewcode-block" id="PolymerBrush.render">
+<a class="viewcode-back" href="../../refl1d.polymer.html#refl1d.polymer.PolymerBrush.render">[docs]</a>
+    <span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">probe</span><span class="p">,</span> <span class="n">slabs</span><span class="p">):</span>
+        <span class="n">thickness</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thickness</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">Pw</span><span class="p">,</span> <span class="n">Pz</span> <span class="o">=</span> <span class="n">slabs</span><span class="o">.</span><span class="n">microslabs</span><span class="p">(</span><span class="n">thickness</span><span class="p">)</span>
+        <span class="c1"># Skip layer if it falls to zero thickness.  This may lead to</span>
+        <span class="c1"># problems in the fitter, since R(thickness) is non-differentiable</span>
+        <span class="c1"># at thickness = 0.  &quot;Clip to boundary&quot; range handling will at</span>
+        <span class="c1"># least allow this point to be found.</span>
+        <span class="c1"># TODO: consider using this behaviour on all layer types.</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">Pw</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">Mr</span><span class="p">,</span> <span class="n">Mi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">polymer</span><span class="o">.</span><span class="n">sld</span><span class="p">(</span><span class="n">probe</span><span class="p">)</span>
+        <span class="n">Sr</span><span class="p">,</span> <span class="n">Si</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">solvent</span><span class="o">.</span><span class="n">sld</span><span class="p">(</span><span class="n">probe</span><span class="p">)</span>
+        <span class="n">M</span> <span class="o">=</span> <span class="n">Mr</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">Mi</span>
+        <span class="n">S</span> <span class="o">=</span> <span class="n">Sr</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">Si</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">M</span><span class="p">,</span> <span class="n">S</span> <span class="o">=</span> <span class="n">M</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">S</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># Temporary hack</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+        <span class="n">vf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">(</span><span class="n">Pz</span><span class="p">)</span>
+        <span class="n">Pw</span><span class="p">,</span> <span class="n">vf</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">merge_ends</span><span class="p">(</span><span class="n">Pw</span><span class="p">,</span> <span class="n">vf</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+        <span class="n">P</span> <span class="o">=</span> <span class="n">M</span> <span class="o">*</span> <span class="n">vf</span> <span class="o">+</span> <span class="n">S</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">vf</span><span class="p">)</span>
+        <span class="n">Pr</span><span class="p">,</span> <span class="n">Pi</span> <span class="o">=</span> <span class="n">real</span><span class="p">(</span><span class="n">P</span><span class="p">),</span> <span class="n">imag</span><span class="p">(</span><span class="n">P</span><span class="p">)</span>
+        <span class="n">slabs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">rho</span><span class="o">=</span><span class="p">[</span><span class="n">Pr</span><span class="p">],</span> <span class="n">irho</span><span class="o">=</span><span class="p">[</span><span class="n">Pi</span><span class="p">],</span> <span class="n">w</span><span class="o">=</span><span class="n">Pw</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="layer_thickness">
+<a class="viewcode-back" href="../../refl1d.polymer.html#refl1d.polymer.layer_thickness">[docs]</a>
+<span class="k">def</span> <span class="nf">layer_thickness</span><span class="p">(</span><span class="n">z</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the thickness of a layer given the microslab z points.</span>
+
+<span class="sd">    The z points are at the centers of the bins.  we can use the recurrence</span>
+<span class="sd">    that boundary b[k] = z[k-1] + (z[k-1] - b[k-1]) to compute the</span>
+<span class="sd">    total length of the layer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">z</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">::</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">z</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">::</span><span class="o">-</span><span class="mi">2</span><span class="p">]))</span></div>
+
+
+
+<div class="viewcode-block" id="VolumeProfile">
+<a class="viewcode-back" href="../../refl1d.polymer.html#refl1d.polymer.VolumeProfile">[docs]</a>
+<span class="k">class</span> <span class="nc">VolumeProfile</span><span class="p">(</span><span class="n">Layer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generic volume profile function</span>
+
+<span class="sd">    :Parameters:</span>
+
+<span class="sd">        *thickness*</span>
+<span class="sd">            the thickness of the solvent layer</span>
+<span class="sd">        *interface*</span>
+<span class="sd">            the roughness of the solvent surface</span>
+<span class="sd">        *material*</span>
+<span class="sd">            the polymer material</span>
+<span class="sd">        *solvent*</span>
+<span class="sd">            the solvent material</span>
+<span class="sd">        *profile*</span>
+<span class="sd">            the profile function, suitably parameterized</span>
+
+<span class="sd">    The materials can either use the scattering length density directly,</span>
+<span class="sd">    such as PDMS = SLD(0.063, 0.00006) or they can use chemical composition</span>
+<span class="sd">    and material density such as PDMS=Material(&quot;C2H6OSi&quot;, density=0.965).</span>
+
+<span class="sd">    These parameters combine in the following profile formula::</span>
+
+<span class="sd">        sld = material.sld * profile + solvent.sld * (1 - profile)</span>
+
+<span class="sd">    The profile function takes a depth z and returns a density rho.</span>
+
+<span class="sd">    For volume profiles, the returned rho should be the volume fraction</span>
+<span class="sd">    of the material.  For SLD profiles, rho should be complex scattering</span>
+<span class="sd">    length density of the material.</span>
+
+<span class="sd">    Fitting parameters are the available named arguments to the function.</span>
+<span class="sd">    The first argument must be *z*, which is the array of depths at which</span>
+<span class="sd">    the profile is to be evaluated.  It is guaranteed to be increasing, with</span>
+<span class="sd">    step size 2*z[0].</span>
+
+<span class="sd">    Initial values for the function parameters can be given using name=value.</span>
+<span class="sd">    These values can be scalars or fitting parameters.  The function will</span>
+<span class="sd">    be called with the current parameter values as arguments.  The layer</span>
+<span class="sd">    thickness can be computed as :func: `layer_thickness`.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># TODO: test that thickness(z) matches the thickness of the layer</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">thickness</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">interface</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;VolumeProfile&quot;</span><span class="p">,</span> <span class="n">material</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">solvent</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">profile</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">interface</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;interface not yet supported&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">profile</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">material</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">solvent</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Need polymer, solvent and profile&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thickness</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">thickness</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;solvent thickness&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">interface</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">interface</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;solvent interface&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">profile</span> <span class="o">=</span> <span class="n">profile</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solvent</span> <span class="o">=</span> <span class="n">solvent</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">material</span> <span class="o">=</span> <span class="n">material</span>
+
+        <span class="c1"># Query profile function for the list of arguments</span>
+        <span class="nb">vars</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getfullargspec</span><span class="p">(</span><span class="n">profile</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="c1"># print(&quot;vars&quot;, vars)</span>
+        <span class="k">if</span> <span class="n">inspect</span><span class="o">.</span><span class="n">ismethod</span><span class="p">(</span><span class="n">profile</span><span class="p">):</span>
+            <span class="nb">vars</span> <span class="o">=</span> <span class="nb">vars</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>  <span class="c1"># Chop self</span>
+        <span class="nb">vars</span> <span class="o">=</span> <span class="nb">vars</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>  <span class="c1"># Chop z</span>
+        <span class="c1"># print(vars)</span>
+        <span class="n">unused</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">kw</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">unused</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Profile got unexpected keyword argument &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="n">unused</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">dups</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">vars</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;thickness&quot;</span><span class="p">,</span> <span class="s2">&quot;interface&quot;</span><span class="p">,</span> <span class="s2">&quot;polymer&quot;</span><span class="p">,</span> <span class="s2">&quot;solvent&quot;</span><span class="p">,</span> <span class="s2">&quot;profile&quot;</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dups</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Profile has conflicting argument &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="n">dups</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">:</span>
+            <span class="n">kw</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kw</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">k</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span> <span class="o">=</span> <span class="nb">vars</span>
+
+<div class="viewcode-block" id="VolumeProfile.parameters">
+<a class="viewcode-back" href="../../refl1d.polymer.html#refl1d.polymer.VolumeProfile.parameters">[docs]</a>
+    <span class="k">def</span> <span class="nf">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">P</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;solvent&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">solvent</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span>
+            <span class="s2">&quot;material&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">material</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="p">:</span>
+            <span class="n">P</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">P</span></div>
+
+
+<div class="viewcode-block" id="VolumeProfile.to_dict">
+<a class="viewcode-back" href="../../refl1d.polymer.html#refl1d.polymer.VolumeProfile.to_dict">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">to_dict</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="s2">&quot;profile&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">,</span>
+                <span class="s2">&quot;thickness&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">thickness</span><span class="p">,</span>
+                <span class="s2">&quot;interface&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="p">,</span>
+                <span class="s2">&quot;parameters&quot;</span><span class="p">:</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="p">},</span>
+                <span class="s2">&quot;solvent&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">solvent</span><span class="p">,</span>
+                <span class="s2">&quot;material&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">material</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="VolumeProfile.render">
+<a class="viewcode-back" href="../../refl1d.polymer.html#refl1d.polymer.VolumeProfile.render">[docs]</a>
+    <span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">probe</span><span class="p">,</span> <span class="n">slabs</span><span class="p">):</span>
+        <span class="n">Mr</span><span class="p">,</span> <span class="n">Mi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">material</span><span class="o">.</span><span class="n">sld</span><span class="p">(</span><span class="n">probe</span><span class="p">)</span>
+        <span class="n">Sr</span><span class="p">,</span> <span class="n">Si</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">solvent</span><span class="o">.</span><span class="n">sld</span><span class="p">(</span><span class="n">probe</span><span class="p">)</span>
+        <span class="n">M</span> <span class="o">=</span> <span class="n">Mr</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">Mi</span>
+        <span class="n">S</span> <span class="o">=</span> <span class="n">Sr</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">Si</span>
+        <span class="c1"># M, S = M[0], S[0]  # Temporary hack</span>
+        <span class="n">Pw</span><span class="p">,</span> <span class="n">Pz</span> <span class="o">=</span> <span class="n">slabs</span><span class="o">.</span><span class="n">microslabs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thickness</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">Pw</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">kw</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="p">)</span>
+        <span class="c1"># print(kw)</span>
+        <span class="n">phi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">(</span><span class="n">Pz</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">phi</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">Pz</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;profile function &#39;</span><span class="si">%s</span><span class="s2">&#39; did not return array phi(z)&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="n">Pw</span><span class="p">,</span> <span class="n">phi</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">merge_ends</span><span class="p">(</span><span class="n">Pw</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+        <span class="n">P</span> <span class="o">=</span> <span class="n">M</span> <span class="o">*</span> <span class="n">phi</span> <span class="o">+</span> <span class="n">S</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">phi</span><span class="p">)</span>
+        <span class="n">slabs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">rho</span><span class="o">=</span><span class="p">[</span><span class="n">real</span><span class="p">(</span><span class="n">P</span><span class="p">)],</span> <span class="n">irho</span><span class="o">=</span><span class="p">[</span><span class="n">imag</span><span class="p">(</span><span class="n">P</span><span class="p">)],</span> <span class="n">w</span><span class="o">=</span><span class="n">Pw</span><span class="p">)</span></div>
+</div>
+
+        <span class="c1"># slabs.interface(self.interface.value)</span>
+
+
+<span class="k">def</span> <span class="nf">smear</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">sigma</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Gaussian smearing</span>
+
+<span class="sd">    :Parameters:</span>
+<span class="sd">        *z* | vector</span>
+<span class="sd">            equally spaced sample times</span>
+<span class="sd">        *P* | vector</span>
+<span class="sd">            sample values</span>
+<span class="sd">        *sigma* | real</span>
+<span class="sd">            root-mean-squared convolution width</span>
+<span class="sd">    :Returns:</span>
+<span class="sd">        *Ps* | vector</span>
+<span class="sd">            smeared sample values</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">z</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">P</span>
+    <span class="n">dz</span> <span class="o">=</span> <span class="n">z</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">z</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">sigma</span> <span class="o">&lt;</span> <span class="n">dz</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">P</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="n">sigma</span> <span class="o">/</span> <span class="n">dz</span><span class="p">)</span>
+    <span class="n">G</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="n">w</span><span class="p">,</span> <span class="n">w</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">dz</span> <span class="o">/</span> <span class="n">sigma</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">full</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(([</span><span class="n">P</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">*</span> <span class="n">w</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="p">[</span><span class="n">P</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">*</span> <span class="n">w</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">full</span><span class="p">,</span> <span class="n">G</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">G</span><span class="p">),</span> <span class="s2">&quot;valid&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="PolymerMushroom">
+<a class="viewcode-back" href="../../refl1d.polymer.html#refl1d.polymer.PolymerMushroom">[docs]</a>
+<span class="k">class</span> <span class="nc">PolymerMushroom</span><span class="p">(</span><span class="n">Layer</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Polymer mushrooms in a solvent (volume profile)</span>
+
+<span class="sd">    :Parameters:</span>
+<span class="sd">        *delta* | real scalar</span>
+<span class="sd">            interaction parameter</span>
+<span class="sd">        *vf* | real scalar</span>
+<span class="sd">            not quite volume fraction (dimensionless grafting density)</span>
+<span class="sd">        *sigma* | real scalar</span>
+<span class="sd">            convolution roughness (A)</span>
+
+<span class="sd">    Using analytical SCF methods for gaussian chains, which are scaled</span>
+<span class="sd">    by the radius of gyration of the equivalent free polymer as an</span>
+<span class="sd">    approximation to results of renormalization group methods.\ [#Adamuti-Trache]_</span>
+
+<span class="sd">    Solutions are only strictly valid for vf &lt;&lt; 1.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">thickness</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">interface</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Mushroom&quot;</span><span class="p">,</span> <span class="n">polymer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">solvent</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vf</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">delta</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thickness</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">thickness</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Mushroom thickness&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">interface</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">interface</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Mushroom interface&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delta</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;delta&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vf</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">vf</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;vf&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;sigma&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solvent</span> <span class="o">=</span> <span class="n">solvent</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">polymer</span> <span class="o">=</span> <span class="n">polymer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+
+<div class="viewcode-block" id="PolymerMushroom.parameters">
+<a class="viewcode-back" href="../../refl1d.polymer.html#refl1d.polymer.PolymerMushroom.parameters">[docs]</a>
+    <span class="k">def</span> <span class="nf">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;solvent&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">solvent</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span>
+            <span class="s2">&quot;polymer&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">polymer</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span>
+            <span class="s2">&quot;delta&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">delta</span><span class="p">,</span>
+            <span class="s2">&quot;vf&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">vf</span><span class="p">,</span>
+            <span class="s2">&quot;sigma&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span>
+            <span class="s2">&quot;thickness&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">thickness</span><span class="p">,</span>
+            <span class="s2">&quot;interface&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="PolymerMushroom.to_dict">
+<a class="viewcode-back" href="../../refl1d.polymer.html#refl1d.polymer.PolymerMushroom.to_dict">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">to_dict</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="s2">&quot;profile&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">,</span>
+                <span class="s2">&quot;thickness&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">thickness</span><span class="p">,</span>
+                <span class="s2">&quot;interface&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="p">,</span>
+                <span class="s2">&quot;delta&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">delta</span><span class="p">,</span>
+                <span class="s2">&quot;vf&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">vf</span><span class="p">,</span>
+                <span class="s2">&quot;sigma&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span>
+                <span class="s2">&quot;solvent&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">solvent</span><span class="p">,</span>
+                <span class="s2">&quot;polymer&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">polymer</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="PolymerMushroom.profile">
+<a class="viewcode-back" href="../../refl1d.polymer.html#refl1d.polymer.PolymerMushroom.profile">[docs]</a>
+    <span class="k">def</span> <span class="nf">profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+        <span class="n">delta</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">vf</span><span class="p">,</span> <span class="n">thickness</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">delta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">thickness</span><span class="p">)]</span>
+
+        <span class="k">return</span> <span class="n">smear</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">MushroomProfile</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">vf</span><span class="p">,</span> <span class="n">sigma</span><span class="p">),</span> <span class="n">sigma</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="PolymerMushroom.render">
+<a class="viewcode-back" href="../../refl1d.polymer.html#refl1d.polymer.PolymerMushroom.render">[docs]</a>
+    <span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">probe</span><span class="p">,</span> <span class="n">slabs</span><span class="p">):</span>
+        <span class="n">thickness</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thickness</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">Pw</span><span class="p">,</span> <span class="n">Pz</span> <span class="o">=</span> <span class="n">slabs</span><span class="o">.</span><span class="n">microslabs</span><span class="p">(</span><span class="n">thickness</span><span class="p">)</span>
+        <span class="c1"># Skip layer if it falls to zero thickness.  This may lead to</span>
+        <span class="c1"># problems in the fitter, since R(thickness) is non-differentiable</span>
+        <span class="c1"># at thickness = 0.  &quot;Clip to boundary&quot; range handling will at</span>
+        <span class="c1"># least allow this point to be found.</span>
+        <span class="c1"># TODO: consider using this behaviour on all layer types.</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">Pw</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">Mr</span><span class="p">,</span> <span class="n">Mi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">polymer</span><span class="o">.</span><span class="n">sld</span><span class="p">(</span><span class="n">probe</span><span class="p">)</span>
+        <span class="n">Sr</span><span class="p">,</span> <span class="n">Si</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">solvent</span><span class="o">.</span><span class="n">sld</span><span class="p">(</span><span class="n">probe</span><span class="p">)</span>
+        <span class="n">M</span> <span class="o">=</span> <span class="n">Mr</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">Mi</span>
+        <span class="n">S</span> <span class="o">=</span> <span class="n">Sr</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">Si</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">M</span><span class="p">,</span> <span class="n">S</span> <span class="o">=</span> <span class="n">M</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">S</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># Temporary hack</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+        <span class="n">phi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">(</span><span class="n">Pz</span><span class="p">)</span>
+        <span class="n">Pw</span><span class="p">,</span> <span class="n">phi</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">merge_ends</span><span class="p">(</span><span class="n">Pw</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+        <span class="n">P</span> <span class="o">=</span> <span class="n">M</span> <span class="o">*</span> <span class="n">phi</span> <span class="o">+</span> <span class="n">S</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">phi</span><span class="p">)</span>
+        <span class="n">Pr</span><span class="p">,</span> <span class="n">Pi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">P</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">P</span><span class="p">)</span>
+        <span class="n">slabs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">rho</span><span class="o">=</span><span class="p">[</span><span class="n">Pr</span><span class="p">],</span> <span class="n">irho</span><span class="o">=</span><span class="p">[</span><span class="n">Pi</span><span class="p">],</span> <span class="n">w</span><span class="o">=</span><span class="n">Pw</span><span class="p">)</span></div>
+</div>
+
+
+
+<span class="k">def</span> <span class="nf">MushroomProfile</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">delta</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">vf</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+    <span class="n">thickness</span> <span class="o">=</span> <span class="n">layer_thickness</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+    <span class="n">thresh</span> <span class="o">=</span> <span class="mf">1e-10</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="mf">3.0</span> <span class="o">*</span> <span class="n">sigma</span>  <span class="c1"># tail is erf, capture 95% of the mixing</span>
+    <span class="n">Rg</span> <span class="o">=</span> <span class="p">(</span><span class="n">thickness</span> <span class="o">-</span> <span class="n">base</span><span class="p">)</span> <span class="o">/</span> <span class="mf">4.0</span>  <span class="c1"># profile ends by ~4 RG, so we can tether these</span>
+    <span class="n">keep</span> <span class="o">=</span> <span class="p">(</span><span class="n">z</span> <span class="o">-</span> <span class="n">base</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mf">0.0</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="n">z</span><span class="p">[</span><span class="n">keep</span><span class="p">]</span> <span class="o">-</span> <span class="n">base</span><span class="p">)</span> <span class="o">/</span> <span class="n">Rg</span>
+
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    mushroom_profile_math has a divide by zero problem at delta=0.</span>
+<span class="sd">    Fix it by weighted average of the profile above and below a threshold.</span>
+<span class="sd">    No visual difference when delta is between +-0.001, and there&#39;s no</span>
+<span class="sd">    floating point error until ~+-1e-14.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">thresh</span><span class="p">:</span>
+        <span class="n">mushroom_profile</span> <span class="o">=</span> <span class="n">mushroom_math</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">vf</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># we should RARELY get here</span>
+        <span class="n">scale</span> <span class="o">=</span> <span class="p">(</span><span class="n">delta</span> <span class="o">+</span> <span class="n">thresh</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span> <span class="o">/</span> <span class="n">thresh</span>
+        <span class="n">mushroom_profile</span> <span class="o">=</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">mushroom_math</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">thresh</span><span class="p">,</span> <span class="n">vf</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">scale</span><span class="p">)</span> <span class="o">*</span> <span class="n">mushroom_math</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">-</span><span class="n">thresh</span><span class="p">,</span> <span class="n">vf</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># make the base connect with the profile</span>
+        <span class="n">zextra</span> <span class="o">=</span> <span class="n">z</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">keep</span><span class="p">)]</span>
+        <span class="n">base_profile</span> <span class="o">=</span> <span class="n">ones_like</span><span class="p">(</span><span class="n">zextra</span><span class="p">)</span> <span class="o">*</span> <span class="n">mushroom_profile</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+        <span class="n">base_profile</span> <span class="o">=</span> <span class="n">ones_like</span><span class="p">(</span><span class="n">z</span><span class="p">)</span> <span class="o">*</span> <span class="n">mushroom_profile</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">hstack</span><span class="p">((</span><span class="n">base_profile</span><span class="p">,</span> <span class="n">mushroom_profile</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">mushroom_math</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">delta</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">vf</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    new method, rewrite for numerical stability at high delta</span>
+<span class="sd">    delta=0 causes divide by zero error!! Compensate elsewhere.</span>
+<span class="sd">    http://ab-initio.mit.edu/wiki/index.php/Faddeeva_Package</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">scipy.special</span> <span class="kn">import</span> <span class="n">erfc</span><span class="p">,</span> <span class="n">erfcx</span>
+
+    <span class="n">x_half</span> <span class="o">=</span> <span class="n">x</span> <span class="o">/</span> <span class="mf">2.0</span>
+    <span class="n">delta_double</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">delta</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="p">(</span>
+            <span class="n">erfc</span><span class="p">(</span><span class="n">x_half</span><span class="p">)</span>
+            <span class="o">-</span> <span class="n">erfcx</span><span class="p">(</span><span class="n">delta_double</span> <span class="o">+</span> <span class="n">x_half</span><span class="p">)</span> <span class="o">/</span> <span class="n">exp</span><span class="p">(</span><span class="n">x_half</span> <span class="o">*</span> <span class="n">x_half</span><span class="p">)</span>
+            <span class="o">-</span> <span class="n">erfc</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="o">+</span> <span class="p">((</span><span class="mf">0.25</span> <span class="o">-</span> <span class="n">delta</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">delta_double</span><span class="p">))</span> <span class="o">*</span> <span class="n">erfcx</span><span class="p">(</span><span class="n">delta_double</span> <span class="o">+</span> <span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="n">delta</span> <span class="o">/</span> <span class="n">SQRT_PI</span><span class="p">)</span> <span class="o">*</span> <span class="mf">4.0</span> <span class="o">/</span> <span class="n">exp</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="o">*</span> <span class="n">vf</span>
+        <span class="o">/</span> <span class="p">(</span><span class="n">delta_double</span> <span class="o">*</span> <span class="n">erfcx</span><span class="p">(</span><span class="n">delta_double</span><span class="p">))</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="EndTetheredPolymer">
+<a class="viewcode-back" href="../../refl1d.polymer.html#refl1d.polymer.EndTetheredPolymer">[docs]</a>
+<span class="k">class</span> <span class="nc">EndTetheredPolymer</span><span class="p">(</span><span class="n">Layer</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Polymer end-tethered to an interface in a solvent</span>
+
+<span class="sd">    Uses a numerical self-consistent field profile.\ [#Cosgrove]_\ [#deVos]_\ [#Sheridan]_</span>
+
+<span class="sd">    **Parameters**</span>
+<span class="sd">        *chi*</span>
+<span class="sd">            solvent interaction parameter</span>
+<span class="sd">        *chi_s*</span>
+<span class="sd">            surface interaction parameter</span>
+<span class="sd">        *h_dry*</span>
+<span class="sd">            thickness of the neat polymer layer</span>
+<span class="sd">        *l_lat*</span>
+<span class="sd">            real length per lattice site</span>
+<span class="sd">        *mn*</span>
+<span class="sd">            Number average molecular weight</span>
+<span class="sd">        *m_lat*</span>
+<span class="sd">            real mass per lattice segment</span>
+<span class="sd">        *pdi*</span>
+<span class="sd">            Dispersity (Polydispersity index)</span>
+<span class="sd">        *phi_b*</span>
+<span class="sd">            volume fraction of free chains in solution. useful for associating</span>
+<span class="sd">            grafted films e.g. PS-COOH in Toluene with an SiO2 surface.</span>
+<span class="sd">        *thickness*</span>
+<span class="sd">            Slab thickness should be greater than the contour</span>
+<span class="sd">            length of the polymer</span>
+<span class="sd">        *interface*</span>
+<span class="sd">            should be zero</span>
+<span class="sd">        *material*</span>
+<span class="sd">            the polymer material</span>
+<span class="sd">        *solvent*</span>
+<span class="sd">            the solvent material</span>
+
+<span class="sd">    Previous layer should not have roughness! Use a spline to simulate it.</span>
+
+<span class="sd">    According to [#Vincent]_, $l_\text{lat}$ and $m_\text{lat}$ should be</span>
+<span class="sd">    calculated by the formulas:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        l_\text{lat} &amp;= \frac{a^2 m/l}{p_l} \\</span>
+<span class="sd">        m_\text{lat} &amp;= \frac{(a m/l)^2}{p_l}</span>
+
+<span class="sd">    where $l$ is the real polymer&#39;s bond length, $m$ is the real segment mass,</span>
+<span class="sd">    and $a$ is the ratio between molecular weight and radius of gyration at</span>
+<span class="sd">    theta conditions. The lattice persistence, $p_l$, is:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        p_l = \frac16 \frac{1+1/Z}{1-1/Z}</span>
+
+<span class="sd">    with coordination number $Z = 6$ for a cubic lattice, $p_l = .233$.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">thickness</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">interface</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;EndTetheredPolymer&quot;</span><span class="p">,</span>
+        <span class="n">polymer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">solvent</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">chi</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">chi_s</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">h_dry</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">l_lat</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">mn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">m_lat</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">pdi</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">phi_b</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="n">interface</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;interface not yet supported&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">polymer</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">solvent</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">h_dry</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">mn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Need polymer, solvent and profile&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">thickness</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">thickness</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;SCF thickness&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">interface</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">interface</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;SCF interface&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chi</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">chi</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Chi&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chi_s</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">chi_s</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Surface chi&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">h_dry</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">h_dry</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Dry thickness&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">l_lat</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">l_lat</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Lattice layer length&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mn</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">mn</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Num. avg. MW&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">m_lat</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">m_lat</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Lattice segegment mass&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pdi</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">pdi</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Dispersity&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phi_b</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">phi_b</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Free polymer conc.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solvent</span> <span class="o">=</span> <span class="n">solvent</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">polymer</span> <span class="o">=</span> <span class="n">polymer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+
+<div class="viewcode-block" id="EndTetheredPolymer.parameters">
+<a class="viewcode-back" href="../../refl1d.polymer.html#refl1d.polymer.EndTetheredPolymer.parameters">[docs]</a>
+    <span class="k">def</span> <span class="nf">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;solvent&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">solvent</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span>
+            <span class="s2">&quot;polymer&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">polymer</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span>
+            <span class="s2">&quot;chi&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">chi</span><span class="p">,</span>
+            <span class="s2">&quot;chi_s&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">chi_s</span><span class="p">,</span>
+            <span class="s2">&quot;h_dry&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">h_dry</span><span class="p">,</span>
+            <span class="s2">&quot;l_lat&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">l_lat</span><span class="p">,</span>
+            <span class="s2">&quot;mn&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mn</span><span class="p">,</span>
+            <span class="s2">&quot;m_lat&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">m_lat</span><span class="p">,</span>
+            <span class="s2">&quot;pdi&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pdi</span><span class="p">,</span>
+            <span class="s2">&quot;phi_b&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi_b</span><span class="p">,</span>
+            <span class="s2">&quot;thickness&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">thickness</span><span class="p">,</span>
+            <span class="s2">&quot;interface&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="EndTetheredPolymer.to_dict">
+<a class="viewcode-back" href="../../refl1d.polymer.html#refl1d.polymer.EndTetheredPolymer.to_dict">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">to_dict</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="s2">&quot;thickness&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">thickness</span><span class="p">,</span>
+                <span class="s2">&quot;interface&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="p">,</span>
+                <span class="s2">&quot;chi&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">chi</span><span class="p">,</span>
+                <span class="s2">&quot;chi_s&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">chi_s</span><span class="p">,</span>
+                <span class="s2">&quot;h_dry&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">h_dry</span><span class="p">,</span>
+                <span class="s2">&quot;l_lat&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">l_lat</span><span class="p">,</span>
+                <span class="s2">&quot;mn&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mn</span><span class="p">,</span>
+                <span class="s2">&quot;m_lat&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">m_lat</span><span class="p">,</span>
+                <span class="s2">&quot;pdi&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pdi</span><span class="p">,</span>
+                <span class="s2">&quot;phi_b&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi_b</span><span class="p">,</span>
+                <span class="s2">&quot;solvent&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">solvent</span><span class="p">,</span>
+                <span class="s2">&quot;polymer&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">polymer</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EndTetheredPolymer.profile">
+<a class="viewcode-back" href="../../refl1d.polymer.html#refl1d.polymer.EndTetheredPolymer.profile">[docs]</a>
+    <span class="k">def</span> <span class="nf">profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">SCFprofile</span><span class="p">(</span>
+            <span class="n">z</span><span class="p">,</span>
+            <span class="n">chi</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">chi</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">chi_s</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">chi_s</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">h_dry</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">h_dry</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">l_lat</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">l_lat</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">mn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mn</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">m_lat</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">m_lat</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">pdi</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pdi</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">phi_b</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">phi_b</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EndTetheredPolymer.render">
+<a class="viewcode-back" href="../../refl1d.polymer.html#refl1d.polymer.EndTetheredPolymer.render">[docs]</a>
+    <span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">probe</span><span class="p">,</span> <span class="n">slabs</span><span class="p">):</span>
+        <span class="n">thickness</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thickness</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">Pw</span><span class="p">,</span> <span class="n">Pz</span> <span class="o">=</span> <span class="n">slabs</span><span class="o">.</span><span class="n">microslabs</span><span class="p">(</span><span class="n">thickness</span><span class="p">)</span>
+        <span class="c1"># Skip layer if it falls to zero thickness.  This may lead to</span>
+        <span class="c1"># problems in the fitter, since R(thickness) is non-differentiable</span>
+        <span class="c1"># at thickness = 0.  &quot;Clip to boundary&quot; range handling will at</span>
+        <span class="c1"># least allow this point to be found.</span>
+        <span class="c1"># TODO: consider using this behaviour on all layer types.</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">Pw</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">Mr</span><span class="p">,</span> <span class="n">Mi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">polymer</span><span class="o">.</span><span class="n">sld</span><span class="p">(</span><span class="n">probe</span><span class="p">)</span>
+        <span class="n">Sr</span><span class="p">,</span> <span class="n">Si</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">solvent</span><span class="o">.</span><span class="n">sld</span><span class="p">(</span><span class="n">probe</span><span class="p">)</span>
+        <span class="n">M</span> <span class="o">=</span> <span class="n">Mr</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">Mi</span>
+        <span class="n">S</span> <span class="o">=</span> <span class="n">Sr</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">Si</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">M</span><span class="p">,</span> <span class="n">S</span> <span class="o">=</span> <span class="n">M</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">S</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># Temporary hack</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+        <span class="n">phi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">(</span><span class="n">Pz</span><span class="p">)</span>
+        <span class="n">Pw</span><span class="p">,</span> <span class="n">phi</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">merge_ends</span><span class="p">(</span><span class="n">Pw</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+        <span class="n">P</span> <span class="o">=</span> <span class="n">M</span> <span class="o">*</span> <span class="n">phi</span> <span class="o">+</span> <span class="n">S</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">phi</span><span class="p">)</span>
+        <span class="n">Pr</span><span class="p">,</span> <span class="n">Pi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">P</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">P</span><span class="p">)</span>
+        <span class="n">slabs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">rho</span><span class="o">=</span><span class="p">[</span><span class="n">Pr</span><span class="p">],</span> <span class="n">irho</span><span class="o">=</span><span class="p">[</span><span class="n">Pi</span><span class="p">],</span> <span class="n">w</span><span class="o">=</span><span class="n">Pw</span><span class="p">)</span></div>
+</div>
+
+
+
+<span class="k">def</span> <span class="nf">SCFprofile</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">chi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">chi_s</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">h_dry</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">l_lat</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">mn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">m_lat</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">phi_b</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">pdi</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate volume fraction profile for Refl1D based on real parameters.</span>
+
+<span class="sd">    The field theory is a lattice-based one, so we need to move between lattice</span>
+<span class="sd">    and real space. This is done using the parameters l_lat and m_lat, the</span>
+<span class="sd">    lattice size and the mass of a lattice segment, respectivley. We use h_dry</span>
+<span class="sd">    (dry thickness) as a convenient measure of surface coverage, along with mn</span>
+<span class="sd">    (number average molecular weight) as the real inputs.</span>
+
+<span class="sd">    Make sure your inputs for h_dry/l_lat and mn/m_lat match dimensions!</span>
+<span class="sd">    Angstroms and daltons are good choices.</span>
+
+<span class="sd">    This function is suitable for use as a VolumeProfile, as well as the</span>
+<span class="sd">    default EndTetheredPolymer class.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># calculate lattice space parameters</span>
+    <span class="n">theta</span> <span class="o">=</span> <span class="n">h_dry</span> <span class="o">/</span> <span class="n">l_lat</span>
+    <span class="n">segments</span> <span class="o">=</span> <span class="n">mn</span> <span class="o">/</span> <span class="n">m_lat</span>
+    <span class="n">sigma</span> <span class="o">=</span> <span class="n">theta</span> <span class="o">/</span> <span class="n">segments</span>
+
+    <span class="c1"># solve the self consistent field equations using the cache</span>
+    <span class="k">if</span> <span class="n">disp</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">=====Begin calculations=====</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">phi_lat</span> <span class="o">=</span> <span class="n">SCFcache</span><span class="p">(</span><span class="n">chi</span><span class="p">,</span> <span class="n">chi_s</span><span class="p">,</span> <span class="n">pdi</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">phi_b</span><span class="p">,</span> <span class="n">segments</span><span class="p">,</span> <span class="n">disp</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">disp</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">============================</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Chop edge effects out</span>
+    <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">layer</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">phi_lat</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">layer</span> <span class="o">-</span> <span class="n">phi_b</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-6</span><span class="p">:</span>
+            <span class="k">break</span>
+    <span class="n">phi_lat</span> <span class="o">=</span> <span class="n">phi_lat</span><span class="p">[:</span> <span class="o">-</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span>
+
+    <span class="c1"># re-dimensionalize the solution</span>
+    <span class="n">layers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">phi_lat</span><span class="p">)</span>
+    <span class="n">z_end</span> <span class="o">=</span> <span class="n">l_lat</span> <span class="o">*</span> <span class="n">layers</span>
+    <span class="n">z_lat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">z_end</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="n">layers</span><span class="p">)</span>
+    <span class="n">phi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">z_lat</span><span class="p">,</span> <span class="n">phi_lat</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="n">phi_b</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">phi</span>
+
+
+<span class="n">_SCFcache_dict</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">SCFcache</span><span class="p">(</span><span class="n">chi</span><span class="p">,</span> <span class="n">chi_s</span><span class="p">,</span> <span class="n">pdi</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">phi_b</span><span class="p">,</span> <span class="n">segments</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cache</span><span class="o">=</span><span class="n">_SCFcache_dict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a memoized SCF result by walking from a previous solution.</span>
+
+<span class="sd">    Using an OrderedDict because I want to prune keys FIFO</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">NoConvergence</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="c1"># cruft for scipy &lt; 1.14, hard breaking change with no warning</span>
+        <span class="kn">from</span> <span class="nn">scipy.optimize.nonlin</span> <span class="kn">import</span> <span class="n">NoConvergence</span>
+    <span class="c1"># prime the cache with a known easy solutions</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">cache</span><span class="p">:</span>
+        <span class="n">cache</span><span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">SCFsolve</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">phi_b</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">segments</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="n">disp</span><span class="p">)</span>
+        <span class="n">cache</span><span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">SCFsolve</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">phi_b</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">segments</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="n">disp</span><span class="p">)</span>
+        <span class="n">cache</span><span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">SCFsolve</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">phi_b</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">segments</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="n">disp</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">disp</span><span class="p">:</span>
+        <span class="n">starttime</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+
+    <span class="c1"># Try to keep the parameters between 0 and 1. Factors are arbitrary.</span>
+    <span class="n">scaled_parameters</span> <span class="o">=</span> <span class="p">(</span><span class="n">chi</span><span class="p">,</span> <span class="n">chi_s</span> <span class="o">*</span> <span class="mi">3</span><span class="p">,</span> <span class="n">pdi</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">phi_b</span><span class="p">,</span> <span class="n">segments</span> <span class="o">/</span> <span class="mi">500</span><span class="p">)</span>
+
+    <span class="c1"># longshot, but return a cached result if we hit it</span>
+    <span class="k">if</span> <span class="n">scaled_parameters</span> <span class="ow">in</span> <span class="n">cache</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">disp</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;SCFcache hit at:&quot;</span><span class="p">,</span> <span class="n">scaled_parameters</span><span class="p">)</span>
+        <span class="n">phi</span> <span class="o">=</span> <span class="n">cache</span><span class="p">[</span><span class="n">scaled_parameters</span><span class="p">]</span> <span class="o">=</span> <span class="n">cache</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">scaled_parameters</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">phi</span>
+
+    <span class="c1"># Find the closest parameters in the cache: O(len(cache))</span>
+
+    <span class="c1"># Numpy setup</span>
+    <span class="n">cached_parameters</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">dict</span><span class="o">.</span><span class="fm">__iter__</span><span class="p">(</span><span class="n">cache</span><span class="p">))</span>
+    <span class="n">cp_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cached_parameters</span><span class="p">)</span>
+    <span class="n">p_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">scaled_parameters</span><span class="p">)</span>
+
+    <span class="c1"># Calculate distances to all cached parameters</span>
+    <span class="n">deltas</span> <span class="o">=</span> <span class="n">p_array</span> <span class="o">-</span> <span class="n">cp_array</span>  <span class="c1"># Parameter space displacement vectors</span>
+    <span class="n">closest_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">deltas</span> <span class="o">*</span> <span class="n">deltas</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">argmin</span><span class="p">()</span>
+
+    <span class="c1"># Organize closest point data for later use</span>
+    <span class="n">closest_cp</span> <span class="o">=</span> <span class="n">cached_parameters</span><span class="p">[</span><span class="n">closest_index</span><span class="p">]</span>
+    <span class="n">closest_cp_array</span> <span class="o">=</span> <span class="n">cp_array</span><span class="p">[</span><span class="n">closest_index</span><span class="p">]</span>
+    <span class="n">closest_delta</span> <span class="o">=</span> <span class="n">deltas</span><span class="p">[</span><span class="n">closest_index</span><span class="p">]</span>
+
+    <span class="n">phi</span> <span class="o">=</span> <span class="n">cache</span><span class="p">[</span><span class="n">closest_cp</span><span class="p">]</span> <span class="o">=</span> <span class="n">cache</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">closest_cp</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">disp</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Walking from nearest:&quot;</span><span class="p">,</span> <span class="n">closest_cp_array</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;to:&quot;</span><span class="p">,</span> <span class="n">p_array</span><span class="p">)</span>
+
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    We must walk from the previously cached point to the desired region.</span>
+<span class="sd">    This is goes from step=0 (cached) and step=1 (finish), where the step=0</span>
+<span class="sd">    is implicit above. We try the full step first, so that this function only</span>
+<span class="sd">    calls SCFsolve one time during normal cache misses.</span>
+
+<span class="sd">    The solver may not converge if the step size is too big. In that case,</span>
+<span class="sd">    we retry with half the step size. This should find the edge of the basin</span>
+<span class="sd">    of attraction for the solution eventually. On successful steps we increase</span>
+<span class="sd">    stepsize slightly to accelerate after getting stuck.</span>
+
+<span class="sd">    It might seem to make sense to bin parameters into a coarser grid, so we</span>
+<span class="sd">    would be more likely to have cache hits and use them, but this rarely</span>
+<span class="sd">    happened in practice.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">step</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># Fractional distance between cached and requested</span>
+    <span class="n">dstep</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># Step size increment</span>
+    <span class="n">flag</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">while</span> <span class="n">flag</span><span class="p">:</span>
+        <span class="c1"># end on 1.0 exactly every time</span>
+        <span class="k">if</span> <span class="n">step</span> <span class="o">&gt;=</span> <span class="mf">1.0</span><span class="p">:</span>
+            <span class="n">step</span> <span class="o">=</span> <span class="mf">1.0</span>
+            <span class="n">flag</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="c1"># conditional math because, &quot;why risk floating point error&quot;</span>
+        <span class="k">if</span> <span class="n">flag</span><span class="p">:</span>
+            <span class="n">p_tup</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">closest_cp_array</span> <span class="o">+</span> <span class="n">step</span> <span class="o">*</span> <span class="n">closest_delta</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">p_tup</span> <span class="o">=</span> <span class="n">scaled_parameters</span>
+
+        <span class="k">if</span> <span class="n">disp</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Parameter step is&quot;</span><span class="p">,</span> <span class="n">step</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;current parameters:&quot;</span><span class="p">,</span> <span class="n">p_tup</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">phi</span> <span class="o">=</span> <span class="n">SCFsolve</span><span class="p">(</span>
+                <span class="n">p_tup</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">p_tup</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="mi">3</span><span class="p">,</span> <span class="n">p_tup</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">p_tup</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">p_tup</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">p_tup</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">*</span> <span class="mi">500</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="n">disp</span><span class="p">,</span> <span class="n">phi0</span><span class="o">=</span><span class="n">phi</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">NoConvergence</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">&quot;array must not contain infs or NaNs&quot;</span><span class="p">:</span>
+                    <span class="k">raise</span>
+            <span class="k">if</span> <span class="n">disp</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Step failed&quot;</span><span class="p">)</span>
+            <span class="n">flag</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># Reset this so we don&#39;t quit if step=1.0 fails</span>
+            <span class="n">dstep</span> <span class="o">*=</span> <span class="mf">0.5</span>
+            <span class="n">step</span> <span class="o">-=</span> <span class="n">dstep</span>
+            <span class="k">if</span> <span class="n">dstep</span> <span class="o">&lt;</span> <span class="mf">1e-5</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Cache walk appears to be stuck&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># Belongs to try, executes if no exception is raised</span>
+            <span class="n">cache</span><span class="p">[</span><span class="n">p_tup</span><span class="p">]</span> <span class="o">=</span> <span class="n">phi</span>
+            <span class="n">dstep</span> <span class="o">*=</span> <span class="mf">1.05</span>
+            <span class="n">step</span> <span class="o">+=</span> <span class="n">dstep</span>
+
+    <span class="k">if</span> <span class="n">disp</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;SCFcache execution time:&quot;</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">starttime</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="s2">&quot;s&quot;</span><span class="p">)</span>
+
+    <span class="c1"># keep the cache from consuming all things</span>
+    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">cache</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">100</span><span class="p">:</span>
+        <span class="n">cache</span><span class="o">.</span><span class="n">popitem</span><span class="p">(</span><span class="n">last</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">phi</span>
+
+
+<span class="k">def</span> <span class="nf">SCFsolve</span><span class="p">(</span><span class="n">chi</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">chi_s</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">pdi</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">phi_b</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">segments</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">phi0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">maxiter</span><span class="o">=</span><span class="mi">30</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Solve SCF equations using an initial guess and lattice parameters</span>
+
+<span class="sd">    This function finds a solution for the equations where the lattice size</span>
+<span class="sd">    is sufficiently large.</span>
+
+<span class="sd">    The Newton-Krylov solver really makes this one. With gmres, it was faster</span>
+<span class="sd">    than the other solvers by quite a lot.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">newton_krylov</span>
+
+    <span class="k">if</span> <span class="n">sigma</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Chains that short cannot be squeezed that high&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">disp</span><span class="p">:</span>
+        <span class="n">starttime</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+
+    <span class="n">p_i</span> <span class="o">=</span> <span class="n">SZdist</span><span class="p">(</span><span class="n">pdi</span><span class="p">,</span> <span class="n">segments</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">phi0</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># TODO: Better initial guess for chi&gt;.6</span>
+        <span class="n">phi0</span> <span class="o">=</span> <span class="n">default_guess</span><span class="p">(</span><span class="n">segments</span><span class="p">,</span> <span class="n">sigma</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">disp</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No guess passed, using default phi0: layers =&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">phi0</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">phi0</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">phi0</span><span class="p">)</span>
+        <span class="n">phi0</span><span class="p">[</span><span class="n">phi0</span> <span class="o">&gt;</span> <span class="mf">0.99999</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.99999</span>
+        <span class="k">if</span> <span class="n">disp</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Initial guess passed: layers =&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">phi0</span><span class="p">))</span>
+
+    <span class="c1"># resizing loop variables</span>
+    <span class="n">jac_solve_method</span> <span class="o">=</span> <span class="s2">&quot;gmres&quot;</span>
+    <span class="n">lattice_too_small</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="c1"># We tolerate up to 1 ppm deviation from bulk phi</span>
+    <span class="c1"># when counting layers_near_phi_b</span>
+    <span class="n">tol</span> <span class="o">=</span> <span class="mf">1e-6</span>
+
+    <span class="k">def</span> <span class="nf">curried_SCFeqns</span><span class="p">(</span><span class="n">phi</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">SCFeqns</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">chi</span><span class="p">,</span> <span class="n">chi_s</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">segments</span><span class="p">,</span> <span class="n">p_i</span><span class="p">,</span> <span class="n">phi_b</span><span class="p">)</span>
+
+    <span class="k">while</span> <span class="n">lattice_too_small</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">disp</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Solving SCF equations&quot;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">invalid</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">):</span>
+                <span class="n">phi</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span>
+                    <span class="n">newton_krylov</span><span class="p">(</span>
+                        <span class="n">curried_SCFeqns</span><span class="p">,</span>
+                        <span class="n">phi0</span><span class="p">,</span>
+                        <span class="n">verbose</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">disp</span><span class="p">),</span>
+                        <span class="n">maxiter</span><span class="o">=</span><span class="n">maxiter</span><span class="p">,</span>
+                        <span class="n">method</span><span class="o">=</span><span class="n">jac_solve_method</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;gmres is not re-entrant&quot;</span><span class="p">:</span>
+                <span class="c1"># Threads are racing to use gmres. Lose the race and use</span>
+                <span class="c1"># something slower but thread-safe.</span>
+                <span class="n">jac_solve_method</span> <span class="o">=</span> <span class="s2">&quot;lgmres&quot;</span>
+                <span class="k">continue</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span>
+
+        <span class="k">if</span> <span class="n">disp</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;lattice size:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">phi</span><span class="p">))</span>
+
+        <span class="n">phi_deviation</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">phi</span> <span class="o">-</span> <span class="n">phi_b</span><span class="p">)</span>
+        <span class="n">layers_near_phi_b</span> <span class="o">=</span> <span class="n">phi_deviation</span> <span class="o">&lt;</span> <span class="n">tol</span>
+        <span class="n">nbulk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">layers_near_phi_b</span><span class="p">)</span>
+        <span class="n">lattice_too_small</span> <span class="o">=</span> <span class="n">nbulk</span> <span class="o">&lt;</span> <span class="n">MINBULK</span>
+
+        <span class="k">if</span> <span class="n">lattice_too_small</span><span class="p">:</span>
+            <span class="c1"># if there aren&#39;t enough layers_near_phi_b, grow the lattice 20%</span>
+            <span class="n">newlayers</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">phi0</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.2</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">disp</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Growing undersized lattice by&quot;</span><span class="p">,</span> <span class="n">newlayers</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">nbulk</span><span class="p">:</span>
+                <span class="n">i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">layers_near_phi_b</span><span class="p">)</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">i</span> <span class="o">=</span> <span class="n">phi_deviation</span><span class="o">.</span><span class="n">argmin</span><span class="p">()</span>
+            <span class="n">phi0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">],</span> <span class="n">phi</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">num</span><span class="o">=</span><span class="n">newlayers</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">nbulk</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">MINBULK</span><span class="p">:</span>
+        <span class="n">chop_end</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">layers_near_phi_b</span><span class="p">)</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+        <span class="n">chop_start</span> <span class="o">=</span> <span class="n">chop_end</span> <span class="o">-</span> <span class="n">MINBULK</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">phi</span><span class="p">))</span>
+        <span class="n">phi</span> <span class="o">=</span> <span class="n">phi</span><span class="p">[(</span><span class="n">i</span> <span class="o">&lt;=</span> <span class="n">chop_start</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">i</span> <span class="o">&gt;</span> <span class="n">chop_end</span><span class="p">)]</span>
+
+    <span class="k">if</span> <span class="n">disp</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;SCFsolve execution time:&quot;</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">starttime</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="s2">&quot;s&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">phi</span>
+
+
+<span class="n">_SZdist_dict</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">SZdist</span><span class="p">(</span><span class="n">pdi</span><span class="p">,</span> <span class="n">nn</span><span class="p">,</span> <span class="n">cache</span><span class="o">=</span><span class="n">_SZdist_dict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate Shultz-Zimm distribution from PDI and number average DP</span>
+
+<span class="sd">    Shultz-Zimm is a &quot;realistic&quot; distribution for linear polymers. Numerical</span>
+<span class="sd">    problems arise when the distribution gets too uniform, so if we find them,</span>
+<span class="sd">    default to an exact uniform calculation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">scipy.special</span> <span class="kn">import</span> <span class="n">gammaln</span>
+
+    <span class="n">args</span> <span class="o">=</span> <span class="n">pdi</span><span class="p">,</span> <span class="n">nn</span>
+    <span class="k">if</span> <span class="n">args</span> <span class="ow">in</span> <span class="n">cache</span><span class="p">:</span>
+        <span class="n">cache</span><span class="p">[</span><span class="n">args</span><span class="p">]</span> <span class="o">=</span> <span class="n">cache</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cache</span><span class="p">[</span><span class="n">args</span><span class="p">]</span>
+
+    <span class="n">uniform</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">if</span> <span class="n">pdi</span> <span class="o">==</span> <span class="mf">1.0</span><span class="p">:</span>
+        <span class="n">uniform</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">elif</span> <span class="n">pdi</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid PDI&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">pdi</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="c1"># Calculate the distribution in chunks so we don&#39;t waste CPU time</span>
+        <span class="n">chunk</span> <span class="o">=</span> <span class="mi">256</span>
+        <span class="n">p_ni_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">pdi_underflow</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">((</span><span class="mi">100</span> <span class="o">*</span> <span class="n">nn</span><span class="p">)</span> <span class="o">/</span> <span class="n">chunk</span><span class="p">))):</span>
+            <span class="n">ni</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">chunk</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">chunk</span> <span class="o">*</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">ni</span> <span class="o">/</span> <span class="n">nn</span>
+            <span class="n">xr</span> <span class="o">=</span> <span class="n">x</span> <span class="o">*</span> <span class="n">r</span>
+
+            <span class="n">p_ni</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="n">log</span><span class="p">(</span><span class="n">x</span> <span class="o">/</span> <span class="n">ni</span><span class="p">)</span> <span class="o">-</span> <span class="n">gammaln</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">xr</span> <span class="o">*</span> <span class="p">(</span><span class="n">log</span><span class="p">(</span><span class="n">xr</span><span class="p">)</span> <span class="o">/</span> <span class="n">r</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+
+            <span class="n">pdi_underflow</span> <span class="o">=</span> <span class="p">(</span><span class="n">p_ni</span> <span class="o">&gt;=</span> <span class="mf">1.0</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>  <span class="c1"># catch &quot;too small PDI&quot;</span>
+            <span class="k">if</span> <span class="n">pdi_underflow</span><span class="p">:</span>
+                <span class="k">break</span>  <span class="c1"># and break out to uniform calculation</span>
+
+            <span class="c1"># Stop calculating when species account for less than 1ppm</span>
+            <span class="n">keep</span> <span class="o">=</span> <span class="p">(</span><span class="n">r</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">p_ni</span> <span class="o">&gt;=</span> <span class="mf">1e-6</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">keep</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+                <span class="n">p_ni_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p_ni</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">p_ni_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p_ni</span><span class="p">[</span><span class="n">keep</span><span class="p">])</span>
+                <span class="k">break</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># Belongs to the for loop. Executes if no break statement runs.</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;SZdist overflow&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">uniform</span> <span class="ow">or</span> <span class="n">pdi_underflow</span><span class="p">:</span>
+        <span class="c1"># NOTE: rounding here allows nn to be a double in the rest of the logic</span>
+        <span class="n">p_ni</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">nn</span><span class="p">)))</span>
+        <span class="n">p_ni</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">p_ni</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">p_ni_list</span><span class="p">)</span>
+        <span class="n">p_ni</span> <span class="o">/=</span> <span class="n">p_ni</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="n">cache</span><span class="p">[</span><span class="n">args</span><span class="p">]</span> <span class="o">=</span> <span class="n">p_ni</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cache</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">9000</span><span class="p">:</span>
+        <span class="n">cache</span><span class="o">.</span><span class="n">popitem</span><span class="p">(</span><span class="n">last</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">p_ni</span>
+
+
+<span class="k">def</span> <span class="nf">default_guess</span><span class="p">(</span><span class="n">segments</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">phi_b</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">chi</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">chi_s</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Produce an initial guess for phi via analytical approximants.</span>
+
+<span class="sd">    For now, a line using numbers from scaling theory</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ss</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">sigma</span><span class="p">)</span>
+    <span class="n">default_layers</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">MINLAT</span><span class="p">,</span> <span class="n">segments</span> <span class="o">*</span> <span class="n">ss</span><span class="p">)))</span>
+    <span class="n">default_phi0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">ss</span><span class="p">,</span> <span class="n">phi_b</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="n">default_layers</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">default_phi0</span>
+
+
+<span class="k">def</span> <span class="nf">SCFeqns</span><span class="p">(</span><span class="n">phi_z</span><span class="p">,</span> <span class="n">chi</span><span class="p">,</span> <span class="n">chi_s</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">n_avg</span><span class="p">,</span> <span class="n">p_i</span><span class="p">,</span> <span class="n">phi_b</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;System of SCF equation for terminally attached polymers.</span>
+
+<span class="sd">    Formatted for input to a nonlinear minimizer or solver.</span>
+
+<span class="sd">    The sign convention here on u is &quot;backwards&quot; and always has been.</span>
+<span class="sd">    It saves a few sign flips, and looks more like Cosgrove&#39;s.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># let the solver go negative if it wants</span>
+    <span class="n">phi_z</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">phi_z</span><span class="p">)</span>
+
+    <span class="c1"># penalize attempts that overfill the lattice</span>
+    <span class="n">toomuch</span> <span class="o">=</span> <span class="n">phi_z</span> <span class="o">&gt;</span> <span class="mf">0.99999</span>
+    <span class="n">penalty_flag</span> <span class="o">=</span> <span class="n">toomuch</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">penalty_flag</span><span class="p">:</span>
+        <span class="n">penalty</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">toomuch</span><span class="p">,</span> <span class="n">phi_z</span> <span class="o">-</span> <span class="mf">0.99999</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">phi_z</span><span class="p">[</span><span class="n">toomuch</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.99999</span>
+
+    <span class="c1"># calculate new g_z (Boltzmann weighting factors)</span>
+    <span class="n">u_prime</span> <span class="o">=</span> <span class="n">log</span><span class="p">((</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">phi_z</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">phi_b</span><span class="p">))</span>
+    <span class="n">u_int</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">chi</span> <span class="o">*</span> <span class="p">(</span><span class="n">old_correlate</span><span class="p">(</span><span class="n">phi_z</span><span class="p">,</span> <span class="n">LAMBDA_ARRAY</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">phi_b</span><span class="p">)</span>
+    <span class="n">u_int</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="n">chi_s</span>
+    <span class="n">u_z</span> <span class="o">=</span> <span class="n">u_prime</span> <span class="o">+</span> <span class="n">u_int</span>
+    <span class="n">g_z</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="n">u_z</span><span class="p">)</span>
+
+    <span class="c1"># normalize g_z for numerical stability</span>
+    <span class="n">u_z_avg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">u_z</span><span class="p">)</span>
+    <span class="n">g_z_norm</span> <span class="o">=</span> <span class="n">g_z</span> <span class="o">/</span> <span class="n">exp</span><span class="p">(</span><span class="n">u_z_avg</span><span class="p">)</span>
+
+    <span class="n">phi_z_new</span> <span class="o">=</span> <span class="n">calc_phi_z</span><span class="p">(</span><span class="n">g_z_norm</span><span class="p">,</span> <span class="n">n_avg</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">phi_b</span><span class="p">,</span> <span class="n">u_z_avg</span><span class="p">,</span> <span class="n">p_i</span><span class="p">)</span>
+
+    <span class="n">eps_z</span> <span class="o">=</span> <span class="n">phi_z</span> <span class="o">-</span> <span class="n">phi_z_new</span>
+
+    <span class="k">if</span> <span class="n">penalty_flag</span><span class="p">:</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">copysign</span><span class="p">(</span><span class="n">penalty</span><span class="p">,</span> <span class="n">eps_z</span><span class="p">,</span> <span class="n">penalty</span><span class="p">)</span>
+        <span class="n">eps_z</span> <span class="o">+=</span> <span class="n">penalty</span>
+
+    <span class="k">return</span> <span class="n">eps_z</span>
+
+
+<span class="k">def</span> <span class="nf">calc_phi_z</span><span class="p">(</span><span class="n">g_z</span><span class="p">,</span> <span class="n">n_avg</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">phi_b</span><span class="p">,</span> <span class="n">u_z_avg</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">p_i</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">p_i</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">segments</span> <span class="o">=</span> <span class="n">n_avg</span>
+        <span class="n">uniform</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">segments</span> <span class="o">=</span> <span class="n">p_i</span><span class="o">.</span><span class="n">size</span>
+        <span class="n">uniform</span> <span class="o">=</span> <span class="n">segments</span> <span class="o">==</span> <span class="nb">round</span><span class="p">(</span><span class="n">n_avg</span><span class="p">)</span>
+
+    <span class="n">g_zs</span> <span class="o">=</span> <span class="n">Propagator</span><span class="p">(</span><span class="n">g_z</span><span class="p">,</span> <span class="n">segments</span><span class="p">)</span>
+
+    <span class="c1"># for terminally attached chains</span>
+    <span class="k">if</span> <span class="n">sigma</span><span class="p">:</span>
+        <span class="n">g_zs_ta</span> <span class="o">=</span> <span class="n">g_zs</span><span class="o">.</span><span class="n">ta</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">uniform</span><span class="p">:</span>
+            <span class="n">c_i_ta</span> <span class="o">=</span> <span class="n">sigma</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">g_zs_ta</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">g_zs_ta_ngts</span> <span class="o">=</span> <span class="n">g_zs</span><span class="o">.</span><span class="n">ngts_u</span><span class="p">(</span><span class="n">c_i_ta</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">c_i_ta</span> <span class="o">=</span> <span class="n">sigma</span> <span class="o">*</span> <span class="n">p_i</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">g_zs_ta</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">g_zs_ta_ngts</span> <span class="o">=</span> <span class="n">g_zs</span><span class="o">.</span><span class="n">ngts</span><span class="p">(</span><span class="n">c_i_ta</span><span class="p">)</span>
+
+        <span class="n">phi_z_ta</span> <span class="o">=</span> <span class="n">compose</span><span class="p">(</span><span class="n">g_zs_ta</span><span class="p">,</span> <span class="n">g_zs_ta_ngts</span><span class="p">,</span> <span class="n">g_z</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">phi_z_ta</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="c1"># for free chains</span>
+    <span class="k">if</span> <span class="n">phi_b</span><span class="p">:</span>
+        <span class="n">g_zs_free</span> <span class="o">=</span> <span class="n">g_zs</span><span class="o">.</span><span class="n">free</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">uniform</span><span class="p">:</span>
+            <span class="n">r_i</span> <span class="o">=</span> <span class="n">segments</span>
+            <span class="n">c_free</span> <span class="o">=</span> <span class="n">phi_b</span> <span class="o">/</span> <span class="n">r_i</span>
+            <span class="n">normalizer</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="n">u_z_avg</span> <span class="o">*</span> <span class="n">r_i</span><span class="p">)</span>
+            <span class="n">c_free</span> <span class="o">=</span> <span class="n">c_free</span> <span class="o">*</span> <span class="n">normalizer</span>
+            <span class="n">g_zs_free_ngts</span> <span class="o">=</span> <span class="n">g_zs</span><span class="o">.</span><span class="n">ngts_u</span><span class="p">(</span><span class="n">c_free</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">r_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">segments</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">c_i_free</span> <span class="o">=</span> <span class="n">phi_b</span> <span class="o">*</span> <span class="n">p_i</span> <span class="o">/</span> <span class="n">r_i</span>
+            <span class="n">normalizer</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="n">u_z_avg</span> <span class="o">*</span> <span class="n">r_i</span><span class="p">)</span>
+            <span class="n">c_i_free</span> <span class="o">=</span> <span class="n">c_i_free</span> <span class="o">*</span> <span class="n">normalizer</span>
+            <span class="n">g_zs_free_ngts</span> <span class="o">=</span> <span class="n">g_zs</span><span class="o">.</span><span class="n">ngts</span><span class="p">(</span><span class="n">c_i_free</span><span class="p">)</span>
+
+        <span class="n">phi_z_free</span> <span class="o">=</span> <span class="n">compose</span><span class="p">(</span><span class="n">g_zs_free</span><span class="p">,</span> <span class="n">g_zs_free_ngts</span><span class="p">,</span> <span class="n">g_z</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">phi_z_free</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">return</span> <span class="n">phi_z_ta</span> <span class="o">+</span> <span class="n">phi_z_free</span>
+
+
+<span class="k">def</span> <span class="nf">compose</span><span class="p">(</span><span class="n">g_zs</span><span class="p">,</span> <span class="n">g_zs_ngts</span><span class="p">,</span> <span class="n">g_z</span><span class="p">):</span>
+    <span class="n">prod</span> <span class="o">=</span> <span class="n">g_zs</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">fliplr</span><span class="p">(</span><span class="n">g_zs_ngts</span><span class="p">)</span>
+    <span class="n">prod</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">prod</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">prod</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">g_z</span>
+
+
+<span class="k">class</span> <span class="nc">Propagator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g_z</span><span class="p">,</span> <span class="n">segments</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">g_z</span> <span class="o">=</span> <span class="n">g_z</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">g_z</span><span class="o">.</span><span class="n">size</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">segments</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">ta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># terminally attached beginnings</span>
+        <span class="c1"># forward propagator</span>
+
+        <span class="n">g_zs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_new</span><span class="p">()</span>
+        <span class="n">g_zs</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">g_zs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">g_z</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">_calc_g_zs_uniform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">g_z</span><span class="p">,</span> <span class="n">g_zs</span><span class="p">,</span> <span class="n">LAMBDA_0</span><span class="p">,</span> <span class="n">LAMBDA_1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">g_zs</span>
+
+    <span class="k">def</span> <span class="nf">free</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># free beginnings</span>
+        <span class="c1"># forward propagator</span>
+
+        <span class="n">g_zs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_new</span><span class="p">()</span>
+        <span class="n">g_zs</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">g_z</span>
+        <span class="n">_calc_g_zs_uniform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">g_z</span><span class="p">,</span> <span class="n">g_zs</span><span class="p">,</span> <span class="n">LAMBDA_0</span><span class="p">,</span> <span class="n">LAMBDA_1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">g_zs</span>
+
+    <span class="k">def</span> <span class="nf">ngts_u</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+        <span class="c1"># free ends of uniform chains</span>
+        <span class="c1"># reverse propagator</span>
+
+        <span class="n">g_zs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_new</span><span class="p">()</span>
+        <span class="n">g_zs</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">g_z</span>
+        <span class="n">_calc_g_zs_uniform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">g_z</span><span class="p">,</span> <span class="n">g_zs</span><span class="p">,</span> <span class="n">LAMBDA_0</span><span class="p">,</span> <span class="n">LAMBDA_1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">g_zs</span>
+
+    <span class="k">def</span> <span class="nf">ngts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c_i</span><span class="p">):</span>
+        <span class="c1"># free ends of disperse chains</span>
+        <span class="c1"># reverse propagator</span>
+
+        <span class="n">g_zs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_new</span><span class="p">()</span>
+        <span class="n">g_zs</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">c_i</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">g_z</span>
+        <span class="n">_calc_g_zs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">g_z</span><span class="p">,</span> <span class="n">c_i</span><span class="p">,</span> <span class="n">g_zs</span><span class="p">,</span> <span class="n">LAMBDA_0</span><span class="p">,</span> <span class="n">LAMBDA_1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">g_zs</span>
+
+    <span class="k">def</span> <span class="nf">_new</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s2">&quot;F&quot;</span><span class="p">)</span>
+
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">numba</span> <span class="kn">import</span> <span class="n">njit</span>
+
+    <span class="n">USE_NUMBA</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">USE_NUMBA</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="c1"># USE_NUMBA = False # Uncomment when doing timing tests</span>
+
+<span class="k">if</span> <span class="n">USE_NUMBA</span><span class="p">:</span>
+
+    <span class="nd">@njit</span><span class="p">(</span><span class="s2">&quot;(f8[:], f8[:, :], f8, f8)&quot;</span><span class="p">,</span> <span class="n">cache</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_calc_g_zs_uniform</span><span class="p">(</span><span class="n">g_z</span><span class="p">,</span> <span class="n">g_zs</span><span class="p">,</span> <span class="n">f0</span><span class="p">,</span> <span class="n">f1</span><span class="p">):</span>
+        <span class="n">points</span><span class="p">,</span> <span class="n">segments</span> <span class="o">=</span> <span class="n">g_zs</span><span class="o">.</span><span class="n">shape</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">segments</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">g_zs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">r</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">g_zs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">r</span><span class="p">]</span> <span class="o">*</span> <span class="n">f0</span> <span class="o">+</span> <span class="n">g_zs</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">r</span><span class="p">]</span> <span class="o">*</span> <span class="n">f1</span><span class="p">)</span> <span class="o">*</span> <span class="n">g_z</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="c1"># g_zs[1:-1, r+1] = np.correlate(g_zs[:, r], [f1, f0, f1], &#39;valid&#39;)*g_z[1:-1]</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">points</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">g_zs</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="n">r</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">g_zs</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="n">r</span><span class="p">]</span> <span class="o">*</span> <span class="n">f0</span> <span class="o">+</span> <span class="p">(</span><span class="n">g_zs</span><span class="p">[</span><span class="n">k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">r</span><span class="p">]</span> <span class="o">+</span> <span class="n">g_zs</span><span class="p">[</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">r</span><span class="p">])</span> <span class="o">*</span> <span class="n">f1</span><span class="p">)</span> <span class="o">*</span> <span class="n">g_z</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+            <span class="n">g_zs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">r</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">g_zs</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="n">r</span><span class="p">]</span> <span class="o">*</span> <span class="n">f1</span> <span class="o">+</span> <span class="n">g_zs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">r</span><span class="p">]</span> <span class="o">*</span> <span class="n">f0</span><span class="p">)</span> <span class="o">*</span> <span class="n">g_z</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="nd">@njit</span><span class="p">(</span><span class="s2">&quot;(f8[:], f8[:], f8[:, :], f8, f8)&quot;</span><span class="p">,</span> <span class="n">cache</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_calc_g_zs</span><span class="p">(</span><span class="n">g_z</span><span class="p">,</span> <span class="n">c_i</span><span class="p">,</span> <span class="n">g_zs</span><span class="p">,</span> <span class="n">f0</span><span class="p">,</span> <span class="n">f1</span><span class="p">):</span>
+        <span class="n">points</span><span class="p">,</span> <span class="n">segments</span> <span class="o">=</span> <span class="n">g_zs</span><span class="o">.</span><span class="n">shape</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">segments</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">c_ir</span> <span class="o">=</span> <span class="n">c_i</span><span class="p">[</span><span class="n">segments</span> <span class="o">-</span> <span class="p">(</span><span class="n">r</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">g_zs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">r</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">g_zs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">r</span><span class="p">]</span> <span class="o">*</span> <span class="n">f0</span> <span class="o">+</span> <span class="n">g_zs</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">r</span><span class="p">]</span> <span class="o">*</span> <span class="n">f1</span> <span class="o">+</span> <span class="n">c_ir</span><span class="p">)</span> <span class="o">*</span> <span class="n">g_z</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="c1"># g_zs[1:-1, r+1] = (np.correlate(g_zs[:, r], fir, &#39;valid&#39;) + c_ir)*g_z[1:-1]</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">points</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">g_zs</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="n">r</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">g_zs</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="n">r</span><span class="p">]</span> <span class="o">*</span> <span class="n">f0</span> <span class="o">+</span> <span class="p">(</span><span class="n">g_zs</span><span class="p">[</span><span class="n">k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">r</span><span class="p">]</span> <span class="o">+</span> <span class="n">g_zs</span><span class="p">[</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">r</span><span class="p">])</span> <span class="o">*</span> <span class="n">f1</span> <span class="o">+</span> <span class="n">c_ir</span><span class="p">)</span> <span class="o">*</span> <span class="n">g_z</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+            <span class="n">g_zs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">r</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">g_zs</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="n">r</span><span class="p">]</span> <span class="o">*</span> <span class="n">f1</span> <span class="o">+</span> <span class="n">g_zs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">r</span><span class="p">]</span> <span class="o">*</span> <span class="n">f0</span> <span class="o">+</span> <span class="n">c_ir</span><span class="p">)</span> <span class="o">*</span> <span class="n">g_z</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+<span class="k">else</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="nf">_calc_g_zs</span><span class="p">(</span><span class="n">g_z</span><span class="p">,</span> <span class="n">c_i</span><span class="p">,</span> <span class="n">g_zs</span><span class="p">,</span> <span class="n">f0</span><span class="p">,</span> <span class="n">f1</span><span class="p">):</span>
+        <span class="n">coeff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">f1</span><span class="p">,</span> <span class="n">f0</span><span class="p">,</span> <span class="n">f1</span><span class="p">])</span>
+        <span class="n">pg_zs</span> <span class="o">=</span> <span class="n">g_zs</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">segment_iterator</span> <span class="o">=</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">c_i</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="nb">next</span><span class="p">(</span><span class="n">segment_iterator</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">segment_iterator</span><span class="p">:</span>
+            <span class="n">g_zs</span><span class="p">[:,</span> <span class="n">r</span><span class="p">]</span> <span class="o">=</span> <span class="n">pg_zs</span> <span class="o">=</span> <span class="p">(</span><span class="n">old_correlate</span><span class="p">(</span><span class="n">pg_zs</span><span class="p">,</span> <span class="n">coeff</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">c</span><span class="p">)</span> <span class="o">*</span> <span class="n">g_z</span>
+
+    <span class="k">def</span> <span class="nf">_calc_g_zs_uniform</span><span class="p">(</span><span class="n">g_z</span><span class="p">,</span> <span class="n">g_zs</span><span class="p">,</span> <span class="n">f0</span><span class="p">,</span> <span class="n">f1</span><span class="p">):</span>
+        <span class="n">coeff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">f1</span><span class="p">,</span> <span class="n">f0</span><span class="p">,</span> <span class="n">f1</span><span class="p">])</span>
+        <span class="n">segments</span> <span class="o">=</span> <span class="n">g_zs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">pg_zs</span> <span class="o">=</span> <span class="n">g_zs</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">segments</span><span class="p">):</span>
+            <span class="n">g_zs</span><span class="p">[:,</span> <span class="n">r</span><span class="p">]</span> <span class="o">=</span> <span class="n">pg_zs</span> <span class="o">=</span> <span class="n">old_correlate</span><span class="p">(</span><span class="n">pg_zs</span><span class="p">,</span> <span class="n">coeff</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">g_z</span>
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

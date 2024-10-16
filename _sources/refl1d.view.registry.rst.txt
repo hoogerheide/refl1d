@@ -1,0 +1,7 @@
+refl1d.view.registry module
+===========================
+
+.. automodule:: refl1d.view.registry
+   :members:
+   :undoc-members:
+   :show-inheritance:

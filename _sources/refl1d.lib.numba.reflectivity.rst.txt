@@ -1,0 +1,7 @@
+refl1d.lib.numba.reflectivity module
+====================================
+
+.. automodule:: refl1d.lib.numba.reflectivity
+   :members:
+   :undoc-members:
+   :show-inheritance:

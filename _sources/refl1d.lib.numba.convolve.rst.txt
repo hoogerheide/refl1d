@@ -1,0 +1,7 @@
+refl1d.lib.numba.convolve module
+================================
+
+.. automodule:: refl1d.lib.numba.convolve
+   :members:
+   :undoc-members:
+   :show-inheritance:

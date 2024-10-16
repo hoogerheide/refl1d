@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>refl1d.fitproblem module &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="_static/plot_directive.css" />
+    <script src="_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>refl1d.fitproblem module</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="module-refl1d.fitproblem">
+<span id="refl1d-fitproblem-module"></span><h1>refl1d.fitproblem module<a class="headerlink" href="#module-refl1d.fitproblem" title="Link to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="refl1d.fitproblem.FitProblem">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">refl1d.fitproblem.</span></span><span class="sig-name descname"><span class="pre">FitProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">models</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Fitness</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Fitness</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">penalty_nllf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'inf'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freevars</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">soft_limit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auto_tag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/fitproblem.html#FitProblem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.fitproblem.FitProblem" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">FitProblem</span></code></p>
+<blockquote>
+<div><p><em>models</em> is a sequence of <code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment</span></code> instances.</p>
+<p><em>weights</em> is an optional scale factor for each model. A weighted fit
+returns nllf <span class="math notranslate nohighlight">\(L = \sum w_k^2 L_k\)</span>. If an individual nllf is the sum
+squared residuals then this is equivalent to scaling the measurement
+uncertainty by <span class="math notranslate nohighlight">\(1/w\)</span>. Unless the measurement uncertainty is unknown,
+weights should be in [0, 1], representing an unknown systematic
+uncertainty spread across the individual measurements.</p>
+<p><em>freevars</em> is <code class="xref py py-class docutils literal notranslate"><span class="pre">parameter.FreeVariables</span></code> instance defining the
+per-model parameter assignments.  See <span class="xref std std-ref">freevariables</span> for details.</p>
+</div></blockquote>
+<p>Additional parameters:</p>
+<blockquote>
+<div><p><em>name</em> name of the problem</p>
+<p><em>constraints</em> is a list of Constraint objects, which have a method to
+calculate the nllf for that constraint. 
+Also supports an alternate form which cannot be serialized:
+A function which returns the negative log likelihood
+of seeing the parameters independent from the fitness function.  Use
+this for example to check for feasible regions of the search space, or
+to add constraints that cannot be easily calculated per parameter.
+Ideally, the constraints nllf will increase as you go farther from
+the feasible region so that the fit will be directed toward feasible
+values.</p>
+<p><em>penalty_nllf</em> is the nllf to use for <em>fitness</em> when <em>constraints</em>
+or model parameter bounds are not satisfied.</p>
+</div></blockquote>
+<p>Total nllf is the sum of the parameter nllf, the constraints nllf and the
+depending on whether constraints is greater than soft_limit, either the
+fitness nllf or the penalty nllf.</p>
+<p>New in 0.9.0: weights are now squared when computing the sum rather than
+linear.</p>
+</dd></dl>
+
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

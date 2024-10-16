@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>profile - Model profile &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
+    <script src="../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="refllib - Low level reflectivity calculations" href="refllib.html" />
+    <link rel="prev" title="probe - Instrument probe" href="probe.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>profile - Model profile</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        «&#160;&#160;<a href="probe.html">probe - Instrument probe</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="refllib.html">refllib - Low level reflectivity calculations</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="profile-model-profile">
+<h1>profile - Model profile<a class="headerlink" href="#profile-model-profile" title="Link to this heading">¶</a></h1>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../refl1d.profile.html#refl1d.profile.Microslabs" title="refl1d.profile.Microslabs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Microslabs</span></code></a></p></td>
+<td><p>Manage the micro slab representation of a model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../refl1d.profile.html#refl1d.profile.blend" title="refl1d.profile.blend"><code class="xref py py-obj docutils literal notranslate"><span class="pre">blend</span></code></a></p></td>
+<td><p>blend function</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../refl1d.profile.html#refl1d.profile.build_profile" title="refl1d.profile.build_profile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_profile</span></code></a></p></td>
+<td><p>Convert a step profile to a smooth profile.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../refl1d.profile.html#refl1d.profile.compute_limited_sigma" title="refl1d.profile.compute_limited_sigma"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_limited_sigma</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+<p id="module-refl1d.profile">Scattering length density profile.</p>
+<p>In order to render a reflectometry model, the theory function calculator
+renders each layer in the model for each energy in the probe.  For slab
+layers this is easy: just accumulate the slabs, with the 1-<span class="math notranslate nohighlight">\(\sigma\)</span> Gaussian
+interface width between the slabs.  For freeform or functional layers,
+this is more complicated.  The rendering needs to chop each layer into
+microslabs and evaluate the profile at each of these slabs.</p>
+<section id="example">
+<h2>Example<a class="headerlink" href="#example" title="Link to this heading">¶</a></h2>
+<p>This example sets up a model which uses tanh to transition from
+silicon to gold in 20 Å with 2 Å steps.</p>
+<p>First define the profile, and put in the substrate:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">S</span> <span class="o">=</span> <span class="n">Microslabs</span><span class="p">(</span><span class="n">nprobe</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">dz</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">S</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">S</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">w</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="mf">2.07</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Next add the interface.  This uses <code class="xref py py-meth docutils literal notranslate"><span class="pre">microslabs()</span></code> to select
+the points at which the interface is evaluated, much like you
+would do when defining your own special layer type.  Note that the
+points Pz are in the center of the micro slabs.  The width of the
+final slab may be different.  You do not need to use fixed width
+microslabs if you can more efficiently represent the profile with
+a smaller number of variable width slabs, but <code class="xref py py-meth docutils literal notranslate"><span class="pre">contract_profile()</span></code>
+serves the same purpose with less work on your part.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">tanh</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Pw</span><span class="p">,</span> <span class="n">Pz</span> <span class="o">=</span> <span class="n">S</span><span class="o">.</span><span class="n">microslabs</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;widths = </span><span class="si">%s</span><span class="s2"> ...&quot;</span><span class="o">%</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%g</span><span class="s2">&quot;</span><span class="o">%</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">Pw</span><span class="p">[:</span><span class="mi">5</span><span class="p">])))</span>
+<span class="go">widths = 2 2 2 2 2 ...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;centers = </span><span class="si">%s</span><span class="s2"> ...&quot;</span><span class="o">%</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%g</span><span class="s2">&quot;</span><span class="o">%</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">Pz</span><span class="p">[:</span><span class="mi">5</span><span class="p">])))</span>
+<span class="go">centers = 1 3 5 7 9 ...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rho</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">tanh</span><span class="p">((</span><span class="n">Pz</span><span class="o">-</span><span class="mi">10</span><span class="p">)</span><span class="o">/</span><span class="mi">5</span><span class="p">))</span><span class="o">/</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="mf">2.07</span><span class="o">-</span><span class="mf">4.5</span><span class="p">)</span><span class="o">+</span><span class="mf">4.5</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">S</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">w</span><span class="o">=</span><span class="n">Pw</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="p">[</span><span class="n">rho</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>Finally, add the incident medium and see the results.  Note that <em>rho</em>
+is a matrix, with one column for each incident energy.  We are only
+using one energy so we only show the first column.</p>
+<blockquote>
+<div><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">S</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">w</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="mf">4.5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;width = </span><span class="si">%s</span><span class="s2"> ...&quot;</span><span class="o">%</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%g</span><span class="s2">&quot;</span><span class="o">%</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">S</span><span class="o">.</span><span class="n">w</span><span class="p">[:</span><span class="mi">5</span><span class="p">])))</span>
+<span class="go">width = 0 2 2 2 2 ...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;rho = </span><span class="si">%s</span><span class="s2"> ...&quot;</span><span class="o">%</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%.2f</span><span class="s2">&quot;</span><span class="o">%</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">S</span><span class="o">.</span><span class="n">rho</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:</span><span class="mi">5</span><span class="p">])))</span>
+<span class="go">rho = 2.07 2.13 2.21 2.36 2.63 ...</span>
+</pre></div>
+</div>
+<p>Since <em>irho</em> and <em>sigma</em> were not specified, they will be zero.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;sigma = </span><span class="si">%s</span><span class="s2"> ...&quot;</span><span class="o">%</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%g</span><span class="s2">&quot;</span><span class="o">%</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">S</span><span class="o">.</span><span class="n">sigma</span><span class="p">[:</span><span class="mi">5</span><span class="p">])))</span>
+<span class="go">sigma = 0 0 0 0 0 ...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;irho = </span><span class="si">%s</span><span class="s2"> ...&quot;</span><span class="o">%</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%g</span><span class="s2">&quot;</span><span class="o">%</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">S</span><span class="o">.</span><span class="n">irho</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:</span><span class="mi">5</span><span class="p">])))</span>
+<span class="go">irho = 0 0 0 0 0 ...</span>
+</pre></div>
+</div>
+</div></blockquote>
+</section>
+<dl class="py class">
+<dt class="sig sig-object py" id="refl1d.profile.Microslabs">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">refl1d.profile.</span></span><span class="sig-name descname"><span class="pre">Microslabs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nprobe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/profile.html#Microslabs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.profile.Microslabs" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Manage the micro slab representation of a model.</p>
+<p>In order to compute reflectivity, we need a series of slabs with thickness,
+roughness and scattering potential for each slab.  Because scattering
+potentials are probe dependent we store an array of potentials for each
+probe value.</p>
+<p>Some slab models use non-uniform layers, and so need the additional
+parameter of dz for the step size within the layer.</p>
+<p>The space for the slabs is saved even after reset, in preparation for a
+new set of slabs from different fitting parameters.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.profile.Microslabs.add_magnetism">
+<span class="sig-name descname"><span class="pre">add_magnetism</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">anchor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rhoM</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thetaM</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">270.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/profile.html#Microslabs.add_magnetism"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.profile.Microslabs.add_magnetism" title="Link to this definition">¶</a></dt>
+<dd><p>Add magnetic layers.</p>
+<p>Note that <em>sigma</em> is a pair <em>(interface_below, interface_above)</em>
+representing the magnetic roughness, which may be different
+from the nuclear roughness at the layer boundaries.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.profile.Microslabs.append">
+<span class="sig-name descname"><span class="pre">append</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">irho</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/profile.html#Microslabs.append"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.profile.Microslabs.append" title="Link to this definition">¶</a></dt>
+<dd><p>Extend the micro slab model with a single layer.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.profile.Microslabs.clear">
+<span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/profile.html#Microslabs.clear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.profile.Microslabs.clear" title="Link to this definition">¶</a></dt>
+<dd><p>Reset the slab model so that none are present.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.profile.Microslabs.extend">
+<span class="sig-name descname"><span class="pre">extend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">irho</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/profile.html#Microslabs.extend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.profile.Microslabs.extend" title="Link to this definition">¶</a></dt>
+<dd><p>Extend the micro slab model with the given layers.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.profile.Microslabs.finalize">
+<span class="sig-name descname"><span class="pre">finalize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">step_interfaces</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dA</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/profile.html#Microslabs.finalize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.profile.Microslabs.finalize" title="Link to this definition">¶</a></dt>
+<dd><p>Rendering complete.</p>
+<p>Call this method after the microslab model has been constructed,
+so any post-rendering processes can be completed.</p>
+<p>In addition to clearing any width from the substrate and
+the surface surround, this will align magnetic and nuclear slabs,
+convert interfaces to step interfaces if desired, and merge slabs
+with similar scattering potentials to reduce computation time.</p>
+<p><em>step_interfaces</em> is True if interfaces should be rendered using
+slabs.</p>
+<p><em>dA</em> is the tolerance to use when deciding if similar layers can
+be merged.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="refl1d.profile.Microslabs.irho">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">irho</span></span><a class="headerlink" href="#refl1d.profile.Microslabs.irho" title="Link to this definition">¶</a></dt>
+<dd><p>Absorption (10^-6 number density)</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="refl1d.profile.Microslabs.ismagnetic">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ismagnetic</span></span><a class="headerlink" href="#refl1d.profile.Microslabs.ismagnetic" title="Link to this definition">¶</a></dt>
+<dd><p>True if there are magnetic materials in any slab</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.profile.Microslabs.limited_sigma">
+<span class="sig-name descname"><span class="pre">limited_sigma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/profile.html#Microslabs.limited_sigma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.profile.Microslabs.limited_sigma" title="Link to this definition">¶</a></dt>
+<dd><p>Limit the roughness by some fraction of layer thickness.</p>
+<p>This function should be called before <a class="reference internal" href="../refl1d.profile.html#refl1d.profile.Microslabs.finalize" title="refl1d.profile.Microslabs.finalize"><code class="xref py py-meth docutils literal notranslate"><span class="pre">finalize()</span></code></a>, but after
+all slabs have been added to the profile.</p>
+<p><em>limit</em> is the number of times sigma has to fit in the layers
+on either side of the interface.  The returned sigma is
+truncated to min(wlow, whigh)/<em>limit</em> where wlow is the thickness
+of the layer below the interface, and whigh is the thickness above
+the interface.  A <em>limit</em> value of 0 returns the original sigma.
+Although a gaussian inteface extends to infinity, in practice
+setting a <em>limit</em> of 3 allows the layer to reach its bulk value,
+with no cross talk between the interfaces.  For very large
+roughnesses, the blending algorithm allows the sld beyond
+the interface to bleed through the entire layer and into the
+next.  In this case the roughness should be the same on both
+sides of the layer to avoid artifacts at the interface.</p>
+<p>Magnetic roughness is ignored for now.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.profile.Microslabs.magnetic_smooth_profile">
+<span class="sig-name descname"><span class="pre">magnetic_smooth_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/profile.html#Microslabs.magnetic_smooth_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.profile.Microslabs.magnetic_smooth_profile" title="Link to this definition">¶</a></dt>
+<dd><p>Return a profile representation of the magnetic microslab structure.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.profile.Microslabs.magnetic_step_profile">
+<span class="sig-name descname"><span class="pre">magnetic_step_profile</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/profile.html#Microslabs.magnetic_step_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.profile.Microslabs.magnetic_step_profile" title="Link to this definition">¶</a></dt>
+<dd><p>Return a step profile representation of the microslab structure.</p>
+<p>Nevot-Croce interfaces are not represented.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.profile.Microslabs.microslabs">
+<span class="sig-name descname"><span class="pre">microslabs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">thickness</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/profile.html#Microslabs.microslabs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.profile.Microslabs.microslabs" title="Link to this definition">¶</a></dt>
+<dd><p>Return a set of microslabs for a layer of the given <em>thickness</em>.</p>
+<p>The step size slabs.dz was defined when the Microslabs
+object was created.</p>
+<p>This is a convenience function.  Layer definitions can choose
+their own slices so long as the step size is approximately
+slabs.dz in the varying region.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><em>thickness</em><span class="classifier">float | A</span></dt><dd><p>Layer thickness</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><em>widths</em>: vector | A</dt><dd><p>Microslab widths</p>
+</dd>
+<dt><em>centers</em>: vector | A</dt><dd><p>Microslab centers</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.profile.Microslabs.repeat">
+<span class="sig-name descname"><span class="pre">repeat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interface</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/profile.html#Microslabs.repeat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.profile.Microslabs.repeat" title="Link to this definition">¶</a></dt>
+<dd><p>Extend the model so that there are <em>count</em> versions of the slabs
+from <em>start</em> to the final slab.</p>
+<p>This is equivalent to L.extend(L[start:]*(count-1)) for list L.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="refl1d.profile.Microslabs.rho">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">rho</span></span><a class="headerlink" href="#refl1d.profile.Microslabs.rho" title="Link to this definition">¶</a></dt>
+<dd><p>Scattering length density (10^-6 number density)</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="refl1d.profile.Microslabs.sigma">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sigma</span></span><a class="headerlink" href="#refl1d.profile.Microslabs.sigma" title="Link to this definition">¶</a></dt>
+<dd><p>rms roughness (A)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.profile.Microslabs.smooth_profile">
+<span class="sig-name descname"><span class="pre">smooth_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/profile.html#Microslabs.smooth_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.profile.Microslabs.smooth_profile" title="Link to this definition">¶</a></dt>
+<dd><p>Return a smooth profile representation of the microslab structure</p>
+<p>Nevot-Croce roughness is approximately represented, though the
+calculation is incorrect for layers with large roughness compared
+to the thickness.</p>
+<p>The returned profile has uniform step size <em>dz</em>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.profile.Microslabs.step_profile">
+<span class="sig-name descname"><span class="pre">step_profile</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/profile.html#Microslabs.step_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.profile.Microslabs.step_profile" title="Link to this definition">¶</a></dt>
+<dd><p>Return a step profile representation of the microslab structure.</p>
+<p>Nevot-Croce interfaces are not represented.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="refl1d.profile.Microslabs.surface_sigma">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">surface_sigma</span></span><a class="headerlink" href="#refl1d.profile.Microslabs.surface_sigma" title="Link to this definition">¶</a></dt>
+<dd><p>roughness for the current top layer, or nan if substrate</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.profile.Microslabs.thickness">
+<span class="sig-name descname"><span class="pre">thickness</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/profile.html#Microslabs.thickness"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.profile.Microslabs.thickness" title="Link to this definition">¶</a></dt>
+<dd><p>Total thickness of the profile.</p>
+<p>Note that thickness includes the thickness of the substrate and
+surface layers.  Normally these will be zero, but the contract
+profile operation may result in large values for either.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="refl1d.profile.Microslabs.w">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">w</span></span><a class="headerlink" href="#refl1d.profile.Microslabs.w" title="Link to this definition">¶</a></dt>
+<dd><p>Thickness (A)</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.profile.blend">
+<span class="sig-prename descclassname"><span class="pre">refl1d.profile.</span></span><span class="sig-name descname"><span class="pre">blend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/profile.html#blend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.profile.blend" title="Link to this definition">¶</a></dt>
+<dd><p>blend function</p>
+<p>Given a Gaussian roughness value, compute the portion of the neighboring
+profile you expect to find in the current profile at depth z.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.profile.build_profile">
+<span class="sig-prename descclassname"><span class="pre">refl1d.profile.</span></span><span class="sig-name descname"><span class="pre">build_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roughness</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/profile.html#build_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.profile.build_profile" title="Link to this definition">¶</a></dt>
+<dd><p>Convert a step profile to a smooth profile.</p>
+<p><em>z</em>          calculation points
+<em>offset</em>     offset for each interface
+<em>roughness</em>  roughness of each interface
+<em>value</em>      target value for each slab
+<em>max_rough</em>  limit the roughness to a fraction of the layer thickness</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.profile.compute_limited_sigma">
+<span class="sig-prename descclassname"><span class="pre">refl1d.profile.</span></span><span class="sig-name descname"><span class="pre">compute_limited_sigma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">thickness</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roughness</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/profile.html#compute_limited_sigma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.profile.compute_limited_sigma" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        «&#160;&#160;<a href="probe.html">probe - Instrument probe</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="refllib.html">refllib - Low level reflectivity calculations</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

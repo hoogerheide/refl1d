@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>flayer - Functional layers &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
+    <script src="../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="freeform - Freeform - Parametric B-Spline" href="freeform.html" />
+    <link rel="prev" title="fitplugin - Bumps plugin definition for reflectivity models" href="fitplugin.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>flayer - Functional layers</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        «&#160;&#160;<a href="fitplugin.html">fitplugin - Bumps plugin definition for reflectivity models</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="freeform.html">freeform - Freeform - Parametric B-Spline</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="flayer-functional-layers">
+<h1>flayer - Functional layers<a class="headerlink" href="#flayer-functional-layers" title="Link to this heading">¶</a></h1>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../refl1d.flayer.html#refl1d.flayer.FunctionalMagnetism" title="refl1d.flayer.FunctionalMagnetism"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FunctionalMagnetism</span></code></a></p></td>
+<td><p>Functional magnetism profile.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../refl1d.flayer.html#refl1d.flayer.FunctionalProfile" title="refl1d.flayer.FunctionalProfile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FunctionalProfile</span></code></a></p></td>
+<td><p>Generic profile function</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class" id="module-refl1d.flayer">
+<dt class="sig sig-object py" id="refl1d.flayer.FunctionalMagnetism">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">refl1d.flayer.</span></span><span class="sig-name descname"><span class="pre">FunctionalMagnetism</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">profile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/flayer.html#FunctionalMagnetism"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.flayer.FunctionalMagnetism" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../refl1d.magnetism.html#refl1d.magnetism.BaseMagnetism" title="refl1d.magnetism.BaseMagnetism"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseMagnetism</span></code></a></p>
+<p>Functional magnetism profile.</p>
+<p>Parameters:</p>
+<blockquote>
+<div><p><em>profile</em> the profile function, suitably parameterized</p>
+<p><em>tol</em> is the tolerance for considering values equal</p>
+<p><a class="reference internal" href="../refl1d.magnetism.html#refl1d.magnetism.BaseMagnetism" title="refl1d.magnetism.BaseMagnetism"><code class="xref py py-class docutils literal notranslate"><span class="pre">refl1d.magnetism.BaseMagnetism</span></code></a> parameters</p>
+</div></blockquote>
+<p>The profile function takes a depth vector <em>z</em> and returns a magnetism
+vector <em>rhoM</em>. For magnetic twist, return a pair of vectors <em>(rhoM, thetaM)</em>.
+Constants can be returned for <em>rhoM</em> or <em>thetaM</em>.  If <em>thetaM</em> is not
+provided it defaults to <em>thetaM=270</em>.</p>
+<p>See <a class="reference internal" href="../refl1d.flayer.html#refl1d.flayer.FunctionalProfile" title="refl1d.flayer.FunctionalProfile"><code class="xref py py-class docutils literal notranslate"><span class="pre">FunctionalProfile</span></code></a> for a description of the the profile
+function.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.flayer.FunctionalMagnetism.RESERVED">
+<span class="sig-name descname"><span class="pre">RESERVED</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('profile',</span> <span class="pre">'tol',</span> <span class="pre">'name',</span> <span class="pre">'extent',</span> <span class="pre">'dead_below',</span> <span class="pre">'dead_above',</span> <span class="pre">'interface_below',</span> <span class="pre">'interface_above')</span></em><a class="headerlink" href="#refl1d.flayer.FunctionalMagnetism.RESERVED" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.flayer.FunctionalMagnetism.dead_above">
+<span class="sig-name descname"><span class="pre">dead_above</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.flayer.FunctionalMagnetism.dead_above" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.flayer.FunctionalMagnetism.dead_below">
+<span class="sig-name descname"><span class="pre">dead_below</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.flayer.FunctionalMagnetism.dead_below" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.flayer.FunctionalMagnetism.extent">
+<span class="sig-name descname"><span class="pre">extent</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#refl1d.flayer.FunctionalMagnetism.extent" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.flayer.FunctionalMagnetism.interface_above">
+<span class="sig-name descname"><span class="pre">interface_above</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.flayer.FunctionalMagnetism.interface_above" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.flayer.FunctionalMagnetism.interface_below">
+<span class="sig-name descname"><span class="pre">interface_below</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#refl1d.flayer.FunctionalMagnetism.interface_below" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.flayer.FunctionalMagnetism.magnetic">
+<span class="sig-name descname"><span class="pre">magnetic</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#refl1d.flayer.FunctionalMagnetism.magnetic" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.flayer.FunctionalMagnetism.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#refl1d.flayer.FunctionalMagnetism.name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.flayer.FunctionalMagnetism.parameters">
+<span class="sig-name descname"><span class="pre">parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/flayer.html#FunctionalMagnetism.parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.flayer.FunctionalMagnetism.parameters" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.flayer.FunctionalMagnetism.render">
+<span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">probe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slabs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thickness</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">anchor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/flayer.html#FunctionalMagnetism.render"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.flayer.FunctionalMagnetism.render" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.flayer.FunctionalMagnetism.set_anchor">
+<span class="sig-name descname"><span class="pre">set_anchor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stack</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/flayer.html#FunctionalMagnetism.set_anchor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.flayer.FunctionalMagnetism.set_anchor" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.flayer.FunctionalMagnetism.set_layer_name">
+<span class="sig-name descname"><span class="pre">set_layer_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.flayer.FunctionalMagnetism.set_layer_name" title="Link to this definition">¶</a></dt>
+<dd><p>Update the names of the magnetic parameters with the name of the
+layer if it has not already been set.  This is necessary since we don’t
+know the layer name until after we have constructed the magnetism object.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.flayer.FunctionalMagnetism.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/flayer.html#FunctionalMagnetism.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.flayer.FunctionalMagnetism.to_dict" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="refl1d.flayer.FunctionalProfile">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">refl1d.flayer.</span></span><span class="sig-name descname"><span class="pre">FunctionalProfile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">thickness</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interface</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">magnetism</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/flayer.html#FunctionalProfile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.flayer.FunctionalProfile" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../refl1d.model.html#refl1d.model.Layer" title="refl1d.model.Layer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Layer</span></code></a></p>
+<p>Generic profile function</p>
+<p>Parameters:</p>
+<blockquote>
+<div><p><em>thickness</em> the thickness of the layer</p>
+<p><em>interface</em> the roughness of the surface [not implemented]</p>
+<p><em>profile</em> the profile function, suitably parameterized</p>
+<p><em>tol</em> is the tolerance for considering values equal</p>
+<p><em>magnetism</em> magnetic profile associated with the layer</p>
+<p><em>name</em> is the layer name</p>
+</div></blockquote>
+<p>The profile function takes a depth vector <em>z</em> returns a density vector
+<em>rho</em>. For absorbing profiles, return complex vector <em>rho + irho*1j</em>.</p>
+<p>Fitting parameters are the available named arguments to the function.
+The first argument is a depth vector, which is the array of depths at
+which the profile is to be evaluated.  It is guaranteed to be increasing,
+with step size 2*z[0].</p>
+<p>Initial values for the function parameters can be given using name=value.
+These values can be scalars or fitting parameters.  The function will
+be called with the current parameter values as arguments.  The layer
+thickness can be computed as <code class="xref py py-func docutils literal notranslate"><span class="pre">layer_thickness()</span></code>.</p>
+<p>There is no mechanism for querying the larger profile to determine the
+value of the <em>rho</em> at the layer boundaries.  If needed, this information
+will have to be communicated through shared parameters.  For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">L1</span> <span class="o">=</span> <span class="n">SLD</span><span class="p">(</span><span class="s1">&#39;L1&#39;</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="mf">2.07</span><span class="p">)</span>
+<span class="n">L3</span> <span class="o">=</span> <span class="n">SLD</span><span class="p">(</span><span class="s1">&#39;L3&#39;</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">linear</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">rhoL</span><span class="p">,</span> <span class="n">rhoR</span><span class="p">):</span>
+    <span class="n">rho</span> <span class="o">=</span> <span class="n">z</span> <span class="o">*</span> <span class="p">(</span><span class="n">rhoR</span><span class="o">-</span><span class="n">rhoL</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">z</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">z</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="n">rhoL</span>
+    <span class="k">return</span> <span class="n">rho</span>
+<span class="n">profile</span> <span class="o">=</span> <span class="n">FunctionalProfile</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">profile</span><span class="o">=</span><span class="n">linear</span><span class="p">,</span>
+                            <span class="n">rhoL</span><span class="o">=</span><span class="n">L1</span><span class="o">.</span><span class="n">rho</span><span class="p">,</span> <span class="n">rhoR</span><span class="o">=</span><span class="n">L3</span><span class="o">.</span><span class="n">rho</span><span class="p">)</span>
+<span class="n">sample</span> <span class="o">=</span> <span class="n">L1</span> <span class="o">|</span> <span class="n">profile</span> <span class="o">|</span> <span class="n">L3</span>
+</pre></div>
+</div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.flayer.FunctionalProfile.RESERVED">
+<span class="sig-name descname"><span class="pre">RESERVED</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('thickness',</span> <span class="pre">'interface',</span> <span class="pre">'profile',</span> <span class="pre">'tol',</span> <span class="pre">'magnetism',</span> <span class="pre">'name')</span></em><a class="headerlink" href="#refl1d.flayer.FunctionalProfile.RESERVED" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.flayer.FunctionalProfile.constraints">
+<span class="sig-name descname"><span class="pre">constraints</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.flayer.FunctionalProfile.constraints" title="Link to this definition">¶</a></dt>
+<dd><p>Constraints</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.flayer.FunctionalProfile.find">
+<span class="sig-name descname"><span class="pre">find</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.flayer.FunctionalProfile.find" title="Link to this definition">¶</a></dt>
+<dd><p>Find the layer at depth z.</p>
+<p>Returns layer, start, end</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.flayer.FunctionalProfile.interface">
+<span class="sig-name descname"><span class="pre">interface</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#refl1d.flayer.FunctionalProfile.interface" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="refl1d.flayer.FunctionalProfile.ismagnetic">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ismagnetic</span></span><a class="headerlink" href="#refl1d.flayer.FunctionalProfile.ismagnetic" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.flayer.FunctionalProfile.layer_parameters">
+<span class="sig-name descname"><span class="pre">layer_parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.flayer.FunctionalProfile.layer_parameters" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.flayer.FunctionalProfile.magnetism">
+<span class="sig-name descname"><span class="pre">magnetism</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../refl1d.magnetism.html#refl1d.magnetism.BaseMagnetism" title="refl1d.magnetism.BaseMagnetism"><span class="pre">BaseMagnetism</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#refl1d.flayer.FunctionalProfile.magnetism" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.flayer.FunctionalProfile.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#refl1d.flayer.FunctionalProfile.name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.flayer.FunctionalProfile.parameters">
+<span class="sig-name descname"><span class="pre">parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/flayer.html#FunctionalProfile.parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.flayer.FunctionalProfile.parameters" title="Link to this definition">¶</a></dt>
+<dd><p>Returns a dictionary of parameters specific to the layer.  These will
+be added to the dictionary containing interface, thickness and magnetism
+parameters.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.flayer.FunctionalProfile.penalty">
+<span class="sig-name descname"><span class="pre">penalty</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.flayer.FunctionalProfile.penalty" title="Link to this definition">¶</a></dt>
+<dd><p>Return a penalty value associated with the layer.  This should be
+zero if the parameters are valid, and increasing as the parameters
+become more invalid.  For example, if total volume fraction exceeds
+unity, then the penalty would be the amount by which it exceeds
+unity, or if z values must be sorted, then penalty would be the
+amount by which they are unsorted.</p>
+<p>Note that penalties are handled separately from any probability of
+seeing a combination of layer parameters; the final solution to the
+problem should not include any penalized points.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.flayer.FunctionalProfile.render">
+<span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">probe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slabs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/flayer.html#FunctionalProfile.render"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.flayer.FunctionalProfile.render" title="Link to this definition">¶</a></dt>
+<dd><p>Use the probe to render the layer into a microslab representation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.flayer.FunctionalProfile.thickness">
+<span class="sig-name descname"><span class="pre">thickness</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span></em><a class="headerlink" href="#refl1d.flayer.FunctionalProfile.thickness" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.flayer.FunctionalProfile.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/flayer.html#FunctionalProfile.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.flayer.FunctionalProfile.to_dict" title="Link to this definition">¶</a></dt>
+<dd><p>Return a dictionary representation of the Slab object</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        «&#160;&#160;<a href="fitplugin.html">fitplugin - Bumps plugin definition for reflectivity models</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="freeform.html">freeform - Freeform - Parametric B-Spline</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

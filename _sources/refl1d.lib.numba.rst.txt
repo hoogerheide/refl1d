@@ -1,0 +1,25 @@
+refl1d.lib.numba package
+========================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   refl1d.lib.numba.build_profile
+   refl1d.lib.numba.clone_module
+   refl1d.lib.numba.contract_profile
+   refl1d.lib.numba.convolve
+   refl1d.lib.numba.convolve_sampled
+   refl1d.lib.numba.magnetic
+   refl1d.lib.numba.rebin
+   refl1d.lib.numba.reflectivity
+
+Module contents
+---------------
+
+.. automodule:: refl1d.lib.numba
+   :members:
+   :undoc-members:
+   :show-inheritance:

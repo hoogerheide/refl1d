@@ -1,0 +1,7 @@
+refl1d.lib.python.rebin module
+==============================
+
+.. automodule:: refl1d.lib.python.rebin
+   :members:
+   :undoc-members:
+   :show-inheritance:

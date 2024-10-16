@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>refl1d.reflectivity &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <script src="../../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>refl1d.reflectivity</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <h1>Source code for refl1d.reflectivity</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Basic reflectometry calculations</span>
+
+<span class="sd">Slab model reflectivity calculator with optional absorption and roughness.</span>
+<span class="sd">The function reflectivity_amplitude returns the complex waveform.</span>
+<span class="sd">Slab model with supporting magnetic scattering.  The function</span>
+<span class="sd">magnetic_reflectivity returns the complex reflection for the four</span>
+<span class="sd">spin polarization cross sections [++, +-, -+, --].  The function</span>
+<span class="sd">unpolarized_magnetic returns the expected magnitude for a measurement</span>
+<span class="sd">of the magnetic scattering using an unpolarized beam.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span>
+
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">reduce</span>
+
+<span class="c1"># __doc__ = &quot;Fundamental reflectivity calculations&quot;</span>
+<span class="n">__author__</span> <span class="o">=</span> <span class="s2">&quot;Paul Kienzle&quot;</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;reflectivity&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;reflectivity_amplitude&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;magnetic_reflectivity&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;magnetic_amplitude&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;unpolarized_magnetic&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;convolve&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">pi</span><span class="p">,</span> <span class="n">sin</span><span class="p">,</span> <span class="n">cos</span><span class="p">,</span> <span class="n">conj</span><span class="p">,</span> <span class="n">radians</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">exp</span><span class="p">,</span> <span class="n">fabs</span>
+
+<span class="n">BASE_GUIDE_ANGLE</span> <span class="o">=</span> <span class="mf">270.0</span>
+
+
+<span class="k">def</span> <span class="nf">_dense</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;d&quot;</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">ascontiguousarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="reflectivity">
+<a class="viewcode-back" href="../../refl1d.reflectivity.html#refl1d.reflectivity.reflectivity">[docs]</a>
+<span class="k">def</span> <span class="nf">reflectivity</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate reflectivity $|r(k_z)|^2$ from slab model.</span>
+
+<span class="sd">    :Parameters :</span>
+<span class="sd">        *depth* : float[N] | |Ang|</span>
+<span class="sd">            Thickness of the individual layers (incident and substrate</span>
+<span class="sd">            depths are ignored)</span>
+<span class="sd">        *sigma* : float OR float[N-1] | |Ang|</span>
+<span class="sd">            Interface roughness between the current layer and the next.</span>
+<span class="sd">            The final layer is ignored.  This may be a scalar for fixed</span>
+<span class="sd">            roughness on every layer, or None if there is no roughness.</span>
+<span class="sd">        *rho*, *irho* : float[N] OR float[N, K] | |1e-6/Ang^2|</span>
+<span class="sd">            Real and imaginary scattering length density.  Use multiple</span>
+<span class="sd">            columns when you have kz-dependent scattering length densities,</span>
+<span class="sd">            and set rho_offset to select the appropriate one.  Data should</span>
+<span class="sd">            be stored in column order.</span>
+<span class="sd">        *kz* : float[M] | |1/Ang|</span>
+<span class="sd">            Points at which to evaluate the reflectivity</span>
+<span class="sd">        *rho_index* : integer[M]</span>
+<span class="sd">            *rho* and *irho* columns to use for the various kz.</span>
+
+<span class="sd">    :Returns:</span>
+<span class="sd">        *R* | float[M]</span>
+<span class="sd">            Reflectivity magnitude.</span>
+
+<span class="sd">    This function does not compute any instrument resolution corrections.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">reflectivity_amplitude</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">r</span> <span class="o">*</span> <span class="n">conj</span><span class="p">(</span><span class="n">r</span><span class="p">))</span><span class="o">.</span><span class="n">real</span></div>
+
+
+
+<div class="viewcode-block" id="reflectivity_amplitude">
+<a class="viewcode-back" href="../../refl1d.reflectivity.html#refl1d.reflectivity.reflectivity_amplitude">[docs]</a>
+<span class="k">def</span> <span class="nf">reflectivity_amplitude</span><span class="p">(</span>
+    <span class="n">kz</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">depth</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">rho</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">irho</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">sigma</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">rho_index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate reflectivity amplitude $r(k_z)$ from slab model.</span>
+
+<span class="sd">    :Parameters :</span>
+<span class="sd">        *depth* : float[N] | |Ang|</span>
+<span class="sd">            Thickness of the individual layers (incident and substrate</span>
+<span class="sd">            depths are ignored)</span>
+<span class="sd">        *sigma* = 0 : float OR float[N-1] | |Ang|</span>
+<span class="sd">            Interface roughness between the current layer and the next.</span>
+<span class="sd">            The final layer is ignored.  This may be a scalar for fixed</span>
+<span class="sd">            roughness on every layer, or None if there is no roughness.</span>
+<span class="sd">        *rho*, *irho* = 0: float[N] OR float[N, K] | |1e-6/Ang^2|</span>
+<span class="sd">            Real and imaginary scattering length density.  Use multiple</span>
+<span class="sd">            columns when you have kz-dependent scattering length densities,</span>
+<span class="sd">            and set *rho_index* to select amongst them.  Data should be</span>
+<span class="sd">            stored in column order.</span>
+<span class="sd">        *kz* : float[M] | |1/Ang|</span>
+<span class="sd">            Points at which to evaluate the reflectivity</span>
+<span class="sd">        *rho_index* = 0 : integer[M]</span>
+<span class="sd">            *rho* and *irho* columns to use for the various kz.</span>
+
+<span class="sd">    :Returns:</span>
+<span class="sd">        *r* | complex[M]</span>
+<span class="sd">            Complex reflectivity waveform.</span>
+
+<span class="sd">    This function does not compute any instrument resolution corrections.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">.refllib</span> <span class="kn">import</span> <span class="n">backend</span>
+
+    <span class="n">kz</span> <span class="o">=</span> <span class="n">_dense</span><span class="p">(</span><span class="n">kz</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">rho_index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">rho_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">kz</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="s2">&quot;i&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">rho_index</span> <span class="o">=</span> <span class="n">_dense</span><span class="p">(</span><span class="n">rho_index</span><span class="p">,</span> <span class="s2">&quot;i&quot;</span><span class="p">)</span>
+
+    <span class="n">depth</span> <span class="o">=</span> <span class="n">_dense</span><span class="p">(</span><span class="n">depth</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">sigma</span><span class="p">):</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="n">sigma</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">depth</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="n">_dense</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">)</span>
+    <span class="n">rho</span> <span class="o">=</span> <span class="n">_dense</span><span class="p">(</span><span class="n">rho</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">)</span>
+    <span class="c1"># promote rho and irho to 2d, for multi-wavelength</span>
+    <span class="k">if</span> <span class="n">rho</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">rho</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="n">rho</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">irho</span><span class="p">):</span>
+        <span class="n">irho</span> <span class="o">=</span> <span class="n">irho</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">rho</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">irho</span> <span class="o">=</span> <span class="n">_dense</span><span class="p">(</span><span class="n">irho</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">irho</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">irho</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="n">irho</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+
+    <span class="c1"># print(irho.shape, irho[:,0], irho[:,-1])</span>
+    <span class="n">irho</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">irho</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-30</span>
+    <span class="c1"># irho[irho &lt; 0] = 0.</span>
+    <span class="c1"># print depth.shape, rho.shape, irho.shape, sigma.shape</span>
+    <span class="c1"># print depth.dtype, rho.dtype, irho.dtype, sigma.dtype</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">kz</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="s2">&quot;D&quot;</span><span class="p">)</span>
+    <span class="c1"># print &quot;amplitude&quot;, depth, rho, kz, rho_index</span>
+    <span class="c1"># print depth.shape, sigma.shape, rho.shape, irho.shape, kz.shape</span>
+    <span class="n">backend</span><span class="o">.</span><span class="n">reflectivity_amplitude</span><span class="p">(</span><span class="n">depth</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">rho</span><span class="p">,</span> <span class="n">irho</span><span class="p">,</span> <span class="n">kz</span><span class="p">,</span> <span class="n">rho_index</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">r</span></div>
+
+
+
+<div class="viewcode-block" id="magnetic_reflectivity">
+<a class="viewcode-back" href="../../refl1d.reflectivity.html#refl1d.reflectivity.magnetic_reflectivity">[docs]</a>
+<span class="k">def</span> <span class="nf">magnetic_reflectivity</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Magnetic reflectivity for slab models.</span>
+
+<span class="sd">    Returns the expected values for the four polarization cross</span>
+<span class="sd">    sections (++, +-, -+, --).</span>
+<span class="sd">    Return reflectivity R^2 from slab model with sharp interfaces.</span>
+<span class="sd">    returns reflectivities.</span>
+
+<span class="sd">    The parameters are as follows:</span>
+
+<span class="sd">    kz (|1/Ang|)</span>
+<span class="sd">        points at which to evaluate the reflectivity</span>
+<span class="sd">    depth (|Ang|)</span>
+<span class="sd">        thickness of the individual layers (incident and substrate</span>
+<span class="sd">        depths are ignored)</span>
+<span class="sd">    rho (|1e-6/Ang^2|)</span>
+<span class="sd">        Scattering length density.</span>
+<span class="sd">    irho (|1e-6/Ang^2|)</span>
+<span class="sd">        absorption. Defaults to 0.</span>
+<span class="sd">    rho_m (microNb)</span>
+<span class="sd">        Magnetic scattering length density correction.</span>
+<span class="sd">    theta_m (degrees)</span>
+<span class="sd">        Angle of the magnetism within the layer.</span>
+<span class="sd">    sigma (|Ang|)</span>
+<span class="sd">        Interface roughness between the current layer and the next.</span>
+<span class="sd">        The final layer is ignored.  This may be a scalar for fixed</span>
+<span class="sd">        roughness on every layer, or None if there is no roughness.</span>
+<span class="sd">    wavelength (|Ang|)</span>
+<span class="sd">        Incident wavelength (only affects absorption).  May be a vector.</span>
+<span class="sd">        Defaults to 1.</span>
+<span class="sd">    Aguide (degrees)</span>
+<span class="sd">        Angle of the guide field; -90 is the usual case</span>
+
+<span class="sd">    This function does not compute any instrument resolution corrections.</span>
+<span class="sd">    Interface diffusion, if present, uses the Nevot-Croce approximation.</span>
+
+<span class="sd">    Use magnetic_amplitude to return the complex waveform.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">magnetic_amplitude</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[(</span><span class="n">z</span> <span class="o">*</span> <span class="n">z</span><span class="o">.</span><span class="n">conj</span><span class="p">())</span><span class="o">.</span><span class="n">real</span> <span class="k">for</span> <span class="n">z</span> <span class="ow">in</span> <span class="n">r</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="unpolarized_magnetic">
+<a class="viewcode-back" href="../../refl1d.reflectivity.html#refl1d.reflectivity.unpolarized_magnetic">[docs]</a>
+<span class="k">def</span> <span class="nf">unpolarized_magnetic</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the average of magnetic reflectivity for all cross-sections.</span>
+
+<span class="sd">    See :class:`magnetic_reflectivity &lt;refl1d.reflectivity.magnetic_reflectivity&gt;` for details.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">reduce</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">magnetic_reflectivity</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">))</span> <span class="o">/</span> <span class="mf">2.0</span></div>
+
+
+
+<span class="n">B2SLD</span> <span class="o">=</span> <span class="mf">2.31604654</span>  <span class="c1"># Scattering factor for B field 1e-6/</span>
+
+
+<div class="viewcode-block" id="magnetic_amplitude">
+<a class="viewcode-back" href="../../refl1d.reflectivity.html#refl1d.reflectivity.magnetic_amplitude">[docs]</a>
+<span class="k">def</span> <span class="nf">magnetic_amplitude</span><span class="p">(</span>
+    <span class="n">kz</span><span class="p">,</span>
+    <span class="n">depth</span><span class="p">,</span>
+    <span class="n">rho</span><span class="p">,</span>
+    <span class="n">irho</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">rhoM</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">thetaM</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">sigma</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">Aguide</span><span class="o">=-</span><span class="mi">90</span><span class="p">,</span>
+    <span class="n">H</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">rho_index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the complex magnetic reflectivity waveform.</span>
+
+<span class="sd">    See :class:`magnetic_reflectivity &lt;refl1d.reflectivity.magnetic_reflectivity&gt;` for details.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">.refllib</span> <span class="kn">import</span> <span class="n">backend</span>
+
+    <span class="n">kz</span> <span class="o">=</span> <span class="n">_dense</span><span class="p">(</span><span class="n">kz</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">rho_index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">rho_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">kz</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="s2">&quot;i&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">rho_index</span> <span class="o">=</span> <span class="n">_dense</span><span class="p">(</span><span class="n">rho_index</span><span class="p">,</span> <span class="s2">&quot;i&quot;</span><span class="p">)</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">depth</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">irho</span><span class="p">):</span>
+        <span class="n">irho</span> <span class="o">=</span> <span class="n">irho</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">rhoM</span><span class="p">):</span>
+        <span class="n">rhoM</span> <span class="o">=</span> <span class="n">rhoM</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">thetaM</span><span class="p">):</span>
+        <span class="n">thetaM</span> <span class="o">=</span> <span class="n">thetaM</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">sigma</span><span class="p">):</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="n">sigma</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">)</span>
+
+    <span class="c1"># kz = -kz</span>
+    <span class="c1"># depth, rho, irho, sigma, rhoM, thetaM = [v[::-1] for v in (depth, rho, irho, sigma, rhoM, thetaM)]</span>
+    <span class="n">depth</span><span class="p">,</span> <span class="n">rho</span><span class="p">,</span> <span class="n">irho</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="p">[</span><span class="n">_dense</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="p">(</span><span class="n">depth</span><span class="p">,</span> <span class="n">rho</span><span class="p">,</span> <span class="n">irho</span><span class="p">,</span> <span class="n">sigma</span><span class="p">)]</span>
+    <span class="c1"># np.set_printoptions(linewidth=1000)</span>
+    <span class="c1"># print(np.vstack((depth, np.hstack((sigma, np.nan)), rho, irho, rhoM, thetaM)).T)</span>
+
+    <span class="n">sld_b</span><span class="p">,</span> <span class="n">u1</span><span class="p">,</span> <span class="n">u3</span> <span class="o">=</span> <span class="n">calculate_u1_u3</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">rhoM</span><span class="p">,</span> <span class="n">thetaM</span><span class="p">,</span> <span class="n">Aguide</span><span class="p">)</span>
+
+    <span class="n">R1</span><span class="p">,</span> <span class="n">R2</span><span class="p">,</span> <span class="n">R3</span><span class="p">,</span> <span class="n">R4</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">kz</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="s2">&quot;D&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">pol</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)]</span>
+    <span class="n">backend</span><span class="o">.</span><span class="n">magnetic_amplitude</span><span class="p">(</span><span class="n">depth</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">rho</span><span class="p">,</span> <span class="n">irho</span><span class="p">,</span> <span class="n">sld_b</span><span class="p">,</span> <span class="n">u1</span><span class="p">,</span> <span class="n">u3</span><span class="p">,</span> <span class="n">kz</span><span class="p">,</span> <span class="n">rho_index</span><span class="p">,</span> <span class="n">R1</span><span class="p">,</span> <span class="n">R2</span><span class="p">,</span> <span class="n">R3</span><span class="p">,</span> <span class="n">R4</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">R1</span><span class="p">,</span> <span class="n">R2</span><span class="p">,</span> <span class="n">R3</span><span class="p">,</span> <span class="n">R4</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">calculate_u1_u3</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">rhoM</span><span class="p">,</span> <span class="n">thetaM</span><span class="p">,</span> <span class="n">Aguide</span><span class="p">):</span>
+    <span class="kn">from</span> <span class="nn">.refllib</span> <span class="kn">import</span> <span class="n">backend</span>
+
+    <span class="n">rhoM</span><span class="p">,</span> <span class="n">thetaM</span> <span class="o">=</span> <span class="p">(</span><span class="n">_dense</span><span class="p">(</span><span class="n">rhoM</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="n">_dense</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">thetaM</span><span class="p">),</span> <span class="s2">&quot;d&quot;</span><span class="p">)</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">rhoM</span><span class="p">)</span>
+    <span class="n">u1</span><span class="p">,</span> <span class="n">u3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="s2">&quot;D&quot;</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="s2">&quot;D&quot;</span><span class="p">)</span>
+    <span class="n">backend</span><span class="o">.</span><span class="n">calculate_u1_u3</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">rhoM</span><span class="p">,</span> <span class="n">thetaM</span><span class="p">,</span> <span class="n">Aguide</span><span class="p">,</span> <span class="n">u1</span><span class="p">,</span> <span class="n">u3</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">rhoM</span><span class="p">,</span> <span class="n">u1</span><span class="p">,</span> <span class="n">u3</span>
+
+
+<span class="k">def</span> <span class="nf">calculate_u1_u3_py</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">rhoM</span><span class="p">,</span> <span class="n">thetaM</span><span class="p">,</span> <span class="n">Aguide</span><span class="p">):</span>
+    <span class="n">rotate_M</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="n">EPS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">tiny</span>  <span class="c1"># not 1e-20 # epsilon offset for divisions.</span>
+    <span class="n">thetaM</span> <span class="o">=</span> <span class="n">radians</span><span class="p">(</span><span class="n">thetaM</span><span class="p">)</span>
+    <span class="n">phiH</span> <span class="o">=</span> <span class="n">radians</span><span class="p">(</span><span class="n">Aguide</span> <span class="o">-</span> <span class="n">BASE_GUIDE_ANGLE</span><span class="p">)</span>
+    <span class="n">thetaH</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mf">2.0</span>  <span class="c1"># by convention, H is in y-z plane so theta = pi/2</span>
+
+    <span class="n">sld_h</span> <span class="o">=</span> <span class="n">B2SLD</span> <span class="o">*</span> <span class="n">H</span>
+    <span class="n">sld_m_x</span> <span class="o">=</span> <span class="n">rhoM</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">thetaM</span><span class="p">)</span>
+    <span class="n">sld_m_y</span> <span class="o">=</span> <span class="n">rhoM</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">thetaM</span><span class="p">)</span>
+    <span class="n">sld_m_z</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c1"># by Maxwell&#39;s equations, H_demag = mz so we&#39;ll just cancel it here</span>
+    <span class="c1"># The purpose of AGUIDE is to rotate the z-axis of the sample coordinate</span>
+    <span class="c1"># system so that it is aligned with the quantization axis z, defined to be</span>
+    <span class="c1"># the direction of the magnetic field outside the sample.</span>
+    <span class="k">if</span> <span class="n">rotate_M</span><span class="p">:</span>
+        <span class="c1"># rotate the M vector instead of the transfer matrix!</span>
+        <span class="c1"># First, rotate the M vector about the x axis:</span>
+        <span class="n">new_my</span> <span class="o">=</span> <span class="n">sld_m_z</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">radians</span><span class="p">(</span><span class="n">Aguide</span><span class="p">))</span> <span class="o">+</span> <span class="n">sld_m_y</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">radians</span><span class="p">(</span><span class="n">Aguide</span><span class="p">))</span>
+        <span class="n">new_mz</span> <span class="o">=</span> <span class="n">sld_m_z</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">radians</span><span class="p">(</span><span class="n">Aguide</span><span class="p">))</span> <span class="o">-</span> <span class="n">sld_m_y</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">radians</span><span class="p">(</span><span class="n">Aguide</span><span class="p">))</span>
+        <span class="n">sld_m_y</span><span class="p">,</span> <span class="n">sld_m_z</span> <span class="o">=</span> <span class="n">new_my</span><span class="p">,</span> <span class="n">new_mz</span>
+        <span class="n">sld_h_x</span> <span class="o">=</span> <span class="n">sld_h_y</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">sld_h_z</span> <span class="o">=</span> <span class="n">sld_h</span>
+        <span class="c1"># Then, don&#39;t rotate the transfer matrix</span>
+        <span class="n">Aguide</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">sld_h_x</span> <span class="o">=</span> <span class="n">sld_h</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">thetaH</span><span class="p">)</span>  <span class="c1"># zero</span>
+        <span class="n">sld_h_y</span> <span class="o">=</span> <span class="n">sld_h</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">thetaH</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phiH</span><span class="p">)</span>
+        <span class="n">sld_h_z</span> <span class="o">=</span> <span class="n">sld_h</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">thetaH</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">phiH</span><span class="p">)</span>
+
+    <span class="n">sld_b_x</span> <span class="o">=</span> <span class="n">sld_h_x</span> <span class="o">+</span> <span class="n">sld_m_x</span>
+    <span class="n">sld_b_y</span> <span class="o">=</span> <span class="n">sld_h_y</span> <span class="o">+</span> <span class="n">sld_m_y</span>
+    <span class="n">sld_b_z</span> <span class="o">=</span> <span class="n">sld_h_z</span> <span class="o">+</span> <span class="n">sld_m_z</span>
+
+    <span class="c1"># avoid divide-by-zero:</span>
+    <span class="n">sld_b_x</span> <span class="o">+=</span> <span class="n">EPS</span> <span class="o">*</span> <span class="p">(</span><span class="n">sld_b_x</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">sld_b_y</span> <span class="o">+=</span> <span class="n">EPS</span> <span class="o">*</span> <span class="p">(</span><span class="n">sld_b_y</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># add epsilon to y, to avoid divide by zero errors?</span>
+    <span class="n">sld_b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">sld_b_x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">sld_b_y</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">sld_b_z</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">u1_num</span> <span class="o">=</span> <span class="o">+</span><span class="n">sld_b</span> <span class="o">+</span> <span class="n">sld_b_x</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">sld_b_y</span> <span class="o">-</span> <span class="n">sld_b_z</span>
+    <span class="n">u1_den</span> <span class="o">=</span> <span class="o">+</span><span class="n">sld_b</span> <span class="o">+</span> <span class="n">sld_b_x</span> <span class="o">-</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">sld_b_y</span> <span class="o">+</span> <span class="n">sld_b_z</span>
+    <span class="n">u3_num</span> <span class="o">=</span> <span class="o">-</span><span class="n">sld_b</span> <span class="o">+</span> <span class="n">sld_b_x</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">sld_b_y</span> <span class="o">-</span> <span class="n">sld_b_z</span>
+    <span class="n">u3_den</span> <span class="o">=</span> <span class="o">-</span><span class="n">sld_b</span> <span class="o">+</span> <span class="n">sld_b_x</span> <span class="o">-</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">sld_b_y</span> <span class="o">+</span> <span class="n">sld_b_z</span>
+
+    <span class="n">u1</span> <span class="o">=</span> <span class="n">u1_num</span> <span class="o">/</span> <span class="n">u1_den</span>
+    <span class="n">u3</span> <span class="o">=</span> <span class="n">u3_num</span> <span class="o">/</span> <span class="n">u3_den</span>
+    <span class="c1"># print &quot;u1&quot;, u1</span>
+    <span class="c1"># print &quot;u3&quot;, u3</span>
+    <span class="k">return</span> <span class="n">sld_b</span><span class="p">,</span> <span class="n">u1</span><span class="p">,</span> <span class="n">u3</span>
+
+
+<div class="viewcode-block" id="convolve">
+<a class="viewcode-back" href="../../refl1d.reflectivity.html#refl1d.reflectivity.convolve">[docs]</a>
+<span class="k">def</span> <span class="nf">convolve</span><span class="p">(</span><span class="n">xi</span><span class="p">,</span> <span class="n">yi</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">dx</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="s2">&quot;normal&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Apply x-dependent gaussian resolution to the theory.</span>
+
+<span class="sd">    Returns convolution y[k] of width dx[k] at points x[k].</span>
+
+<span class="sd">    The theory function is a piece-wise linear spline which does not need to</span>
+<span class="sd">    be uniformly sampled.  The theory calculation points *xi* should be dense</span>
+<span class="sd">    enough to capture the &quot;wiggle&quot; in the theory function, and should extend</span>
+<span class="sd">    beyond the ends of the data measurement points *x*. Convolution at the</span>
+<span class="sd">    tails is truncated and normalized to area of overlap between the resolution</span>
+<span class="sd">    function in case the theory does not extend far enough.</span>
+
+<span class="sd">    *resolution* is &#39;normal&#39; (default) or &#39;uniform&#39;. Note that the uniform</span>
+<span class="sd">    distribution uses the $1-\sigma$ equivalent distribution width which is</span>
+<span class="sd">    $1/\sqrt{3}$ times the width of the rectangle.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">.refllib</span> <span class="kn">import</span> <span class="n">backend</span>
+
+    <span class="n">xi</span><span class="p">,</span> <span class="n">yi</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">dx</span> <span class="o">=</span> <span class="n">_dense</span><span class="p">(</span><span class="n">xi</span><span class="p">),</span> <span class="n">_dense</span><span class="p">(</span><span class="n">yi</span><span class="p">),</span> <span class="n">_dense</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">_dense</span><span class="p">(</span><span class="n">dx</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">resolution</span> <span class="o">==</span> <span class="s2">&quot;uniform&quot;</span><span class="p">:</span>
+        <span class="n">backend</span><span class="o">.</span><span class="n">convolve_uniform</span><span class="p">(</span><span class="n">xi</span><span class="p">,</span> <span class="n">yi</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">dx</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">backend</span><span class="o">.</span><span class="n">convolve_gaussian</span><span class="p">(</span><span class="n">xi</span><span class="p">,</span> <span class="n">yi</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">dx</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">y</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">convolve_sampled</span><span class="p">(</span><span class="n">xi</span><span class="p">,</span> <span class="n">yi</span><span class="p">,</span> <span class="n">xp</span><span class="p">,</span> <span class="n">yp</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">dx</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Apply x-dependent arbitrary resolution function to the theory.</span>
+
+<span class="sd">    Returns convolution y[k] of width dx[k] at points x[k].</span>
+
+<span class="sd">    Like :func:`convolve`, the theory *(xi, yi)* is represented as a</span>
+<span class="sd">    piece-wise linear spline which should extend beyond the data</span>
+<span class="sd">    measurement points *x*.  Instead of a gaussian resolution function,</span>
+<span class="sd">    resolution *(xp, yp)* is also represented as a piece-wise linear</span>
+<span class="sd">    spline.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">.refllib</span> <span class="kn">import</span> <span class="n">backend</span>
+
+    <span class="n">x</span> <span class="o">=</span> <span class="n">_dense</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">backend</span><span class="o">.</span><span class="n">convolve_sampled</span><span class="p">(</span><span class="n">_dense</span><span class="p">(</span><span class="n">xi</span><span class="p">),</span> <span class="n">_dense</span><span class="p">(</span><span class="n">yi</span><span class="p">),</span> <span class="n">_dense</span><span class="p">(</span><span class="n">xp</span><span class="p">),</span> <span class="n">_dense</span><span class="p">(</span><span class="n">yp</span><span class="p">),</span> <span class="n">x</span><span class="p">,</span> <span class="n">_dense</span><span class="p">(</span><span class="n">dx</span><span class="p">),</span> <span class="n">y</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">y</span>
+
+
+<span class="k">def</span> <span class="nf">test_uniform</span><span class="p">():</span>
+    <span class="n">xi</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>
+    <span class="n">yi</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+    <span class="n">_check_uniform</span><span class="p">(</span><span class="s2">&quot;uniform aligned&quot;</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="n">yi</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="p">],</span> <span class="n">dx</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">_check_uniform</span><span class="p">(</span><span class="s2">&quot;uniform unaligned&quot;</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="n">yi</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="p">[</span><span class="mf">2.5</span><span class="p">,</span> <span class="mf">4.5</span><span class="p">,</span> <span class="mf">6.5</span><span class="p">,</span> <span class="mf">8.5</span><span class="p">],</span> <span class="n">dx</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">_check_uniform</span><span class="p">(</span><span class="s2">&quot;uniform wide&quot;</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="n">yi</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="p">[</span><span class="mf">2.5</span><span class="p">,</span> <span class="mf">4.5</span><span class="p">,</span> <span class="mf">6.5</span><span class="p">,</span> <span class="mf">8.5</span><span class="p">],</span> <span class="n">dx</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+    <span class="c1"># Check bad values</span>
+    <span class="n">ystar</span> <span class="o">=</span> <span class="n">convolve</span><span class="p">(</span><span class="n">xi</span><span class="p">,</span> <span class="n">yi</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="mi">13</span><span class="p">],</span> <span class="n">dx</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">3</span><span class="p">)]</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="s2">&quot;uniform&quot;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="n">ystar</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+
+    <span class="n">xi</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">2.3</span><span class="p">,</span> <span class="mf">2.8</span><span class="p">,</span> <span class="mf">4.2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>
+    <span class="n">yi</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+    <span class="n">_check_uniform</span><span class="p">(</span><span class="s2">&quot;uniform unaligned&quot;</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="n">yi</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="p">[</span><span class="mf">2.5</span><span class="p">,</span> <span class="mf">4.5</span><span class="p">,</span> <span class="mf">6.5</span><span class="p">,</span> <span class="mf">8.5</span><span class="p">],</span> <span class="n">dx</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_check_uniform</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="n">yi</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">dx</span><span class="p">):</span>
+    <span class="c1"># Note: using fixed dx since that&#39;s all _check_spline supports.</span>
+    <span class="n">ystar</span> <span class="o">=</span> <span class="n">convolve</span><span class="p">(</span><span class="n">xi</span><span class="p">,</span> <span class="n">yi</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="p">[</span><span class="n">dx</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">3</span><span class="p">)]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">resolution</span><span class="o">=</span><span class="s2">&quot;uniform&quot;</span><span class="p">)</span>
+    <span class="c1"># print(&quot;xi&quot;, xi)</span>
+    <span class="c1"># print(&quot;yi&quot;, yi)</span>
+    <span class="c1"># print(&quot;x&quot;, x, &quot;dx&quot;, dx)</span>
+    <span class="c1"># print(&quot;ystar&quot;, ystar)</span>
+    <span class="n">xp</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="n">dx</span><span class="p">,</span> <span class="o">-</span><span class="n">dx</span><span class="p">,</span> <span class="n">dx</span><span class="p">,</span> <span class="n">dx</span><span class="p">]</span>
+    <span class="n">yp</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">/</span> <span class="n">dx</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">/</span> <span class="n">dx</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">_check_spline</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="n">yi</span><span class="p">,</span> <span class="n">xp</span><span class="p">,</span> <span class="n">yp</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">ystar</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">test_convolve_sampled</span><span class="p">():</span>
+    <span class="n">xi</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>
+    <span class="n">yi</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+    <span class="n">xp</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+    <span class="n">yp</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">_check_sampled</span><span class="p">(</span><span class="s2">&quot;sampled aligned&quot;</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="n">yi</span><span class="p">,</span> <span class="n">xp</span><span class="p">,</span> <span class="n">yp</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">_check_sampled</span><span class="p">(</span><span class="s2">&quot;sampled unaligned&quot;</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="n">yi</span><span class="p">,</span> <span class="n">_dense</span><span class="p">(</span><span class="n">xp</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.2000003</span><span class="p">,</span> <span class="n">yp</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">_check_sampled</span><span class="p">(</span><span class="s2">&quot;sampled wide&quot;</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="n">yi</span><span class="p">,</span> <span class="n">xp</span><span class="p">,</span> <span class="n">yp</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">_check_sampled</span><span class="p">(</span><span class="s2">&quot;sampled super wide&quot;</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="n">yi</span><span class="p">,</span> <span class="n">xp</span><span class="p">,</span> <span class="n">yp</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_check_sampled</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="n">yi</span><span class="p">,</span> <span class="n">xp</span><span class="p">,</span> <span class="n">yp</span><span class="p">,</span> <span class="n">dx</span><span class="p">):</span>
+    <span class="n">ystar</span> <span class="o">=</span> <span class="n">convolve_sampled</span><span class="p">(</span><span class="n">xi</span><span class="p">,</span> <span class="n">yi</span><span class="p">,</span> <span class="n">xp</span><span class="p">,</span> <span class="n">yp</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">xi</span><span class="p">,</span> <span class="n">dx</span><span class="p">))</span>
+    <span class="n">xp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">xp</span><span class="p">)</span> <span class="o">*</span> <span class="n">dx</span>
+    <span class="n">_check_spline</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="n">yi</span><span class="p">,</span> <span class="n">xp</span><span class="p">,</span> <span class="n">yp</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="n">ystar</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_check_spline</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="n">yi</span><span class="p">,</span> <span class="n">xp</span><span class="p">,</span> <span class="n">yp</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">ystar</span><span class="p">):</span>
+    <span class="n">step</span> <span class="o">=</span> <span class="mf">0.0001</span>
+    <span class="n">xpfine</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">xp</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xp</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">step</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="n">step</span><span class="p">)</span>
+    <span class="n">ypfine</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">xpfine</span><span class="p">,</span> <span class="n">xp</span><span class="p">,</span> <span class="n">yp</span><span class="p">)</span>
+    <span class="c1"># make sure xfine is wide enough by adding an extra interval at the ends</span>
+    <span class="n">xfine</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">xi</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">xpfine</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">step</span><span class="p">,</span> <span class="n">xi</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">xpfine</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">step</span><span class="p">,</span> <span class="n">step</span><span class="p">)</span>
+    <span class="n">yfine</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">xfine</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="n">yi</span><span class="p">,</span> <span class="n">left</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">pidx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">xfine</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="n">xp</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">left</span><span class="p">,</span> <span class="n">right</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">xfine</span><span class="p">,</span> <span class="p">[</span><span class="n">xi</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xi</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
+
+    <span class="n">conv</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">pk</span> <span class="ow">in</span> <span class="n">pidx</span><span class="p">:</span>
+        <span class="n">norm_start</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">left</span> <span class="o">-</span> <span class="n">pk</span><span class="p">)</span>
+        <span class="n">norm_end</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">xpfine</span><span class="p">),</span> <span class="n">right</span> <span class="o">-</span> <span class="n">pk</span><span class="p">)</span>
+        <span class="n">norm</span> <span class="o">=</span> <span class="n">step</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ypfine</span><span class="p">[</span><span class="n">norm_start</span><span class="p">:</span><span class="n">norm_end</span><span class="p">])</span>
+        <span class="n">conv</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">step</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ypfine</span> <span class="o">*</span> <span class="n">yfine</span><span class="p">[</span><span class="n">pk</span> <span class="p">:</span> <span class="n">pk</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">xpfine</span><span class="p">)])</span> <span class="o">/</span> <span class="n">norm</span><span class="p">)</span>
+
+    <span class="c1"># print(&quot;checking convolution %s&quot;%(name, ))</span>
+    <span class="c1"># print(&quot; &quot;.join(&quot;%7.4f&quot;%yi for yi in ystar))</span>
+    <span class="c1"># print(&quot; &quot;.join(&quot;%7.4f&quot;%yi for yi in conv))</span>
+    <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">yi</span> <span class="o">-</span> <span class="n">fi</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.0005</span> <span class="k">for</span> <span class="p">(</span><span class="n">yi</span><span class="p">,</span> <span class="n">fi</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ystar</span><span class="p">,</span> <span class="n">conv</span><span class="p">)),</span> <span class="n">name</span>
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

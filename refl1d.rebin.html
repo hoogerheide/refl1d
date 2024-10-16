@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>refl1d.rebin module &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="_static/plot_directive.css" />
+    <script src="_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>refl1d.rebin module</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="module-refl1d.rebin">
+<span id="refl1d-rebin-module"></span><h1>refl1d.rebin module<a class="headerlink" href="#module-refl1d.rebin" title="Link to this heading">¶</a></h1>
+<p>1-D and 2-D rebinning code.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.rebin.bin_edges">
+<span class="sig-prename descclassname"><span class="pre">refl1d.rebin.</span></span><span class="sig-name descname"><span class="pre">bin_edges</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">C</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/rebin.html#bin_edges"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.rebin.bin_edges" title="Link to this definition">¶</a></dt>
+<dd><p>Construct bin edges <em>E</em> from equally spaced bin centers <em>C</em>.</p>
+<p>Assumes the edges lie half way between the centers.  This will only
+be true if the centers are evenly spaced, but may be good enough for
+visualization purposes even when they are not.  Ideally analysis would
+be performed on the raw data without rebinning.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.rebin.logbin_edges">
+<span class="sig-prename descclassname"><span class="pre">refl1d.rebin.</span></span><span class="sig-name descname"><span class="pre">logbin_edges</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">L</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/rebin.html#logbin_edges"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.rebin.logbin_edges" title="Link to this definition">¶</a></dt>
+<dd><p>Construct bin edges <em>E</em> from logarithmically spaced bin centers <em>L</em>.</p>
+<p>Assuming fixed <span class="math notranslate nohighlight">\(\omega = \Delta\lambda/\lambda\)</span> in the bins, the
+edges will be spaced logarithmically at:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}E_0     &amp;= \min \lambda \\
+E_{i+1} &amp;= E_i + \omega E_i = E_i (1+\omega)\end{split}\]</div>
+<p>with centers <span class="math notranslate nohighlight">\(L\)</span> half way between the edges:</p>
+<div class="math notranslate nohighlight">
+\[L_i = (E_i+E_{i+1})/2
+    = (E_i + E_i (1+\omega))/2
+    = E_i (2 + \omega)/2\]</div>
+<p>Solving for <span class="math notranslate nohighlight">\(E_i\)</span>, we can recover the edges from the centers:</p>
+<div class="math notranslate nohighlight">
+\[E_i = L_i \frac{2}{2+\omega}\]</div>
+<p>The final edge, <span class="math notranslate nohighlight">\(E_{n+1}\)</span>, does not have a corresponding center
+<span class="math notranslate nohighlight">\(L_{n+1}\)</span> so we must determine it from the previous edge <span class="math notranslate nohighlight">\(E_n\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[E_{n+1} = L_n \frac{2}{2+\omega}(1+\omega)\]</div>
+<p>The fixed <span class="math notranslate nohighlight">\(\omega\)</span> can be retrieved from the ratio of any pair
+of bin centers using:</p>
+<div class="math notranslate nohighlight">
+\[\frac{L_{i+1}}{L_i} = \frac{ (E_{i+2}+E_{i+1})/2 }{ (E_{i+1}+E_i)/2 }
+                  = \frac{ (E_{i+1}(1+\omega)+E_{i+1} }
+                          { (E_i(1+\omega)+E_i }
+                  = \frac{E_{i+1}}{E_i}
+                  = \frac{E_i(1+\omega)}{E_i} = 1 + \omega\]</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.rebin.rebin">
+<span class="sig-prename descclassname"><span class="pre">refl1d.rebin.</span></span><span class="sig-name descname"><span class="pre">rebin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">I</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Io=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype=&lt;class</span> <span class="pre">'numpy.float64'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/rebin.html#rebin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.rebin.rebin" title="Link to this definition">¶</a></dt>
+<dd><p>Rebin a vector.</p>
+<p>x are the existing bin edges
+xo are the new bin edges
+I are the existing counts (one fewer than edges)</p>
+<p>Io will be used if present, but be sure that it is a contiguous
+array of the correct shape and size.</p>
+<p>dtype is the type to use for the intensity vectors.  This can be
+integer (uint8, uint16, uint32) or real (float32 or f, float64 or d).
+The edge vectors are all coerced to doubles.</p>
+<p>Note that total intensity is not preserved for integer rebinning.
+The algorithm uses truncation so total intensity will be down on
+average by half the total number of bins.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.rebin.rebin2d">
+<span class="sig-prename descclassname"><span class="pre">refl1d.rebin.</span></span><span class="sig-name descname"><span class="pre">rebin2d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">I</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Io</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/rebin.html#rebin2d"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.rebin.rebin2d" title="Link to this definition">¶</a></dt>
+<dd><p>Rebin a matrix.</p>
+<p>x, y are the existing bin edges
+xo, yo are the new bin edges
+I is the existing counts (one fewer than edges in each direction)</p>
+<p>For example, with x representing the column edges in each row and
+y representing the row edges in each column, the following
+represents a uniform field:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">#from bumps.rebin import rebin2d</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">z</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">]]</span>
+</pre></div>
+</div>
+<p>We can check this by rebinning with uniform size bins:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">xo</span><span class="p">,</span> <span class="n">yo</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">6</span><span class="p">),</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">zo</span> <span class="o">=</span> <span class="n">rebin2d</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">yo</span><span class="p">,</span> <span class="n">xo</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">bool</span><span class="p">((</span><span class="n">zo</span> <span class="o">==</span> <span class="mf">1.</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">())</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+<p>dtype is the type to use for the intensity vectors.  This can be
+integer (uint8, uint16, uint32) or real (float32 or f, float64 or d).
+The edge vectors are all coerced to doubles.</p>
+<p>Note that total intensity is not preserved for integer rebinning.
+The algorithm uses truncation so total intensity will be down on
+average by half the total number of bins.</p>
+<p>Io will be used if present, if it is contiguous and if it has the
+correct shape and type for the input.  Otherwise it will raise a
+TypeError.  This will allow you to rebin the slices of an appropriately
+ordered matrix without making copies.</p>
+</dd></dl>
+
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

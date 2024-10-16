@@ -1,0 +1,7 @@
+refl1d.view.profilei module
+===========================
+
+.. automodule:: refl1d.view.profilei
+   :members:
+   :undoc-members:
+   :show-inheritance:

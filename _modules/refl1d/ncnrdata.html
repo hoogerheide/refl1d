@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>refl1d.ncnrdata &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <script src="../../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>refl1d.ncnrdata</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <h1>Source code for refl1d.ncnrdata</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This program is in the public domain</span>
+<span class="c1"># Author: Paul Kienzle</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">NCNR data loaders</span>
+
+<span class="sd">The following instruments are defined:</span>
+
+<span class="sd">    MAGIK, PBR, ANDR, NG1, NG7 and XRay</span>
+
+<span class="sd">These are :class:`refl1d.instrument.Monochromatic` classes tuned with default</span>
+<span class="sd">instrument parameters and loaders for reduced NCNR data.</span>
+
+<span class="sd">The instruments can be used to load data or to compute resolution functions</span>
+<span class="sd">for the purposes.</span>
+
+<span class="sd">Example loading data:</span>
+
+<span class="sd">    &gt;&gt;&gt; from refl1d.names import *</span>
+<span class="sd">    &gt;&gt;&gt; datafile = sample_data(&#39;chale207.refl&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; instrument = NCNR.ANDR(Tlo=0.5, slits_at_Tlo=0.2, slits_below=0.1)</span>
+<span class="sd">    &gt;&gt;&gt; probe = instrument.load(datafile)</span>
+<span class="sd">    &gt;&gt;&gt; probe.plot(view=&#39;log&#39;)</span>
+
+<span class="sd">Magnetic data has multiple cross sections and often has fixed slits:</span>
+
+<span class="sd">    &gt;&gt;&gt; datafile = sample_data(&#39;lha03_255G.refl&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; instrument = NCNR.NG1(slits_at_Tlo=1)</span>
+<span class="sd">    &gt;&gt;&gt; probe = instrument.load_magnetic(datafile)</span>
+<span class="sd">    &gt;&gt;&gt; probe.plot(view=&#39;SA&#39;, substrate=silicon) # Spin asymmetry view</span>
+
+<span class="sd">For simulation, you need a probe and a sample:</span>
+
+<span class="sd">    &gt;&gt;&gt; instrument = NCNR.ANDR(Tlo=0.5, slits_at_Tlo=0.2, slits_below=0.1)</span>
+<span class="sd">    &gt;&gt;&gt; probe = instrument.probe(T=np.linspace(0, 5, 51))</span>
+<span class="sd">    &gt;&gt;&gt; probe.plot_resolution()</span>
+<span class="sd">    &gt;&gt;&gt; sample = silicon(0, 10) | gold(100, 10) | air</span>
+<span class="sd">    &gt;&gt;&gt; M = Experiment(probe=probe, sample=sample)</span>
+<span class="sd">    &gt;&gt;&gt; M.simulate_data() # Optional</span>
+<span class="sd">    &gt;&gt;&gt; M.plot()</span>
+
+<span class="sd">And for magnetic:</span>
+
+<span class="sd">    &gt;&gt;&gt; instrument = NCNR.NG1(slits_at_Tlo=1)</span>
+<span class="sd">    &gt;&gt;&gt; #sample = silicon(0, 10) | Magnetic(permalloy(100, 10), rho_M=3) | air</span>
+<span class="sd">    &gt;&gt;&gt; #M = Experiment(probe=probe, sample=sample)</span>
+<span class="sd">    &gt;&gt;&gt; #M.simulate_data()</span>
+<span class="sd">    &gt;&gt;&gt; #M.plot()</span>
+<span class="sd">    &gt;&gt;&gt; #probe = instrument.simulate_magnetic(sample, T=np.linspace(0, 5, 51))</span>
+<span class="sd">    &gt;&gt;&gt; #h = pylab.plot(probe.Q, probe.dQ)</span>
+<span class="sd">    &gt;&gt;&gt; #h = pylab.ylabel(&#39;resolution (1-sigma)&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; #h = pylab.xlabel(&#39;Q (inv A)&#39;)</span>
+
+<span class="sd">See :mod:`instrument &lt;refl1d.instrument&gt;` for details.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">bumps.data</span> <span class="kn">import</span> <span class="n">parse_file</span>
+
+<span class="kn">from</span> <span class="nn">.instrument</span> <span class="kn">import</span> <span class="n">Monochromatic</span>
+<span class="kn">from</span> <span class="nn">.probe</span> <span class="kn">import</span> <span class="n">PolarizedNeutronProbe</span>
+<span class="kn">from</span> <span class="nn">.reflectivity</span> <span class="kn">import</span> <span class="n">BASE_GUIDE_ANGLE</span>
+
+
+<div class="viewcode-block" id="load">
+<a class="viewcode-back" href="../../refl1d.ncnrdata.html#refl1d.ncnrdata.load">[docs]</a>
+<span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">instrument</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a probe for NCNR data.</span>
+
+<span class="sd">    Keyword arguments are as specified Monochromatic instruments.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">instrument</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">instrument</span> <span class="o">=</span> <span class="n">Monochromatic</span><span class="p">()</span>
+    <span class="n">header</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">parse_ncnr_file</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="c1"># calling parameters override what&#39;s in the file.</span>
+    <span class="n">header</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+    <span class="n">Q</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">dR</span> <span class="o">=</span> <span class="n">data</span>
+    <span class="n">header</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;Q&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>  <span class="c1"># if columns are preceded by # Q R dR</span>
+    <span class="n">probe</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">probe</span><span class="p">(</span><span class="n">Q</span><span class="o">=</span><span class="n">Q</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">dR</span><span class="p">),</span> <span class="o">**</span><span class="n">header</span><span class="p">)</span>
+    <span class="n">probe</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">header</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;title&quot;</span> <span class="ow">in</span> <span class="n">header</span> <span class="k">else</span> <span class="n">filename</span>
+    <span class="n">probe</span><span class="o">.</span><span class="n">date</span> <span class="o">=</span> <span class="n">header</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;date&quot;</span> <span class="ow">in</span> <span class="n">header</span> <span class="k">else</span> <span class="s2">&quot;unknown&quot;</span>
+    <span class="n">probe</span><span class="o">.</span><span class="n">instrument</span> <span class="o">=</span> <span class="n">header</span><span class="p">[</span><span class="s2">&quot;instrument&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;instrument&quot;</span> <span class="ow">in</span> <span class="n">header</span> <span class="k">else</span> <span class="n">instrument</span><span class="o">.</span><span class="n">instrument</span>
+    <span class="k">return</span> <span class="n">probe</span></div>
+
+
+
+<div class="viewcode-block" id="load_magnetic">
+<a class="viewcode-back" href="../../refl1d.ncnrdata.html#refl1d.ncnrdata.load_magnetic">[docs]</a>
+<span class="k">def</span> <span class="nf">load_magnetic</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">Aguide</span><span class="o">=</span><span class="n">BASE_GUIDE_ANGLE</span><span class="p">,</span> <span class="n">H</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">shared_beam</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a probe for magnetic NCNR data.</span>
+
+<span class="sd">    *filename* (string, or 4x string)</span>
+<span class="sd">        If it is a string, then filenameA, filenameB, filenameC, filenameD,</span>
+<span class="sd">        are the --, -+, +-, ++ cross sections, otherwise the individual</span>
+<span class="sd">        cross sections should the be the file name for the cross section or</span>
+<span class="sd">        None if the cross section does not exist.</span>
+<span class="sd">    *Aguide* (degrees)</span>
+<span class="sd">        Angle of the guide field relative to the beam.  270 is the default.</span>
+<span class="sd">    *shared_beam* (True)</span>
+<span class="sd">        Use false if beam parameters should be fit separately for the</span>
+<span class="sd">        individual cross sections.</span>
+
+<span class="sd">    Other keyword arguments are for the individual cross section loaders</span>
+<span class="sd">    as specified in</span>
+<span class="sd">    :class:`instrument.Monochromatic &lt;refl1d.instrument.Monochromatic&gt;`.</span>
+
+<span class="sd">    The data sets should are the base filename with an additional character</span>
+<span class="sd">    corresponding to the spin state::</span>
+
+<span class="sd">        &#39;a&#39; corresponds to spin --</span>
+<span class="sd">        &#39;b&#39; corresponds to spin -+</span>
+<span class="sd">        &#39;c&#39; corresponds to spin +-</span>
+<span class="sd">        &#39;d&#39; corresponds to spin ++</span>
+
+<span class="sd">    Unfortunately the interpretation is a little more complicated than</span>
+<span class="sd">    this as the data acquisition system assigns letter on the basis of</span>
+<span class="sd">    flipper state rather than neutron spin state.  Whether flipper on</span>
+<span class="sd">    or off corresponds to spin up or down depends on whether the</span>
+<span class="sd">    polarizer/analyzer is a supermirror in transmission or reflection</span>
+<span class="sd">    mode, or in the case of ^3He polarizers, whether the polarization</span>
+<span class="sd">    is up or down.</span>
+
+<span class="sd">    For full control, specify filename as a list of files, with None</span>
+<span class="sd">    for the missing cross sections.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">probes</span> <span class="o">=</span> <span class="p">[</span><span class="n">load</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">find_xsec</span><span class="p">(</span><span class="n">filename</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">p</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">probes</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="s2">&quot;Data set has no magnetic cross sections: </span><span class="si">%r</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">filename</span><span class="p">)</span>
+    <span class="n">probe</span> <span class="o">=</span> <span class="n">PolarizedNeutronProbe</span><span class="p">(</span><span class="n">probes</span><span class="p">,</span> <span class="n">Aguide</span><span class="o">=</span><span class="n">Aguide</span><span class="p">,</span> <span class="n">H</span><span class="o">=</span><span class="n">H</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">shared_beam</span><span class="p">:</span>
+        <span class="n">probe</span><span class="o">.</span><span class="n">shared_beam</span><span class="p">()</span>  <span class="c1"># Share the beam parameters by default</span>
+    <span class="k">return</span> <span class="n">probe</span></div>
+
+
+
+<div class="viewcode-block" id="find_xsec">
+<a class="viewcode-back" href="../../refl1d.ncnrdata.html#refl1d.ncnrdata.find_xsec">[docs]</a>
+<span class="k">def</span> <span class="nf">find_xsec</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Find files containing the polarization cross-sections.</span>
+
+<span class="sd">    Returns tuple with file names for ++ +- -+ -- cross sections, or</span>
+<span class="sd">    None if the spin cross section does not exist.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Check if it is a string.  If not, assume it is a length 4 tuple</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">filename</span> <span class="o">+</span> <span class="s2">&quot;s&quot;</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">filename</span>
+
+    <span class="k">if</span> <span class="n">filename</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="s2">&quot;abcdABCD&quot;</span><span class="p">:</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">filename</span> <span class="o">+</span> <span class="n">a</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">filename</span> <span class="o">+</span> <span class="n">a</span>
+        <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">filename</span> <span class="o">+</span> <span class="n">a</span><span class="o">.</span><span class="n">lower</span><span class="p">()):</span>
+            <span class="k">return</span> <span class="n">filename</span> <span class="o">+</span> <span class="n">a</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="n">check</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="p">),</span> <span class="n">check</span><span class="p">(</span><span class="s2">&quot;B&quot;</span><span class="p">),</span> <span class="n">check</span><span class="p">(</span><span class="s2">&quot;C&quot;</span><span class="p">),</span> <span class="n">check</span><span class="p">(</span><span class="s2">&quot;D&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="parse_ncnr_file">
+<a class="viewcode-back" href="../../refl1d.ncnrdata.html#refl1d.ncnrdata.parse_ncnr_file">[docs]</a>
+<span class="k">def</span> <span class="nf">parse_ncnr_file</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parse NCNR reduced data file returning *header* and *data*.</span>
+
+<span class="sd">    *header* dictionary of fields such as &#39;data&#39;, &#39;title&#39;, &#39;instrument&#39;</span>
+<span class="sd">    *data* 2D array of data</span>
+
+<span class="sd">    If &#39;columns&#39; is present in header, it will be a list of the names of</span>
+<span class="sd">    the columns.  If &#39;instrument&#39; is present in the header, the default</span>
+<span class="sd">    instrument geometry will be specified.</span>
+
+<span class="sd">    Slit geometry is set to the default from the instrument if it is not</span>
+<span class="sd">    available in the reduced file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">header</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">parse_file</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+
+    <span class="c1"># Fill in instrument parameters, if not available from the file</span>
+    <span class="k">if</span> <span class="s2">&quot;instrument&quot;</span> <span class="ow">in</span> <span class="n">header</span> <span class="ow">and</span> <span class="n">header</span><span class="p">[</span><span class="s2">&quot;instrument&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">INSTRUMENTS</span><span class="p">:</span>
+        <span class="n">instrument</span> <span class="o">=</span> <span class="n">INSTRUMENTS</span><span class="p">[</span><span class="n">header</span><span class="p">[</span><span class="s2">&quot;instrument&quot;</span><span class="p">]]</span>
+        <span class="n">header</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;radiation&quot;</span><span class="p">,</span> <span class="n">instrument</span><span class="o">.</span><span class="n">radiation</span><span class="p">)</span>
+        <span class="n">header</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;wavelength&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">instrument</span><span class="o">.</span><span class="n">wavelength</span><span class="p">))</span>
+        <span class="n">header</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;dLoL&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">instrument</span><span class="o">.</span><span class="n">dLoL</span><span class="p">))</span>
+        <span class="n">header</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;d_s1&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">instrument</span><span class="o">.</span><span class="n">d_s1</span><span class="p">))</span>
+        <span class="n">header</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;d_s2&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">instrument</span><span class="o">.</span><span class="n">d_s2</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="s2">&quot;columns&quot;</span> <span class="ow">in</span> <span class="n">header</span><span class="p">:</span>
+        <span class="n">header</span><span class="p">[</span><span class="s2">&quot;columns&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">header</span><span class="p">[</span><span class="s2">&quot;columns&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;wavelength&quot;</span><span class="p">,</span> <span class="s2">&quot;dLoL&quot;</span><span class="p">,</span> <span class="s2">&quot;d_s1&quot;</span><span class="p">,</span> <span class="s2">&quot;d_s2&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">header</span><span class="p">:</span>
+            <span class="n">header</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">header</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">header</span><span class="p">,</span> <span class="n">data</span></div>
+
+
+
+<div class="viewcode-block" id="NCNRData">
+<a class="viewcode-back" href="../../refl1d.ncnrdata.html#refl1d.ncnrdata.NCNRData">[docs]</a>
+<span class="k">class</span> <span class="nc">NCNRData</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="NCNRData.readfile">
+<a class="viewcode-back" href="../../refl1d.ncnrdata.html#refl1d.ncnrdata.NCNRData.readfile">[docs]</a>
+    <span class="k">def</span> <span class="nf">readfile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">parse_ncnr_file</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="NCNRData.load">
+<a class="viewcode-back" href="../../refl1d.ncnrdata.html#refl1d.ncnrdata.NCNRData.load">[docs]</a>
+    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">load</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">instrument</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="NCNRData.load_magnetic">
+<a class="viewcode-back" href="../../refl1d.ncnrdata.html#refl1d.ncnrdata.NCNRData.load_magnetic">[docs]</a>
+    <span class="k">def</span> <span class="nf">load_magnetic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">load_magnetic</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">instrument</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MAGIK">
+<a class="viewcode-back" href="../../refl1d.ncnrdata.html#refl1d.ncnrdata.MAGIK">[docs]</a>
+<span class="k">class</span> <span class="nc">MAGIK</span><span class="p">(</span><span class="n">NCNRData</span><span class="p">,</span> <span class="n">Monochromatic</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Instrument definition for NCNR MAGIK diffractometer/reflectometer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">instrument</span> <span class="o">=</span> <span class="s2">&quot;MAGIK&quot;</span>
+    <span class="n">radiation</span> <span class="o">=</span> <span class="s2">&quot;neutron&quot;</span>
+    <span class="n">wavelength</span> <span class="o">=</span> <span class="mf">5.0042</span>
+    <span class="n">dLoL</span> <span class="o">=</span> <span class="mf">0.009</span>
+    <span class="n">d_s1</span> <span class="o">=</span> <span class="mf">1321.0</span> <span class="o">+</span> <span class="mf">438.0</span>
+    <span class="n">d_s2</span> <span class="o">=</span> <span class="mf">1321.0</span> <span class="o">-</span> <span class="mf">991.0</span></div>
+
+
+
+<div class="viewcode-block" id="PBR">
+<a class="viewcode-back" href="../../refl1d.ncnrdata.html#refl1d.ncnrdata.PBR">[docs]</a>
+<span class="k">class</span> <span class="nc">PBR</span><span class="p">(</span><span class="n">NCNRData</span><span class="p">,</span> <span class="n">Monochromatic</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Instrument definition for NCNR PBR reflectometer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">instrument</span> <span class="o">=</span> <span class="s2">&quot;PBR&quot;</span>
+    <span class="n">radiation</span> <span class="o">=</span> <span class="s2">&quot;neutron&quot;</span>
+    <span class="n">wavelength</span> <span class="o">=</span> <span class="mf">4.75</span>
+    <span class="n">dLoL</span> <span class="o">=</span> <span class="mf">0.015</span>
+    <span class="n">d_s1</span> <span class="o">=</span> <span class="mi">1835</span>
+    <span class="n">d_s2</span> <span class="o">=</span> <span class="mi">343</span>
+    <span class="n">d_s3</span> <span class="o">=</span> <span class="mi">380</span>
+    <span class="n">d_s4</span> <span class="o">=</span> <span class="mi">1015</span></div>
+
+
+
+<div class="viewcode-block" id="NG7">
+<a class="viewcode-back" href="../../refl1d.ncnrdata.html#refl1d.ncnrdata.NG7">[docs]</a>
+<span class="k">class</span> <span class="nc">NG7</span><span class="p">(</span><span class="n">NCNRData</span><span class="p">,</span> <span class="n">Monochromatic</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Instrument definition for NCNR NG-7 reflectometer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">instrument</span> <span class="o">=</span> <span class="s2">&quot;NG-7&quot;</span>
+    <span class="n">radiation</span> <span class="o">=</span> <span class="s2">&quot;neutron&quot;</span>
+    <span class="n">wavelength</span> <span class="o">=</span> <span class="mf">4.768</span>
+    <span class="n">dLoL</span> <span class="o">=</span> <span class="mf">0.025</span>  <span class="c1"># 2.5% FWHM wavelength spread</span>
+    <span class="n">d_s2</span> <span class="o">=</span> <span class="mf">222.25</span>
+    <span class="n">d_s1</span> <span class="o">=</span> <span class="mf">1722.25</span>
+    <span class="n">d_detector</span> <span class="o">=</span> <span class="mf">2000.0</span></div>
+
+
+
+<div class="viewcode-block" id="XRay">
+<a class="viewcode-back" href="../../refl1d.ncnrdata.html#refl1d.ncnrdata.XRay">[docs]</a>
+<span class="k">class</span> <span class="nc">XRay</span><span class="p">(</span><span class="n">NCNRData</span><span class="p">,</span> <span class="n">Monochromatic</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Instrument definition for NCNR X-ray reflectometer.</span>
+
+<span class="sd">    Normal dT is in the range 2e-5 to 3e-4.</span>
+
+<span class="sd">    Slits are fixed throughout the experiment in one of a</span>
+<span class="sd">    few preconfigured openings.  Please update this file with</span>
+<span class="sd">    the standard configurations when you find them.</span>
+
+<span class="sd">    You can choose to ignore the geometric calculation entirely</span>
+<span class="sd">    by setting the slit opening to 0 and using sample_broadening</span>
+<span class="sd">    to define the entire divergence.  Note that Probe.sample_broadening</span>
+<span class="sd">    is a fittable parameter, so you need to access its value::</span>
+
+<span class="sd">        &gt;&gt;&gt; from refl1d.names import *</span>
+<span class="sd">        &gt;&gt;&gt; file = sample_data(&quot;spin_valve01.refl&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; xray = NCNR.XRay(slits_at_Tlo=0)</span>
+<span class="sd">        &gt;&gt;&gt; data = xray.load(file, sample_broadening=1e-4)</span>
+<span class="sd">        &gt;&gt;&gt; print(data.sample_broadening.value)</span>
+<span class="sd">        0.0001</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">instrument</span> <span class="o">=</span> <span class="s2">&quot;X-ray&quot;</span>
+    <span class="n">radiation</span> <span class="o">=</span> <span class="s2">&quot;xray&quot;</span>
+    <span class="n">wavelength</span> <span class="o">=</span> <span class="mf">1.5416</span>
+    <span class="n">dLoL</span> <span class="o">=</span> <span class="mf">1e-3</span> <span class="o">/</span> <span class="n">wavelength</span>
+    <span class="n">d_s1</span> <span class="o">=</span> <span class="mf">275.5</span>
+    <span class="n">d_s2</span> <span class="o">=</span> <span class="mf">192.5</span>
+    <span class="n">d_s3</span> <span class="o">=</span> <span class="mf">175.0</span>
+    <span class="n">d_detector</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="ANDR">
+<a class="viewcode-back" href="../../refl1d.ncnrdata.html#refl1d.ncnrdata.ANDR">[docs]</a>
+<span class="k">class</span> <span class="nc">ANDR</span><span class="p">(</span><span class="n">NCNRData</span><span class="p">,</span> <span class="n">Monochromatic</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Instrument definition for NCNR AND/R diffractometer/reflectometer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">instrument</span> <span class="o">=</span> <span class="s2">&quot;AND/R&quot;</span>
+    <span class="n">radiation</span> <span class="o">=</span> <span class="s2">&quot;neutron&quot;</span>
+    <span class="n">wavelength</span> <span class="o">=</span> <span class="mf">5.0042</span>
+    <span class="n">dLoL</span> <span class="o">=</span> <span class="mf">0.009</span>
+    <span class="n">d_s1</span> <span class="o">=</span> <span class="mf">230.0</span> <span class="o">+</span> <span class="mf">1856.0</span>
+    <span class="n">d_s2</span> <span class="o">=</span> <span class="mf">230.0</span></div>
+
+
+
+<div class="viewcode-block" id="NG1">
+<a class="viewcode-back" href="../../refl1d.ncnrdata.html#refl1d.ncnrdata.NG1">[docs]</a>
+<span class="k">class</span> <span class="nc">NG1</span><span class="p">(</span><span class="n">NCNRData</span><span class="p">,</span> <span class="n">Monochromatic</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Instrument definition for NCNR NG-1 reflectometer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">instrument</span> <span class="o">=</span> <span class="s2">&quot;NG-1&quot;</span>
+    <span class="n">radiation</span> <span class="o">=</span> <span class="s2">&quot;neutron&quot;</span>
+    <span class="n">wavelength</span> <span class="o">=</span> <span class="mf">4.75</span>
+    <span class="n">dLoL</span> <span class="o">=</span> <span class="mf">0.015</span>
+    <span class="n">d_s1</span> <span class="o">=</span> <span class="mi">75</span> <span class="o">*</span> <span class="mf">25.4</span>
+    <span class="n">d_s2</span> <span class="o">=</span> <span class="mi">14</span> <span class="o">*</span> <span class="mf">25.4</span>
+    <span class="n">d_s3</span> <span class="o">=</span> <span class="mi">9</span> <span class="o">*</span> <span class="mf">25.4</span>
+    <span class="n">d_s4</span> <span class="o">=</span> <span class="mi">42</span> <span class="o">*</span> <span class="mf">25.4</span></div>
+
+
+
+<span class="c1"># Instrument names assigned by reflpak</span>
+<span class="n">INSTRUMENTS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;CG-D&quot;</span><span class="p">:</span> <span class="n">MAGIK</span><span class="p">,</span>
+    <span class="s2">&quot;NG-D&quot;</span><span class="p">:</span> <span class="n">PBR</span><span class="p">,</span>
+    <span class="s2">&quot;CG-1&quot;</span><span class="p">:</span> <span class="n">ANDR</span><span class="p">,</span>
+    <span class="s2">&quot;NG-1&quot;</span><span class="p">:</span> <span class="n">NG1</span><span class="p">,</span>
+    <span class="s2">&quot;NG-7&quot;</span><span class="p">:</span> <span class="n">NG7</span><span class="p">,</span>
+    <span class="s2">&quot;Xray&quot;</span><span class="p">:</span> <span class="n">XRay</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">_</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">def _counting_time(instrument, sample, uncertainty,</span>
+<span class="s1">    Qrange, Qstep, beam_rate, num_parts):</span>
+<span class="s1">    r&quot;&quot;&quot;</span>
+<span class="s1">    Simulate counting time for a particular sample.</span>
+
+<span class="s1">    :Parameters:</span>
+<span class="s1">        *sample* : Stack</span>
+<span class="s1">            Model of the sample.</span>
+<span class="s1">        *uncertainty* = 0.01 : float</span>
+<span class="s1">            Relative uncertainty in the measurement.</span>
+
+<span class="s1">    Additional :meth:`probe` keyword parameters are required to define</span>
+<span class="s1">    the set of angles to be measured</span>
+
+<span class="s1">    Returns</span>
+<span class="s1">    -------</span>
+
+<span class="s1">    *experiment* : Experiment</span>
+<span class="s1">        Sample + probe with simulated data.</span>
+
+<span class="s1">    Algorithm</span>
+<span class="s1">    ---------</span>
+
+<span class="s1">    Assuming our counts follow approximately the Fresnel reflectivity</span>
+<span class="s1">    of the sample, $F$, and we are targeting an fractional uncertainty</span>
+<span class="s1">    $\Delta R/R = \sigma$, we can calculate the desired incident beam</span>
+<span class="s1">    $I = 1/(F\sigma^2)$ that will yield this uncertainty.  With $I$,</span>
+<span class="s1">    we can compute the  expected number of counts on the detector due</span>
+<span class="s1">    to reflection off the sample (this is just $R_{\rm th} I$) and use</span>
+<span class="s1">    that to simulate detector counts $D$ by drawing from a Poisson</span>
+<span class="s1">    distribution $D ~ P(R_{\rm th} I)$.  Given $D$ and $I$ we can use</span>
+<span class="s1">    the normal reflectometry reduction process to get $(R, \Delta R)$</span>
+<span class="s1">    as:</span>
+
+<span class="s1">    .. math:</span>
+
+<span class="s1">        I &amp;=&amp; 1/(F \sigma^2) //</span>
+<span class="s1">        D &amp;~&amp; P(R_{\rm th} I) //</span>
+<span class="s1">        R &amp;=&amp; D/I //</span>
+<span class="s1">        \Delta R &amp;=&amp; \sqrt(D)/I</span>
+<span class="s1">    &quot;&quot;&quot;</span>
+<span class="s1">    import numpy as np</span>
+<span class="s1">    from .experiment import Experiment</span>
+<span class="s1">    probe = self.probe(**kw)</span>
+<span class="s1">    M = Experiment(probe=probe, sample=sample)</span>
+<span class="s1">    if 1: # Fresnel counting</span>
+<span class="s1">        I = 1/(M.fresnel()* uncertainty**2)</span>
+<span class="s1">    else: # Q^4 counting</span>
+<span class="s1">        I = 1/(100*probe.Q**4 * uncertainty**2)</span>
+<span class="s1">    D = np.random.poisson( Rth * I )</span>
+<span class="s1">    R, dR = D/I, np.sqrt(D)/I</span>
+<span class="s1">    probe.data = R, dR</span>
+
+<span class="s1">    return M</span>
+<span class="s1">&#39;&#39;&#39;</span>
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

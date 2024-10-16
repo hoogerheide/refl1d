@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>refl1d.anstodata &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <script src="../../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>refl1d.anstodata</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <h1>Source code for refl1d.anstodata</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This program is in the public domain</span>
+<span class="c1"># Author: Andrew Nelson</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">ANSTO data loaders</span>
+
+<span class="sd">The following instrument is defined::</span>
+
+<span class="sd">    Platypus</span>
+
+<span class="sd">All the ANSTO instruments emit Q/R/dR/dQ in their output files.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">os.path</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">bumps.data</span> <span class="kn">import</span> <span class="n">maybe_open</span>
+<span class="kn">from</span> <span class="nn">.probe</span> <span class="kn">import</span> <span class="n">QProbe</span>
+<span class="kn">from</span> <span class="nn">.resolution</span> <span class="kn">import</span> <span class="n">FWHM2sigma</span>
+
+
+<span class="k">def</span> <span class="nf">_load_dat</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Loads a Platypus dataset from file. This will normally be Q, R, dR, dQ.</span>
+
+<span class="sd">    | Q - Momentum transfer |1/Ang|</span>
+<span class="sd">    | R - Reflectivity</span>
+<span class="sd">    | dR - uncertainty in reflectivity (1 sigma)</span>
+<span class="sd">    | dQ - FWHM of Gaussian resolution kernel.</span>
+
+<span class="sd">    **Parameters**</span>
+
+<span class="sd">    f : file-handle or string</span>
+<span class="sd">        File to load the dataset from.</span>
+
+<span class="sd">    **Returns**</span>
+
+<span class="sd">    (filename, name, data) - str, str, tuple of np.ndarray</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># it would be nice to use refl1d.probe.load4 directly. However,</span>
+    <span class="c1"># there are lots of files in the wild that don&#39;t use # to denote comments</span>
+    <span class="c1"># in the header. In addition, it is known that ANSTO datasets emit dQ as</span>
+    <span class="c1"># FWHM.</span>
+
+    <span class="k">with</span> <span class="n">maybe_open</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+        <span class="n">fname</span> <span class="o">=</span> <span class="n">fh</span><span class="o">.</span><span class="n">name</span>
+        <span class="n">header_lines</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">fh</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">nums</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">tok</span><span class="p">)</span> <span class="k">for</span> <span class="n">tok</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\s|,&quot;</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tok</span><span class="p">)]</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">nums</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">header_lines</span> <span class="o">=</span> <span class="n">i</span>
+                <span class="k">break</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">skiprows</span><span class="o">=</span><span class="n">header_lines</span><span class="p">)</span>
+
+    <span class="n">filename</span> <span class="o">=</span> <span class="n">fname</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">fname</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">filename</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">data</span>
+
+
+<div class="viewcode-block" id="load">
+<a class="viewcode-back" href="../../refl1d.anstodata.html#refl1d.anstodata.load">[docs]</a>
+<span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">instrument</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a probe for ANSTO data.</span>
+
+<span class="sd">    **Parameters**</span>
+
+<span class="sd">    f : file-handle or string</span>
+<span class="sd">        File to load the dataset from.</span>
+
+<span class="sd">    **Returns**</span>
+
+<span class="sd">    probe : probe.QProbe</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fname</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">_load_dat</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+
+    <span class="n">Q</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">R</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">dR</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">dQ</span> <span class="o">=</span> <span class="n">FWHM2sigma</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+
+    <span class="n">probe</span> <span class="o">=</span> <span class="n">QProbe</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">dQ</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">dR</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">fname</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">instrument</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">probe</span><span class="o">.</span><span class="n">instrument</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">instrument</span>
+
+    <span class="k">return</span> <span class="n">probe</span></div>
+
+
+
+<div class="viewcode-block" id="ANSTOData">
+<a class="viewcode-back" href="../../refl1d.anstodata.html#refl1d.anstodata.ANSTOData">[docs]</a>
+<span class="k">class</span> <span class="nc">ANSTOData</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="ANSTOData.load">
+<a class="viewcode-back" href="../../refl1d.anstodata.html#refl1d.anstodata.ANSTOData.load">[docs]</a>
+    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">load</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">instrument</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Platypus">
+<a class="viewcode-back" href="../../refl1d.anstodata.html#refl1d.anstodata.Platypus">[docs]</a>
+<span class="k">class</span> <span class="nc">Platypus</span><span class="p">(</span><span class="n">ANSTOData</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Loader for reduced data from the ANSTO Platypus instrument.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">instrument</span> <span class="o">=</span> <span class="s2">&quot;Platypus&quot;</span>
+    <span class="n">radiation</span> <span class="o">=</span> <span class="s2">&quot;neutron&quot;</span></div>
+
+
+
+<span class="n">INSTRUMENTS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;Platypus&quot;</span><span class="p">:</span> <span class="n">Platypus</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

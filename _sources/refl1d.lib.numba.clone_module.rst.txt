@@ -1,0 +1,7 @@
+refl1d.lib.numba.clone\_module module
+=====================================
+
+.. automodule:: refl1d.lib.numba.clone_module
+   :members:
+   :undoc-members:
+   :show-inheritance:

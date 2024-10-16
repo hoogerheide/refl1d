@@ -1,0 +1,7 @@
+refl1d.magnetism module
+=======================
+
+.. automodule:: refl1d.magnetism
+   :members:
+   :undoc-members:
+   :show-inheritance:

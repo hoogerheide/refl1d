@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Four column data &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <script src="../../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Anticorrelated parameters" href="../ill_posed/anticor.html" />
+    <link rel="prev" title="MLayer Models" href="../staj/readme.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>Four column data</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        «&#160;&#160;<a href="../staj/readme.html">MLayer Models</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../ill_posed/anticor.html">Anticorrelated parameters</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="four-column-data">
+<h1>Four column data<a class="headerlink" href="#four-column-data" title="Link to this heading">¶</a></h1>
+<p>This example reuses the spin-value model for a completely unrelated
+measurement.  The goal is to demonstrate loading of four column data
+files (Q, R, dR, dQ) produced by the NCNR reductus fitting program.</p>
+<p>The following is copied directly from the spin value example</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">refl1d.names</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">Si</span> <span class="o">=</span> <span class="n">SLD</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Si&quot;</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="mf">2.0737</span><span class="p">,</span> <span class="n">irho</span><span class="o">=</span><span class="mf">2.376e-5</span><span class="p">)</span>
+<span class="n">Cu</span> <span class="o">=</span> <span class="n">SLD</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Cu&quot;</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="mf">6.5535</span><span class="p">,</span> <span class="n">irho</span><span class="o">=</span><span class="mf">8.925e-4</span><span class="p">)</span>
+<span class="n">Ta</span> <span class="o">=</span> <span class="n">SLD</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Ta&quot;</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="mf">3.8300</span><span class="p">,</span> <span class="n">irho</span><span class="o">=</span><span class="mf">3.175e-3</span><span class="p">)</span>
+<span class="n">TaOx</span> <span class="o">=</span> <span class="n">SLD</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;TaOx&quot;</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="mf">1.6325</span><span class="p">,</span> <span class="n">irho</span><span class="o">=</span><span class="mf">3.175e-3</span><span class="p">)</span>
+<span class="n">NiFe</span> <span class="o">=</span> <span class="n">SLD</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;NiFe&quot;</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="mf">9.1200</span><span class="p">,</span> <span class="n">irho</span><span class="o">=</span><span class="mf">1.032e-3</span><span class="p">)</span>
+<span class="n">CoFe</span> <span class="o">=</span> <span class="n">SLD</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;CoFe&quot;</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="mf">4.3565</span><span class="p">,</span> <span class="n">irho</span><span class="o">=</span><span class="mf">7.986e-3</span><span class="p">)</span>  <span class="c1"># 60:40</span>
+<span class="n">IrMn</span> <span class="o">=</span> <span class="n">SLD</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;IrMn&quot;</span><span class="p">,</span> <span class="n">rho</span><span class="o">=-</span><span class="mf">0.21646</span><span class="p">,</span> <span class="n">irho</span><span class="o">=</span><span class="mf">4.245e-2</span><span class="p">)</span>
+
+<span class="n">sample</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Si</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">2.13</span><span class="p">)</span>
+    <span class="o">|</span> <span class="n">Ta</span><span class="p">(</span><span class="mf">38.8</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="o">|</span> <span class="n">NiFe</span><span class="p">(</span><span class="mf">25.0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">magnetism</span><span class="o">=</span><span class="n">Magnetism</span><span class="p">(</span><span class="n">rhoM</span><span class="o">=</span><span class="mf">1.4638</span><span class="p">,</span> <span class="n">thetaM</span><span class="o">=</span><span class="mi">270</span><span class="p">,</span> <span class="n">interface_below</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">interface_above</span><span class="o">=</span><span class="mi">3</span><span class="p">))</span>
+    <span class="o">|</span> <span class="n">CoFe</span><span class="p">(</span><span class="mf">12.7</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">magnetism</span><span class="o">=</span><span class="n">Magnetism</span><span class="p">(</span><span class="n">rhoM</span><span class="o">=</span><span class="mf">3.7340</span><span class="p">,</span> <span class="n">thetaM</span><span class="o">=</span><span class="mi">270</span><span class="p">,</span> <span class="n">interface_above</span><span class="o">=</span><span class="mi">4</span><span class="p">))</span>
+    <span class="o">|</span> <span class="n">Cu</span><span class="p">(</span><span class="mi">28</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="o">|</span> <span class="n">CoFe</span><span class="p">(</span><span class="mf">30.2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">MagnetismTwist</span><span class="p">(</span><span class="n">rhoM</span><span class="o">=</span><span class="p">[</span><span class="mf">4.5102</span><span class="p">,</span> <span class="mf">1.7860</span><span class="p">],</span> <span class="n">thetaM</span><span class="o">=</span><span class="p">[</span><span class="mi">270</span><span class="p">,</span> <span class="mi">85</span><span class="p">],</span> <span class="n">interface_below</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="n">interface_above</span><span class="o">=</span><span class="mi">7</span><span class="p">))</span>
+    <span class="o">|</span> <span class="n">IrMn</span><span class="p">(</span><span class="mf">4.74</span><span class="p">,</span> <span class="mf">1.7</span><span class="p">)</span>
+    <span class="o">|</span> <span class="n">Cu</span><span class="p">(</span><span class="mf">5.148</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="o">|</span> <span class="n">Ta</span><span class="p">(</span><span class="mf">55.4895</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="o">|</span> <span class="n">TaOx</span><span class="p">(</span><span class="mf">47.42</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">)</span>
+    <span class="o">|</span> <span class="n">air</span>
+<span class="p">)</span>
+
+<span class="n">sample</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">thickness</span><span class="o">.</span><span class="n">pmp</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span>
+<span class="n">sample</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">magnetism</span><span class="o">.</span><span class="n">rhoM</span><span class="o">.</span><span class="n">pmp</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span>
+
+<span class="n">sample</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">magnetism</span><span class="o">.</span><span class="n">interface_below</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">sample</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">magnetism</span><span class="o">.</span><span class="n">interface_above</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">sample</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">magnetism</span><span class="o">.</span><span class="n">interface_above</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">sample</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">magnetism</span><span class="o">.</span><span class="n">interface_below</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">sample</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">magnetism</span><span class="o">.</span><span class="n">interface_above</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Here’s the new loader.  Much simplified since the reduction computes the
+appropriate <span class="math notranslate nohighlight">\(\Delta Q\)</span> for the data points, and we don’t need to specify
+the slit openings and distances for the data set.  The options to the
+<a class="reference internal" href="../../refl1d.probe.html#refl1d.probe.load4" title="refl1d.probe.load4"><code class="xref py py-func docutils literal notranslate"><span class="pre">refl1d.probe.load4()</span></code></a> function allow you to override things during
+load, such as the sample broadening of the resolution.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">probe</span> <span class="o">=</span> <span class="n">load4</span><span class="p">(</span><span class="s2">&quot;refl.txt&quot;</span><span class="p">)</span>
+<span class="n">experiment</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">probe</span><span class="o">=</span><span class="n">probe</span><span class="p">,</span> <span class="n">sample</span><span class="o">=</span><span class="n">sample</span><span class="p">,</span> <span class="n">dz</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">dA</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">problem</span> <span class="o">=</span> <span class="n">FitProblem</span><span class="p">(</span><span class="n">experiment</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        «&#160;&#160;<a href="../staj/readme.html">MLayer Models</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../ill_posed/anticor.html">Anticorrelated parameters</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

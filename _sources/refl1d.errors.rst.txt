@@ -1,0 +1,7 @@
+refl1d.errors module
+====================
+
+.. automodule:: refl1d.errors
+   :members:
+   :undoc-members:
+   :show-inheritance:

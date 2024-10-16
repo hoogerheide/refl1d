@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>refl1d.material &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <script src="../../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>refl1d.material</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <h1>Source code for refl1d.material</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This program is in the public domain</span>
+<span class="c1"># Author Paul Kienzle</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Reflectometry materials.</span>
+
+<span class="sd">Materials (see :class:`Material`) have a composition and a density.</span>
+<span class="sd">Density may not be known, either because it has not been measured or</span>
+<span class="sd">because the measurement of the bulk value does not apply to thin films.</span>
+<span class="sd">The density parameter can be fitted directly, or the bulk density can be</span>
+<span class="sd">used, and a stretch parameter can be fitted.</span>
+
+<span class="sd">Mixtures (see :class:`Mixture`) are a special kind of material which are</span>
+<span class="sd">composed of individual parts in proportion.  A mixture can be constructed</span>
+<span class="sd">in a number of ways, such as by measuring proportional masses and mixing</span>
+<span class="sd">or measuring proportional volumes and mixing.  The parameter of interest</span>
+<span class="sd">may also be the relative number of atoms of one material versus another.</span>
+<span class="sd">The fractions of the different mixture components are fitted parameters,</span>
+<span class="sd">with the remainder of the bulk filled by the final component.</span>
+
+<span class="sd">SLDs (see :class:`SLD`) are raw scattering length density values.  These</span>
+<span class="sd">should be used if the material composition is not known.  In that case,</span>
+<span class="sd">you will need separate SLD materials for each wavelength and probe.</span>
+
+<span class="sd">*air* (see :class:`Vacuum`) is a predefined scatterer transparent to</span>
+<span class="sd">all probes.</span>
+
+<span class="sd">Scatter (see :class:`Scatterer`) is the abstract base class from which</span>
+<span class="sd">all scatterers are derived.</span>
+
+<span class="sd">The probe cache (see :class:`ProbeCache`) stores the scattering factors</span>
+<span class="sd">for the various materials and calls the material sld method on demand.</span>
+<span class="sd">Because the same material can be used for multiple measurements, the</span>
+<span class="sd">scattering factors cannot be stored with material itself, nor does it</span>
+<span class="sd">make sense to store them with the probe.  The scattering factor lookup</span>
+<span class="sd">for the material is separate from the scattering length density</span>
+<span class="sd">calculation so that you only need to look up the material once per fit.</span>
+
+<span class="sd">The probe itself deals with all computations relating to the radiation</span>
+<span class="sd">type and energy.  Unlike the normally tabulated scattering factors f&#39;, f&#39;&#39;</span>
+<span class="sd">for X-ray, there is no need to scale by probe by electron radius.  In</span>
+<span class="sd">the end, sld is just the returned scattering factors times density.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;Material&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Mixture&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;SLD&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Vacuum&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Scatterer&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ProbeCache&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;BulkDensityMaterial&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NaturalDensityMaterial&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NumberDensityMaterial&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;RelativeDensityMaterial&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;CellVolumeMaterial&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Literal</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">inf</span><span class="p">,</span> <span class="n">nan</span>
+<span class="kn">import</span> <span class="nn">periodictable</span>
+<span class="kn">from</span> <span class="nn">periodictable.constants</span> <span class="kn">import</span> <span class="n">avogadro_number</span>
+<span class="kn">from</span> <span class="nn">bumps.parameter</span> <span class="kn">import</span> <span class="n">Expression</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">,</span> <span class="n">to_dict</span>  <span class="c1"># , PARAMETER_TYPES, UnaryExpression</span>
+<span class="kn">from</span> <span class="nn">periodictable.formulas</span> <span class="kn">import</span> <span class="n">Formula</span> <span class="k">as</span> <span class="n">BaseFormula</span>
+
+
+<div class="viewcode-block" id="Scatterer">
+<a class="viewcode-back" href="../../refl1d.material.html#refl1d.material.Scatterer">[docs]</a>
+<span class="k">class</span> <span class="nc">Scatterer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A generic scatterer separates the lookup of the scattering factors</span>
+<span class="sd">    from the calculation of the scattering length density.  This allows</span>
+<span class="sd">    programs to fit density and alloy composition more efficiently.</span>
+
+<span class="sd">    .. Note::</span>
+<span class="sd">       the Scatterer base class is extended by</span>
+<span class="sd">       :class:`_MaterialStacker &lt;refl1d.model._MaterialStacker&gt;` so that materials</span>
+<span class="sd">       can be implicitly converted to slabs when used in stack construction</span>
+<span class="sd">       expressions. It is not done directly to avoid circular dependencies</span>
+<span class="sd">       between :mod:`model &lt;refl1d.model&gt;` and :mod:`material &lt;refl1d.material&gt;`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Scatterer.sld">
+<a class="viewcode-back" href="../../refl1d.material.html#refl1d.material.Scatterer.sld">[docs]</a>
+    <span class="k">def</span> <span class="nf">sld</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sf</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the scattering length density pair (rho, irho) expected for the given</span>
+<span class="sd">        scattering factors, as returned from a call to scattering_factors()</span>
+<span class="sd">        for a particular probe.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__or__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Interface for a material stacker, to support e.g., *stack = Si | air*.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;failed monkey-patch: material stacker needs&quot;</span> <span class="s2">&quot; to replace __or__ in Scatterer&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Interface for a material stacker, to support e.g., *stack = Si(thickness=)*.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;failed monkey-patch: material stacker needs&quot;</span> <span class="s2">&quot; to replace __call__ in Scatterer&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span></div>
+
+
+
+<span class="c1"># ============================ No scatterer =============================</span>
+<div class="viewcode-block" id="Vacuum">
+<a class="viewcode-back" href="../../refl1d.material.html#refl1d.material.Vacuum">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">Vacuum</span><span class="p">(</span><span class="n">Scatterer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Empty layer (all sld = 0)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Vacuum&quot;</span>
+
+<div class="viewcode-block" id="Vacuum.parameters">
+<a class="viewcode-back" href="../../refl1d.material.html#refl1d.material.Vacuum.parameters">[docs]</a>
+    <span class="k">def</span> <span class="nf">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[]</span></div>
+
+
+<div class="viewcode-block" id="Vacuum.to_dict">
+<a class="viewcode-back" href="../../refl1d.material.html#refl1d.material.Vacuum.to_dict">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="Vacuum.sld">
+<a class="viewcode-back" href="../../refl1d.material.html#refl1d.material.Vacuum.sld">[docs]</a>
+    <span class="k">def</span> <span class="nf">sld</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">probe</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;Vacuum()&quot;</span></div>
+
+
+
+<span class="c1"># ============================ Unknown scatterer ========================</span>
+<div class="viewcode-block" id="SLD">
+<a class="viewcode-back" href="../../refl1d.material.html#refl1d.material.SLD">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">SLD</span><span class="p">(</span><span class="n">Scatterer</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Unknown composition.</span>
+
+<span class="sd">    Use this when you don&#39;t know the composition of the sample.  The</span>
+<span class="sd">    absorption and scattering length density are stored directly rather</span>
+<span class="sd">    than trying to guess at the composition from details about the sample.</span>
+
+<span class="sd">    The complex scattering potential is defined by $\rho + j \rho_i$.</span>
+<span class="sd">    Note that this differs from $\rho + j \mu/(2 \lambda)$ more</span>
+<span class="sd">    traditionally used in neutron reflectometry, and $N r_e (f_1 + j f_2)$</span>
+<span class="sd">    traditionally used in X-ray reflectometry.</span>
+
+<span class="sd">    Given that $f_1$ and $f_2$ are always wavelength dependent for X-ray</span>
+<span class="sd">    reflectometry, it will not make much sense to uses this for wavelength</span>
+<span class="sd">    varying X-ray measurements.  Similarly, some isotopes, particularly</span>
+<span class="sd">    rare earths, show wavelength dependence for neutrons, and so</span>
+<span class="sd">    time-of-flight measurements should not be fit with a fixed SLD scatterer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">rho</span><span class="p">:</span> <span class="n">Parameter</span>
+    <span class="n">irho</span><span class="p">:</span> <span class="n">Parameter</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;SLD&quot;</span><span class="p">,</span> <span class="n">rho</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">irho</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rho</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">rho</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; rho&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">irho</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">irho</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; irho&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SLD.parameters">
+<a class="viewcode-back" href="../../refl1d.material.html#refl1d.material.SLD.parameters">[docs]</a>
+    <span class="k">def</span> <span class="nf">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;rho&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="p">,</span> <span class="s2">&quot;irho&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">irho</span><span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="SLD.to_dict">
+<a class="viewcode-back" href="../../refl1d.material.html#refl1d.material.SLD.to_dict">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">to_dict</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="s2">&quot;rho&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="p">,</span>
+                <span class="s2">&quot;irho&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">irho</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SLD.sld">
+<a class="viewcode-back" href="../../refl1d.material.html#refl1d.material.SLD.sld">[docs]</a>
+    <span class="k">def</span> <span class="nf">sld</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">probe</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">irho</span><span class="o">.</span><span class="n">value</span></div>
+</div>
+
+
+
+<span class="c1"># ============================ Substances =============================</span>
+<span class="c1"># TODO: fix and use the real (circular) type definition:</span>
+<span class="c1"># FormulaStructure = Tuple[&#39;FormulaUnit&#39;]</span>
+<span class="c1"># FormulaUnit = Tuple[float, Union[str, FormulaStructure]]</span>
+<span class="c1"># still have to convert Element to/from string repr</span>
+<span class="c1"># ELEMENTS = Enum(&#39;elements&#39;, [(e.name, e.symbol) for e in periodictable.elements._element.values()])</span>
+
+
+<span class="k">class</span> <span class="nc">BaseMaterial</span><span class="p">(</span><span class="n">Scatterer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Description of a solid block of material.</span>
+
+<span class="sd">    :Parameters:</span>
+<span class="sd">        *name* : string</span>
+
+<span class="sd">        *formula* : Formula</span>
+
+<span class="sd">            Composition can be initialized from either a string or a chemical</span>
+<span class="sd">            formula.  Valid values are defined in periodictable.formula.</span>
+
+<span class="sd">        *use_incoherent* = False : boolean</span>
+
+<span class="sd">            True if incoherent scattering should be interpreted as absorption.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">formula</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># Formula</span>
+    <span class="n">use_incoherent</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="c1"># not in the schema:</span>
+    <span class="n">_formula</span><span class="p">:</span> <span class="n">BaseFormula</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">formula</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BaseFormula</span><span class="p">],</span> <span class="n">density</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">natural_density</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_incoherent</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">):</span>
+        <span class="c1"># coerce formula to string repr:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">formula</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">formula</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_formula</span><span class="p">:</span> <span class="n">BaseFormula</span> <span class="o">=</span> <span class="n">periodictable</span><span class="o">.</span><span class="n">formula</span><span class="p">(</span><span class="n">formula</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="n">density</span><span class="p">,</span> <span class="n">natural_density</span><span class="o">=</span><span class="n">natural_density</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_formula</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_incoherent</span> <span class="o">=</span> <span class="n">use_incoherent</span>
+
+    <span class="k">def</span> <span class="nf">sld</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">probe</span><span class="p">):</span>
+        <span class="n">rho</span><span class="p">,</span> <span class="n">irho</span><span class="p">,</span> <span class="n">incoh</span> <span class="o">=</span> <span class="n">probe</span><span class="o">.</span><span class="n">scattering_factors</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_formula</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">density</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_incoherent</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;incoherent scattering not supported&quot;</span><span class="p">)</span>
+            <span class="c1"># irho += incoh</span>
+        <span class="k">return</span> <span class="n">rho</span><span class="p">,</span> <span class="n">irho</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+
+
+<span class="n">FitByChoices</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;bulk_density&quot;</span><span class="p">,</span> <span class="s2">&quot;natural_density&quot;</span><span class="p">,</span> <span class="s2">&quot;relative_density&quot;</span><span class="p">,</span> <span class="s2">&quot;number_density&quot;</span><span class="p">,</span> <span class="s2">&quot;cell_volume&quot;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="Material">
+<a class="viewcode-back" href="../../refl1d.material.html#refl1d.material.Material">[docs]</a>
+<span class="k">def</span> <span class="nf">Material</span><span class="p">(</span>
+    <span class="n">formula</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BaseFormula</span><span class="p">],</span>
+    <span class="n">density</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">natural_density</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">use_incoherent</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">fitby</span><span class="p">:</span> <span class="n">FitByChoices</span> <span class="o">=</span> <span class="s2">&quot;bulk_density&quot;</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kw</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="k">if</span> <span class="n">fitby</span> <span class="o">==</span> <span class="s2">&quot;bulk_density&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">BulkDensityMaterial</span><span class="p">(</span><span class="n">formula</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="n">density</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">use_incoherent</span><span class="o">=</span><span class="n">use_incoherent</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">fitby</span> <span class="o">==</span> <span class="s2">&quot;natural_density&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">NaturalDensityMaterial</span><span class="p">(</span>
+            <span class="n">formula</span><span class="p">,</span> <span class="n">natural_density</span><span class="o">=</span><span class="n">natural_density</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">use_incoherent</span><span class="o">=</span><span class="n">use_incoherent</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">fitby</span> <span class="o">==</span> <span class="s2">&quot;relative_density&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">RelativeDensityMaterial</span><span class="p">(</span>
+            <span class="n">formula</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="n">density</span><span class="p">,</span> <span class="n">natural_density</span><span class="o">=</span><span class="n">natural_density</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">use_incoherent</span><span class="o">=</span><span class="n">use_incoherent</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">fitby</span> <span class="o">==</span> <span class="s2">&quot;number_density&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">NumberDensityMaterial</span><span class="p">(</span>
+            <span class="n">formula</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="n">density</span><span class="p">,</span> <span class="n">natural_density</span><span class="o">=</span><span class="n">natural_density</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">use_incoherent</span><span class="o">=</span><span class="n">use_incoherent</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">fitby</span> <span class="o">==</span> <span class="s2">&quot;cell_volume&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">CellVolumeMaterial</span><span class="p">(</span>
+            <span class="n">formula</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="n">density</span><span class="p">,</span> <span class="n">natural_density</span><span class="o">=</span><span class="n">natural_density</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">use_incoherent</span><span class="o">=</span><span class="n">use_incoherent</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;unknown value &quot;</span><span class="si">{</span><span class="n">fitby</span><span class="si">}</span><span class="s1">&quot; of fitby: should be one of [&quot;bulk_density&quot;, &quot;natural_density&quot;, &quot;relative_density&quot;, &quot;number_density&quot;, &quot;cell_volume&quot;]&#39;</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="BulkDensityMaterial">
+<a class="viewcode-back" href="../../refl1d.material.html#refl1d.material.BulkDensityMaterial">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">BulkDensityMaterial</span><span class="p">(</span><span class="n">BaseMaterial</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A solid block of material, described by its bulk density</span>
+
+<span class="sd">    :Parameters:</span>
+<span class="sd">        *density* : float | |g/cm^3|</span>
+<span class="sd">            the bulk density for the material.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">formula</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># Formula</span>
+    <span class="n">use_incoherent</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">density</span><span class="p">:</span> <span class="n">Parameter</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">formula</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BaseFormula</span><span class="p">],</span>
+        <span class="n">density</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">use_incoherent</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">BaseMaterial</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="n">density</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">use_incoherent</span><span class="o">=</span><span class="n">use_incoherent</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">density</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_formula</span><span class="o">.</span><span class="n">density</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">density</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_formula</span><span class="o">.</span><span class="n">density</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;material </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_formula</span><span class="si">}</span><span class="s2"> does not have known density: please provide it in arguments&quot;</span>
+                <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">density</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">density</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; density&quot;</span><span class="p">,</span> <span class="n">limits</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">inf</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bulk_density</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">density</span>
+
+<div class="viewcode-block" id="BulkDensityMaterial.parameters">
+<a class="viewcode-back" href="../../refl1d.material.html#refl1d.material.BulkDensityMaterial.parameters">[docs]</a>
+    <span class="k">def</span> <span class="nf">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">density</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">density</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="NaturalDensityMaterial">
+<a class="viewcode-back" href="../../refl1d.material.html#refl1d.material.NaturalDensityMaterial">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">NaturalDensityMaterial</span><span class="p">(</span><span class="n">BaseMaterial</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A solid block of material, described by its natural density</span>
+
+<span class="sd">    :Parameters:</span>
+<span class="sd">        *natural_density* : float | |g/cm^3|</span>
+<span class="sd">            the natural bulk density for the material.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">formula</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># Formula</span>
+    <span class="n">use_incoherent</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">natural_density</span><span class="p">:</span> <span class="n">Parameter</span>
+    <span class="n">density</span><span class="p">:</span> <span class="n">Expression</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">formula</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BaseFormula</span><span class="p">],</span>
+        <span class="n">natural_density</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">use_incoherent</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">BaseMaterial</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">natural_density</span><span class="o">=</span><span class="n">natural_density</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">use_incoherent</span><span class="o">=</span><span class="n">use_incoherent</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">natural_density</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_formula</span><span class="o">.</span><span class="n">density</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">natural_density</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_formula</span><span class="o">.</span><span class="n">density</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;material </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_formula</span><span class="si">}</span><span class="s2"> does not have known natural_density: please provide it in arguments&quot;</span>
+                <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">natural_density</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">natural_density</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; nat. density&quot;</span><span class="p">,</span> <span class="n">limits</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">inf</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">density</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">natural_density</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_formula</span><span class="o">.</span><span class="n">natural_mass_ratio</span><span class="p">()</span>
+
+<div class="viewcode-block" id="NaturalDensityMaterial.parameters">
+<a class="viewcode-back" href="../../refl1d.material.html#refl1d.material.NaturalDensityMaterial.parameters">[docs]</a>
+    <span class="k">def</span> <span class="nf">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">density</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">density</span><span class="p">,</span> <span class="n">natural_density</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">natural_density</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="NumberDensityMaterial">
+<a class="viewcode-back" href="../../refl1d.material.html#refl1d.material.NumberDensityMaterial">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">NumberDensityMaterial</span><span class="p">(</span><span class="n">BaseMaterial</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A solid block of material, described by its number density</span>
+
+<span class="sd">    :Parameters:</span>
+<span class="sd">        *number_density*: [atoms/cm^3]</span>
+<span class="sd">                Density is *number_density* * molar mass / avogadro constant</span>
+
+<span class="sd">        *density* : float | |g/cm^3|</span>
+<span class="sd">            if specified, the bulk density for the material.</span>
+
+<span class="sd">        *natural_density* : float | |g/cm^3|</span>
+<span class="sd">            if specified, the natural bulk density for the material.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">formula</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># Formula</span>
+    <span class="n">use_incoherent</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">number_density</span><span class="p">:</span> <span class="n">Parameter</span>
+    <span class="n">density</span><span class="p">:</span> <span class="n">Expression</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">formula</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BaseFormula</span><span class="p">],</span>
+        <span class="n">number_density</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">density</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">natural_density</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">use_incoherent</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">BaseMaterial</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="n">density</span><span class="p">,</span> <span class="n">natural_density</span><span class="o">=</span><span class="n">natural_density</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">use_incoherent</span><span class="o">=</span><span class="n">use_incoherent</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">number_density</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_formula</span><span class="o">.</span><span class="n">density</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">number_density</span> <span class="o">=</span> <span class="n">avogadro_number</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_formula</span><span class="o">.</span><span class="n">mass</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_formula</span><span class="o">.</span><span class="n">density</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;material </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_formula</span><span class="si">}</span><span class="s2"> does not have known density: please provide density or natural_density argument&quot;</span>
+                <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">number_density</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">number_density</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; number density&quot;</span><span class="p">,</span> <span class="n">limits</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">inf</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">density</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">number_density</span> <span class="o">/</span> <span class="n">avogadro_number</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_formula</span><span class="o">.</span><span class="n">mass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_formula</span><span class="o">.</span><span class="n">density</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">density</span><span class="p">)</span>
+
+<div class="viewcode-block" id="NumberDensityMaterial.parameters">
+<a class="viewcode-back" href="../../refl1d.material.html#refl1d.material.NumberDensityMaterial.parameters">[docs]</a>
+    <span class="k">def</span> <span class="nf">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">density</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">density</span><span class="p">,</span> <span class="n">number_density</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">number_density</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="RelativeDensityMaterial">
+<a class="viewcode-back" href="../../refl1d.material.html#refl1d.material.RelativeDensityMaterial">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">RelativeDensityMaterial</span><span class="p">(</span><span class="n">BaseMaterial</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A solid block of material, described by its relative density</span>
+
+<span class="sd">    :Parameters:</span>
+<span class="sd">        *relative_density* : unitless</span>
+<span class="sd">            Density is *relative_density* * formula density</span>
+
+<span class="sd">        *density* : float | |g/cm^3|</span>
+<span class="sd">            if specified, the bulk density for the material.</span>
+
+<span class="sd">        *natural_density* : float | |g/cm^3|</span>
+<span class="sd">            if specified, the natural bulk density for the material.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">formula</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># Formula</span>
+    <span class="n">use_incoherent</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">relative_density</span><span class="p">:</span> <span class="n">Parameter</span>
+    <span class="n">density</span><span class="p">:</span> <span class="n">Expression</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">formula</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BaseFormula</span><span class="p">],</span>
+        <span class="n">relative_density</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">density</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">natural_density</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">use_incoherent</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">BaseMaterial</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="n">density</span><span class="p">,</span> <span class="n">natural_density</span><span class="o">=</span><span class="n">natural_density</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">use_incoherent</span><span class="o">=</span><span class="n">use_incoherent</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_formula</span><span class="o">.</span><span class="n">density</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">density</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">natural_density</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;material </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_formula</span><span class="si">}</span><span class="s2"> does not have known density: please provide density or natural_density argument&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">relative_density</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">relative_density</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relative_density</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">relative_density</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; rel. density&quot;</span><span class="p">,</span> <span class="n">limits</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">inf</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">density</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_formula</span><span class="o">.</span><span class="n">density</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">relative_density</span>
+
+<div class="viewcode-block" id="RelativeDensityMaterial.parameters">
+<a class="viewcode-back" href="../../refl1d.material.html#refl1d.material.RelativeDensityMaterial.parameters">[docs]</a>
+    <span class="k">def</span> <span class="nf">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">density</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">density</span><span class="p">,</span> <span class="n">relative_density</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">relative_density</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="CellVolumeMaterial">
+<a class="viewcode-back" href="../../refl1d.material.html#refl1d.material.CellVolumeMaterial">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">CellVolumeMaterial</span><span class="p">(</span><span class="n">BaseMaterial</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A solid block of material, described by the volume of one unit cell</span>
+
+<span class="sd">    :Parameters:</span>
+<span class="sd">        *cell_volume* : |Ang^3|</span>
+<span class="sd">                Density is mass / *cell_volume*</span>
+
+<span class="sd">        *density* : float | |g/cm^3|</span>
+<span class="sd">            if specified, the bulk density for the material.</span>
+
+<span class="sd">        *natural_density* : float | |g/cm^3|</span>
+<span class="sd">            if specified, the natural bulk density for the material.</span>
+
+
+<span class="sd">    For example, to fit Pd by cell volume use::</span>
+<span class="sd">        &gt;&gt;&gt; m = Material(&#39;Pd&#39;, fitby=&#39;cell_volume&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; m.cell_volume.range(1, 10)</span>
+<span class="sd">        Parameter(Pd cell volume)</span>
+<span class="sd">        &gt;&gt;&gt; print(&quot;%.2f %.2f&quot;%(m.density.value, m.cell_volume.value))</span>
+<span class="sd">        12.02 14.70</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">formula</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># Formula</span>
+    <span class="n">use_incoherent</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">cell_volume</span><span class="p">:</span> <span class="n">Parameter</span>
+    <span class="n">density</span><span class="p">:</span> <span class="n">Expression</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">formula</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BaseFormula</span><span class="p">],</span>
+        <span class="n">cell_volume</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">density</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">natural_density</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">use_incoherent</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">BaseMaterial</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="n">density</span><span class="p">,</span> <span class="n">natural_density</span><span class="o">=</span><span class="n">natural_density</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">use_incoherent</span><span class="o">=</span><span class="n">use_incoherent</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_formula</span><span class="o">.</span><span class="n">density</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">density</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">natural_density</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;material </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_formula</span><span class="si">}</span><span class="s2"> does not have known density: please provide density or natural_density argument&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">cell_volume</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">cell_volume</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1e24</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_formula</span><span class="o">.</span><span class="n">molecular_mass</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_formula</span><span class="o">.</span><span class="n">density</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cell_volume</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">cell_volume</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; cell volume&quot;</span><span class="p">,</span> <span class="n">limits</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">inf</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">density</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1e24</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_formula</span><span class="o">.</span><span class="n">molecular_mass</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">cell_volume</span>
+
+<div class="viewcode-block" id="CellVolumeMaterial.parameters">
+<a class="viewcode-back" href="../../refl1d.material.html#refl1d.material.CellVolumeMaterial.parameters">[docs]</a>
+    <span class="k">def</span> <span class="nf">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">density</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">density</span><span class="p">,</span> <span class="n">cell_volume</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cell_volume</span><span class="p">)</span></div>
+</div>
+
+
+
+<span class="n">MaterialTypes</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span>
+    <span class="n">BulkDensityMaterial</span><span class="p">,</span> <span class="n">NaturalDensityMaterial</span><span class="p">,</span> <span class="n">NumberDensityMaterial</span><span class="p">,</span> <span class="n">RelativeDensityMaterial</span><span class="p">,</span> <span class="n">CellVolumeMaterial</span>
+<span class="p">]</span>
+
+
+<span class="k">class</span> <span class="nc">Compound</span><span class="p">(</span><span class="n">Scatterer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Chemical formula with variable composition.</span>
+
+<span class="sd">    :Parameters:</span>
+
+<span class="sd">        *parts* : [M1, F1, M2, F2, ...]</span>
+
+<span class="sd">    Unlike a simple material which has a chemical formula and a density,</span>
+<span class="sd">    the formula itself can be varied by fitting the number of atoms of</span>
+<span class="sd">    each component in the unit cell in addition to the overall density.</span>
+
+<span class="sd">    An individual component can be a chemical formula, not just an element.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parts</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="c1"># Split [M1, N1, M2, N2, ...] into [M1, M2, ...], [N1, N2, ...]</span>
+        <span class="n">formula</span> <span class="o">=</span> <span class="p">[</span><span class="n">parts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">),</span> <span class="mi">2</span><span class="p">)]</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="p">[</span><span class="n">parts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">),</span> <span class="mi">2</span><span class="p">)]</span>
+        <span class="c1"># Convert M1, M2, ... to materials if necessary</span>
+        <span class="n">formula</span> <span class="o">=</span> <span class="p">[</span><span class="n">periodictable</span><span class="o">.</span><span class="n">formula</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">formula</span><span class="p">]</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="p">[</span><span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">limits</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; count&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">w</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">count</span><span class="p">,</span> <span class="n">formula</span><span class="p">)]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parts</span> <span class="o">=</span> <span class="n">formula</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">count</span> <span class="o">=</span> <span class="n">count</span>
+
+    <span class="k">def</span> <span class="nf">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adjustable parameters are the fractions associated with each</span>
+<span class="sd">        constituent and the relative scale fraction used to tweak</span>
+<span class="sd">        the overall density.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;count&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">count</span><span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+            <span class="s2">&quot;parts&quot;</span><span class="p">:</span> <span class="n">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parts</span><span class="p">),</span>
+            <span class="s2">&quot;count&quot;</span><span class="p">:</span> <span class="n">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">count</span><span class="p">),</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">formula</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">((</span><span class="n">c</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">count</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parts</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;&lt;</span><span class="si">%s</span><span class="s2">&gt;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">M</span><span class="p">)</span> <span class="k">for</span> <span class="n">M</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">formula</span><span class="p">()))</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;Compound([</span><span class="si">%s</span><span class="s2">])&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">M</span><span class="p">)</span> <span class="k">for</span> <span class="n">M</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">formula</span><span class="p">()))</span>
+
+
+<span class="c1"># ============================ Alloys =============================</span>
+
+
+<span class="k">class</span> <span class="nc">_VolumeFraction</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the relative volume for each component in the system given</span>
+<span class="sd">    the volume percentages.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base</span><span class="p">,</span> <span class="n">material</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fraction</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mf">0.01</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">fraction</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">_MassFraction</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the relative volume for each component in the system given</span>
+<span class="sd">    the relative masses.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base</span><span class="p">,</span> <span class="n">material</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_material</span> <span class="o">=</span> <span class="p">[</span><span class="n">base</span><span class="p">]</span> <span class="o">+</span> <span class="n">material</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fraction</span><span class="p">):</span>
+        <span class="n">density</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">m</span><span class="o">.</span><span class="n">density</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_material</span><span class="p">])</span>
+        <span class="n">volume</span> <span class="o">=</span> <span class="n">fraction</span> <span class="o">/</span> <span class="n">density</span>
+        <span class="k">return</span> <span class="n">volume</span> <span class="o">/</span> <span class="nb">sum</span><span class="p">(</span><span class="n">volume</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Mixture">
+<a class="viewcode-back" href="../../refl1d.material.html#refl1d.material.Mixture">[docs]</a>
+<span class="k">class</span> <span class="nc">Mixture</span><span class="p">(</span><span class="n">Scatterer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Mixed block of material.</span>
+
+<span class="sd">    The components of the mixture can vary relative to each other, either</span>
+<span class="sd">    by mass, by volume or by number::</span>
+
+<span class="sd">        Mixture.bymass(base, M2, F2..., name=&#39;mixture name&#39;)</span>
+<span class="sd">        Mixture.byvolume(base, M2, F2..., name=&#39;mixture name&#39;)</span>
+
+<span class="sd">    The materials *base*, *M2*, *M3*, ... can be chemical formula</span>
+<span class="sd">    strings including @density or from material objects. Use natural_density</span>
+<span class="sd">    to change from bulk values if the formula has isotope substitutions.</span>
+
+<span class="sd">    The fractions F2, F3, ... are percentages in [0, 100]. The implicit</span>
+<span class="sd">    fraction for the base material is 100 - (F2+F3+...). The SLD is NaN</span>
+<span class="sd">    then *F1 &lt; 0*.</span>
+
+<span class="sd">    name defaults to M2.name+M3.name+...</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Mixture.bymass">
+<a class="viewcode-back" href="../../refl1d.material.html#refl1d.material.Mixture.bymass">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">bymass</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">base</span><span class="p">,</span> <span class="o">*</span><span class="n">parts</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns an alloy defined by relative mass of the constituents.</span>
+
+<span class="sd">        Mixture.bymass(base, M2, F2, ..., name=&#39;mixture name&#39;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">parts</span><span class="p">,</span> <span class="n">by</span><span class="o">=</span><span class="s2">&quot;mass&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Mixture.byvolume">
+<a class="viewcode-back" href="../../refl1d.material.html#refl1d.material.Mixture.byvolume">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">byvolume</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">base</span><span class="p">,</span> <span class="o">*</span><span class="n">parts</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns an alloy defined by relative volume of the constituents.</span>
+
+<span class="sd">        Mixture.byvolume(base, M2, F2, ..., name=&#39;mixture name&#39;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">parts</span><span class="p">,</span> <span class="n">by</span><span class="o">=</span><span class="s2">&quot;volume&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base</span><span class="p">,</span> <span class="n">parts</span><span class="p">,</span> <span class="n">by</span><span class="o">=</span><span class="s2">&quot;volume&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_incoherent</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="c1"># Split [M1, M2, F2, ...] into [M1, M2, ...], [F2, ...]</span>
+        <span class="n">material</span> <span class="o">=</span> <span class="p">[</span><span class="n">parts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">),</span> <span class="mi">2</span><span class="p">)]</span>
+        <span class="n">fraction</span> <span class="o">=</span> <span class="p">[</span><span class="n">parts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">),</span> <span class="mi">2</span><span class="p">)]</span>
+        <span class="c1"># Convert M1, M2, ... to materials if necessary</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">Scatterer</span><span class="p">):</span>
+            <span class="n">base</span> <span class="o">=</span> <span class="n">Material</span><span class="p">(</span><span class="n">base</span><span class="p">)</span>
+        <span class="n">material</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">Scatterer</span><span class="p">)</span> <span class="k">else</span> <span class="n">Material</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">material</span><span class="p">]</span>
+
+        <span class="c1"># Specify the volume calculator based on the type of fraction</span>
+        <span class="k">if</span> <span class="n">by</span> <span class="o">==</span> <span class="s2">&quot;volume&quot;</span><span class="p">:</span>
+            <span class="n">_volume</span> <span class="o">=</span> <span class="n">_VolumeFraction</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">material</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">by</span> <span class="o">==</span> <span class="s2">&quot;mass&quot;</span><span class="p">:</span>
+            <span class="n">_volume</span> <span class="o">=</span> <span class="n">_MassFraction</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">material</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;fraction must be one of volume, mass or number&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Name defaults to names of individual components</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;+&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">material</span><span class="p">)</span>
+
+        <span class="c1"># Make the fractions into fittable parameters</span>
+        <span class="n">fraction</span> <span class="o">=</span> <span class="p">[</span><span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">limits</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;% &quot;</span> <span class="o">+</span> <span class="n">by</span><span class="p">)</span> <span class="k">for</span> <span class="n">w</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">fraction</span><span class="p">,</span> <span class="n">material</span><span class="p">)]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_volume</span> <span class="o">=</span> <span class="n">_volume</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base</span> <span class="o">=</span> <span class="n">base</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">material</span> <span class="o">=</span> <span class="n">material</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fraction</span> <span class="o">=</span> <span class="n">fraction</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_incoherent</span> <span class="o">=</span> <span class="n">use_incoherent</span>
+
+<div class="viewcode-block" id="Mixture.parameters">
+<a class="viewcode-back" href="../../refl1d.material.html#refl1d.material.Mixture.parameters">[docs]</a>
+    <span class="k">def</span> <span class="nf">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adjustable parameters are the fractions associated with each</span>
+<span class="sd">        constituent and the relative scale fraction used to tweak</span>
+<span class="sd">        the overall density.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;base&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span>
+            <span class="s2">&quot;material&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">parameters</span><span class="p">()</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">material</span><span class="p">],</span>
+            <span class="s2">&quot;fraction&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">fraction</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="Mixture.to_dict">
+<a class="viewcode-back" href="../../refl1d.material.html#refl1d.material.Mixture.to_dict">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+            <span class="s2">&quot;base&quot;</span><span class="p">:</span> <span class="n">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base</span><span class="p">),</span>
+            <span class="s2">&quot;material&quot;</span><span class="p">:</span> <span class="n">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">material</span><span class="p">),</span>
+            <span class="s2">&quot;fraction&quot;</span><span class="p">:</span> <span class="n">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fraction</span><span class="p">),</span>
+        <span class="p">}</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_density</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the density of the mixture from the density and proportion</span>
+<span class="sd">        of the individual components.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fraction</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fraction</span><span class="p">])</span>
+        <span class="c1"># TODO: handle invalid fractions using penalty functions</span>
+        <span class="c1"># S = sum(fraction)</span>
+        <span class="c1"># scale = S/100 if S &gt; 100 else 1</span>
+        <span class="c1"># fraction[0] = 100 - S/scale</span>
+        <span class="c1"># penalty = scale - 1</span>
+        <span class="n">fraction</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">-</span> <span class="nb">sum</span><span class="p">(</span><span class="n">fraction</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">fraction</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">nan</span>
+        <span class="n">volume</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_volume</span><span class="p">(</span><span class="n">fraction</span><span class="p">)</span>
+        <span class="n">density</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">m</span><span class="o">.</span><span class="n">density</span><span class="p">()</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">base</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">material</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">volume</span> <span class="o">*</span> <span class="n">density</span><span class="p">)</span>
+
+    <span class="n">density</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="n">_density</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="n">_density</span><span class="o">.</span><span class="vm">__doc__</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Mixture.sld">
+<a class="viewcode-back" href="../../refl1d.material.html#refl1d.material.Mixture.sld">[docs]</a>
+    <span class="k">def</span> <span class="nf">sld</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">probe</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the scattering length density and absorption of the mixture.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Convert fractions into an array, with the final fraction</span>
+        <span class="n">fraction</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fraction</span><span class="p">])</span>
+        <span class="n">fraction</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">-</span> <span class="nb">sum</span><span class="p">(</span><span class="n">fraction</span><span class="p">)</span>
+        <span class="c1"># TODO: handle invalid fractions using penalty functions</span>
+        <span class="c1"># S = sum(fraction)</span>
+        <span class="c1"># scale = S/100 if S &gt; 100 else 1</span>
+        <span class="c1"># fraction[0] = 100 - S/scale</span>
+        <span class="c1"># penalty = scale - 1</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">fraction</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">nan</span><span class="p">,</span> <span class="n">nan</span>
+
+        <span class="c1"># Lookup SLD</span>
+        <span class="n">slds</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">sld</span><span class="p">(</span><span class="n">probe</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">base</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">material</span><span class="p">]</span>
+        <span class="n">rho</span><span class="p">,</span> <span class="n">irho</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">slds</span><span class="p">)]</span>
+
+        <span class="c1"># Use calculator to convert individual SLDs to overall SLD</span>
+        <span class="n">volume_fraction</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_volume</span><span class="p">(</span><span class="n">fraction</span><span class="p">)</span>
+        <span class="n">rho</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">rho</span> <span class="o">*</span> <span class="n">extend</span><span class="p">(</span><span class="n">volume_fraction</span><span class="p">,</span> <span class="n">rho</span><span class="p">))</span>
+
+        <span class="n">irho</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">irho</span> <span class="o">*</span> <span class="n">extend</span><span class="p">(</span><span class="n">volume_fraction</span><span class="p">,</span> <span class="n">irho</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_incoherent</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;incoherent scattering not supported&quot;</span><span class="p">)</span>
+        <span class="c1"># print &quot;Mixture&quot;, self.name, coh, absorp</span>
+
+        <span class="k">return</span> <span class="n">rho</span><span class="p">,</span> <span class="n">irho</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;&lt;</span><span class="si">%s</span><span class="s2">&gt;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">M</span><span class="p">)</span> <span class="k">for</span> <span class="n">M</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">base</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">material</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;Mixture(</span><span class="si">%s</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">M</span><span class="p">)</span> <span class="k">for</span> <span class="n">M</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">base</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">material</span><span class="p">))</span></div>
+
+
+
+<span class="c1"># ============================ SLD cache =============================</span>
+
+
+<div class="viewcode-block" id="ProbeCache">
+<a class="viewcode-back" href="../../refl1d.material.html#refl1d.material.ProbeCache">[docs]</a>
+<span class="k">class</span> <span class="nc">ProbeCache</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Probe proxy for materials properties.</span>
+
+<span class="sd">    A caching probe which only looks up scattering factors for materials</span>
+<span class="sd">    which it hasn&#39;t seen before.   Note that caching is based on object</span>
+<span class="sd">    id, and will fail if the material object is updated with a new atomic</span>
+<span class="sd">    structure.</span>
+
+<span class="sd">    *probe* is the probe to use when looking up the scattering length density.</span>
+
+<span class="sd">    The scattering factors need to be retrieved each time the probe</span>
+<span class="sd">    or the composition changes. This can be done either by deleting</span>
+<span class="sd">    an individual material from probe (using del probe[material]) or</span>
+<span class="sd">    by clearing the entire cash.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">probe</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_probe</span> <span class="o">=</span> <span class="n">probe</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span> <span class="o">=</span> <span class="p">{}</span>
+
+<div class="viewcode-block" id="ProbeCache.clear">
+<a class="viewcode-back" href="../../refl1d.material.html#refl1d.material.ProbeCache.clear">[docs]</a>
+    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span> <span class="o">=</span> <span class="p">{}</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">material</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">material</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">material</span><span class="p">]</span>
+
+<div class="viewcode-block" id="ProbeCache.scattering_factors">
+<a class="viewcode-back" href="../../refl1d.material.html#refl1d.material.ProbeCache.scattering_factors">[docs]</a>
+    <span class="k">def</span> <span class="nf">scattering_factors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">material</span><span class="p">,</span> <span class="n">density</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the scattering factors for the material, retrieving them from</span>
+<span class="sd">        the cache if they have already been looked up.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="nb">id</span><span class="p">(</span><span class="n">material</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">h</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">:</span>
+            <span class="c1"># lookup density of 1, and scale to actual density on retrieval</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">h</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_probe</span><span class="o">.</span><span class="n">scattering_factors</span><span class="p">(</span><span class="n">material</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">v</span> <span class="o">*</span> <span class="n">density</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">h</span><span class="p">]]</span></div>
+</div>
+
+
+
+<span class="k">def</span> <span class="nf">extend</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extend *a* to match the number of dimensions of *b*.</span>
+
+<span class="sd">    This adds dimensions to the end of *a* rather than the beginning. It is</span>
+<span class="sd">    equivalent to *a[..., None, None]* with the right number of None elements</span>
+<span class="sd">    to make the number of dimensions match (or np.newaxis if you prefer).</span>
+
+<span class="sd">    For example::</span>
+
+<span class="sd">        from numpy.random import rand</span>
+<span class="sd">        a, b = rand(3, 4), rand(3, 4, 2)</span>
+<span class="sd">        a + b</span>
+<span class="sd">        ==&gt; ValueError: operands could not be broadcast together with shapes (3,4) (3,4,2)</span>
+<span class="sd">        c = extend(a, b) + b</span>
+<span class="sd">        c.shape</span>
+<span class="sd">        ==&gt; (3, 4, 2)</span>
+
+<span class="sd">    Numpy broadcasting rules automatically extend arrays to the beginning,</span>
+<span class="sd">    so the corresponding *lextend* function is not needed::</span>
+
+<span class="sd">        c = rand(3, 4) + rand(2, 3, 4)</span>
+<span class="sd">        c.shape</span>
+<span class="sd">        ==&gt; (2, 3, 4)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">a</span>
+    <span class="c1"># CRUFT: python 2.7 support</span>
+    <span class="n">extra_dims</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,)</span> <span class="o">*</span> <span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="n">a</span><span class="o">.</span><span class="n">ndim</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">a</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">shape</span> <span class="o">+</span> <span class="n">extra_dims</span><span class="p">)</span>
+    <span class="c1"># python 3 uses</span>
+    <span class="c1"># extra_dims = (np.newaxis,)*(b.ndim-a.ndim)</span>
+    <span class="c1"># return a[(..., *extra_dims)]</span>
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

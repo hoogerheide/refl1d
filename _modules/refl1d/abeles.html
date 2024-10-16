@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>refl1d.abeles &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <script src="../../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>refl1d.abeles</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <h1>Source code for refl1d.abeles</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This program is public domain.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Optical matrix form of the reflectivity calculation.</span>
+
+<span class="sd">O.S. Heavens, Optical Properties of Thin Solid Films</span>
+
+<span class="sd">This is a pure python implementation of reflectometry provided for</span>
+<span class="sd">convenience when a compiler is not available.  The refl1d</span>
+<span class="sd">application uses reflmodule to compute reflectivity.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span>
+
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">asarray</span><span class="p">,</span> <span class="n">isscalar</span><span class="p">,</span> <span class="n">empty</span><span class="p">,</span> <span class="n">ones</span><span class="p">,</span> <span class="n">ones_like</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">exp</span><span class="p">,</span> <span class="n">pi</span>
+
+
+<div class="viewcode-block" id="refl">
+<a class="viewcode-back" href="../../refl1d.abeles.html#refl1d.abeles.refl">[docs]</a>
+<span class="k">def</span> <span class="nf">refl</span><span class="p">(</span><span class="n">kz</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="n">rho</span><span class="p">,</span> <span class="n">irho</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">rho_index</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Reflectometry as a function of kz for a set of slabs.</span>
+
+<span class="sd">    :Parameters:</span>
+
+<span class="sd">    *kz* : float[n] | |1/Ang|</span>
+<span class="sd">        Scattering vector $2\pi\sin(\theta)/\lambda$. This is $\tfrac12 Q_z$.</span>
+<span class="sd">    *depth* :  float[m] | |Ang|</span>
+<span class="sd">        thickness of each layer.  The thickness of the incident medium</span>
+<span class="sd">        and substrate are ignored.</span>
+<span class="sd">    *rho*, *irho* :  float[n, k] | |1e-6/Ang^2|</span>
+<span class="sd">        real and imaginary scattering length density for each layer for each kz</span>
+<span class="sd">        Note: absorption cross section mu = 2 irho/lambda</span>
+<span class="sd">    *sigma* : float[m-1] | |Ang|</span>
+<span class="sd">        interfacial roughness.  This is the roughness between a layer</span>
+<span class="sd">        and the subsequent layer.  There is no interface associated</span>
+<span class="sd">        with the substrate.  The sigma array should have at least m-1</span>
+<span class="sd">        entries, though it may have m with the last entry ignored.</span>
+<span class="sd">    *rho_index* : int[m]</span>
+<span class="sd">        index into rho vector for each kz</span>
+
+<span class="sd">    Slabs are ordered with the surface SLD at index 0 and substrate at</span>
+<span class="sd">    index -1, or reversed if kz &lt; 0.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">isscalar</span><span class="p">(</span><span class="n">kz</span><span class="p">):</span>
+        <span class="n">kz</span> <span class="o">=</span> <span class="n">asarray</span><span class="p">([</span><span class="n">kz</span><span class="p">],</span> <span class="s2">&quot;d&quot;</span><span class="p">)</span>
+
+    <span class="n">m</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">depth</span><span class="p">)</span>
+
+    <span class="c1"># Make everything into arrays</span>
+    <span class="n">depth</span> <span class="o">=</span> <span class="n">asarray</span><span class="p">(</span><span class="n">depth</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">)</span>
+    <span class="n">rho</span> <span class="o">=</span> <span class="n">asarray</span><span class="p">(</span><span class="n">rho</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">)</span>
+    <span class="n">irho</span> <span class="o">=</span> <span class="n">irho</span> <span class="o">*</span> <span class="n">ones_like</span><span class="p">(</span><span class="n">rho</span><span class="p">)</span> <span class="k">if</span> <span class="n">isscalar</span><span class="p">(</span><span class="n">irho</span><span class="p">)</span> <span class="k">else</span> <span class="n">asarray</span><span class="p">(</span><span class="n">irho</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">)</span>
+    <span class="n">sigma</span> <span class="o">=</span> <span class="n">sigma</span> <span class="o">*</span> <span class="n">ones</span><span class="p">(</span><span class="n">m</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">isscalar</span><span class="p">(</span><span class="n">sigma</span><span class="p">)</span> <span class="k">else</span> <span class="n">asarray</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Repeat rho, irho columns as needed</span>
+    <span class="k">if</span> <span class="n">rho_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">rho</span> <span class="o">=</span> <span class="n">rho</span><span class="p">[</span><span class="n">rho_index</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">irho</span> <span class="o">=</span> <span class="n">irho</span><span class="p">[</span><span class="n">rho_index</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">rho</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">rho</span> <span class="o">=</span> <span class="n">rho</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">irho</span> <span class="o">=</span> <span class="n">irho</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+
+    <span class="c1"># Force the correct branch cut for sqrt below the critical edge</span>
+    <span class="n">irho</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">irho</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-30</span>
+
+    <span class="c1">## For kz &lt; 0 we need to reverse the order of the layers</span>
+    <span class="c1">## Note that the interface array sigma is conceptually one</span>
+    <span class="c1">## shorter than rho, mu so when reversing it, start at n-1.</span>
+    <span class="c1">## This allows the caller to provide an array of length n</span>
+    <span class="c1">## corresponding to rho, mu or of length n-1.</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">empty</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">kz</span><span class="p">),</span> <span class="s2">&quot;D&quot;</span><span class="p">)</span>
+    <span class="n">r</span><span class="p">[</span><span class="n">kz</span> <span class="o">&gt;=</span> <span class="mf">1e-10</span><span class="p">]</span> <span class="o">=</span> <span class="n">_calc</span><span class="p">(</span><span class="n">kz</span><span class="p">[</span><span class="n">kz</span> <span class="o">&gt;=</span> <span class="mf">1e-10</span><span class="p">],</span> <span class="n">depth</span><span class="p">,</span> <span class="n">rho</span><span class="p">,</span> <span class="n">irho</span><span class="p">,</span> <span class="n">sigma</span><span class="p">)</span>
+    <span class="n">r</span><span class="p">[</span><span class="n">kz</span> <span class="o">&lt;=</span> <span class="mf">1e-10</span><span class="p">]</span> <span class="o">=</span> <span class="n">_calc</span><span class="p">(</span><span class="o">-</span><span class="n">kz</span><span class="p">[</span><span class="n">kz</span> <span class="o">&lt;=</span> <span class="mf">1e-10</span><span class="p">],</span> <span class="n">depth</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">rho</span><span class="p">[:,</span> <span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">irho</span><span class="p">[:,</span> <span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">sigma</span><span class="p">[</span><span class="n">m</span> <span class="o">-</span> <span class="mi">2</span> <span class="p">::</span> <span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">r</span><span class="p">[</span><span class="nb">abs</span><span class="p">(</span><span class="n">kz</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-10</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">return</span> <span class="n">r</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">_calc</span><span class="p">(</span><span class="n">kz</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="n">rho</span><span class="p">,</span> <span class="n">irho</span><span class="p">,</span> <span class="n">sigma</span><span class="p">):</span>
+    <span class="c1"># type: (np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray) -&gt; np.ndarray</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">kz</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">kz</span>
+
+    <span class="c1"># Complex index of refraction is relative to the incident medium.</span>
+    <span class="c1"># We can get the same effect using kz_rel^2 = kz^2 + 4*pi*rho_o</span>
+    <span class="c1"># in place of kz^2, and ignoring rho_o</span>
+    <span class="n">kz_sq</span> <span class="o">=</span> <span class="n">kz</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">4e-6</span> <span class="o">*</span> <span class="n">pi</span> <span class="o">*</span> <span class="n">rho</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">kz</span>
+
+    <span class="c1"># According to Heavens, the initial matrix should be [ 1 F; F 1],</span>
+    <span class="c1"># which we do by setting B=I and M0 to [1 F; F 1].  An extra matrix</span>
+    <span class="c1"># multiply versus some coding convenience.</span>
+    <span class="n">B11</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">B22</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">B21</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">B12</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">depth</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">k_next</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">kz_sq</span> <span class="o">-</span> <span class="mf">4e-6</span> <span class="o">*</span> <span class="n">pi</span> <span class="o">*</span> <span class="p">(</span><span class="n">rho</span><span class="p">[:,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">irho</span><span class="p">[:,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]))</span>
+        <span class="n">F</span> <span class="o">=</span> <span class="p">(</span><span class="n">k</span> <span class="o">-</span> <span class="n">k_next</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">k</span> <span class="o">+</span> <span class="n">k_next</span><span class="p">)</span>
+        <span class="n">F</span> <span class="o">*=</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">k</span> <span class="o">*</span> <span class="n">k_next</span> <span class="o">*</span> <span class="n">sigma</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="c1"># print(&quot;==== layer&quot;, i)</span>
+        <span class="c1"># print(&quot;kz:&quot;, kz.real)</span>
+        <span class="c1"># print(&quot;k:&quot;, k.real)</span>
+        <span class="c1"># print(&quot;k_next:&quot;, k_next.real)</span>
+        <span class="c1"># print(&quot;F:&quot;, F.real)</span>
+        <span class="c1"># print(&quot;rho:&quot;, rho[:, i+1])</span>
+        <span class="c1"># print(&quot;irho:&quot;, irho[:, i+1])</span>
+        <span class="c1"># print(&quot;d:&quot;, depth[i], &quot;sigma:&quot;, sigma[i])</span>
+        <span class="n">M11</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">k</span> <span class="o">*</span> <span class="n">depth</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">1</span>
+        <span class="n">M22</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">k</span> <span class="o">*</span> <span class="n">depth</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">1</span>
+        <span class="n">M21</span> <span class="o">=</span> <span class="n">F</span> <span class="o">*</span> <span class="n">M11</span>
+        <span class="n">M12</span> <span class="o">=</span> <span class="n">F</span> <span class="o">*</span> <span class="n">M22</span>
+        <span class="n">C1</span> <span class="o">=</span> <span class="n">B11</span> <span class="o">*</span> <span class="n">M11</span> <span class="o">+</span> <span class="n">B21</span> <span class="o">*</span> <span class="n">M12</span>
+        <span class="n">C2</span> <span class="o">=</span> <span class="n">B11</span> <span class="o">*</span> <span class="n">M21</span> <span class="o">+</span> <span class="n">B21</span> <span class="o">*</span> <span class="n">M22</span>
+        <span class="n">B11</span> <span class="o">=</span> <span class="n">C1</span>
+        <span class="n">B21</span> <span class="o">=</span> <span class="n">C2</span>
+        <span class="n">C1</span> <span class="o">=</span> <span class="n">B12</span> <span class="o">*</span> <span class="n">M11</span> <span class="o">+</span> <span class="n">B22</span> <span class="o">*</span> <span class="n">M12</span>
+        <span class="n">C2</span> <span class="o">=</span> <span class="n">B12</span> <span class="o">*</span> <span class="n">M21</span> <span class="o">+</span> <span class="n">B22</span> <span class="o">*</span> <span class="n">M22</span>
+        <span class="n">B12</span> <span class="o">=</span> <span class="n">C1</span>
+        <span class="n">B22</span> <span class="o">=</span> <span class="n">C2</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">k_next</span>
+        <span class="c1"># print(&quot;B11:&quot;, B11)</span>
+        <span class="c1"># print(&quot;B22:&quot;, B22)</span>
+        <span class="c1"># print(&quot;B21:&quot;, B21)</span>
+        <span class="c1"># print(&quot;B12:&quot;, B12)</span>
+        <span class="c1"># print(&quot;1-det:&quot;, 1 - (B11*B22 - B21*B12))</span>
+
+    <span class="n">r</span> <span class="o">=</span> <span class="n">B12</span> <span class="o">/</span> <span class="n">B11</span>
+    <span class="k">return</span> <span class="n">r</span>
+
+
+<div class="viewcode-block" id="check">
+<a class="viewcode-back" href="../../refl1d.abeles.html#refl1d.abeles.check">[docs]</a>
+<span class="k">def</span> <span class="nf">check</span><span class="p">():</span>
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+    <span class="n">np</span><span class="o">.</span><span class="n">set_printoptions</span><span class="p">(</span><span class="n">linewidth</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span>
+
+    <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+    <span class="c1"># q = np.linspace(0.1, 0.3, 3)</span>
+    <span class="n">layers</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="c1"># depth rho irho sigma</span>
+        <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">200</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">200</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+    <span class="p">]</span>
+    <span class="c1"># add absorption</span>
+    <span class="c1"># layers[1][2] = 1.0</span>
+
+    <span class="n">depth</span><span class="p">,</span> <span class="n">rho</span><span class="p">,</span> <span class="n">irho</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">layers</span><span class="p">)</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">refl</span><span class="p">(</span><span class="n">q</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="n">rho</span><span class="p">,</span> <span class="n">irho</span><span class="o">=</span><span class="n">irho</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;q&quot;</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span></div>
+
+    <span class="c1"># print(&quot;r^2&quot;, abs(r**2))</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">check</span><span class="p">()</span>
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

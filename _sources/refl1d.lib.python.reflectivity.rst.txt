@@ -1,0 +1,7 @@
+refl1d.lib.python.reflectivity module
+=====================================
+
+.. automodule:: refl1d.lib.python.reflectivity
+   :members:
+   :undoc-members:
+   :show-inheritance:

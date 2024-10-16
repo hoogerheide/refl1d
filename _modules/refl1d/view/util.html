@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>refl1d.view.util &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/plot_directive.css" />
+    <script src="../../../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>refl1d.view.util</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        <a class="uplink" href="../../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <h1>Source code for refl1d.view.util</h1><div class="highlight"><pre>
+<div class="viewcode-block" id="clip">
+<a class="viewcode-back" href="../../../refl1d.view.util.html#refl1d.view.util.clip">[docs]</a>
+<span></span><span class="k">def</span> <span class="nf">clip</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">hi</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="setpar">
+<a class="viewcode-back" href="../../../refl1d.view.util.html#refl1d.view.util.setpar">[docs]</a>
+<span class="k">def</span> <span class="nf">setpar</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">clip</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="o">*</span><span class="n">p</span><span class="o">.</span><span class="n">prior</span><span class="o">.</span><span class="n">limits</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="CopyImage">
+<a class="viewcode-back" href="../../../refl1d.view.util.html#refl1d.view.util.CopyImage">[docs]</a>
+<span class="k">def</span> <span class="nf">CopyImage</span><span class="p">(</span><span class="n">canvas</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Copy the MPL canvas to the wx clipboard.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">wx</span>
+
+    <span class="n">bmp</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">BitmapDataObject</span><span class="p">()</span>
+    <span class="n">bmp</span><span class="o">.</span><span class="n">SetBitmap</span><span class="p">(</span><span class="n">canvas</span><span class="o">.</span><span class="n">bitmap</span><span class="p">)</span>
+
+    <span class="n">wx</span><span class="o">.</span><span class="n">TheClipboard</span><span class="o">.</span><span class="n">Open</span><span class="p">()</span>
+    <span class="n">wx</span><span class="o">.</span><span class="n">TheClipboard</span><span class="o">.</span><span class="n">SetData</span><span class="p">(</span><span class="n">bmp</span><span class="p">)</span>
+    <span class="n">wx</span><span class="o">.</span><span class="n">TheClipboard</span><span class="o">.</span><span class="n">Close</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="showErrorMsg">
+<a class="viewcode-back" href="../../../refl1d.view.util.html#refl1d.view.util.showErrorMsg">[docs]</a>
+<span class="k">def</span> <span class="nf">showErrorMsg</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">title</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Show error message</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">wx</span>
+
+    <span class="n">msg</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">MessageDialog</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ICON_ERROR</span> <span class="o">|</span> <span class="n">wx</span><span class="o">.</span><span class="n">OK</span><span class="p">)</span>
+    <span class="n">msg</span><span class="o">.</span><span class="n">ShowModal</span><span class="p">()</span>
+    <span class="n">msg</span><span class="o">.</span><span class="n">Destroy</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="showWarningMsg">
+<a class="viewcode-back" href="../../../refl1d.view.util.html#refl1d.view.util.showWarningMsg">[docs]</a>
+<span class="k">def</span> <span class="nf">showWarningMsg</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">title</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Show Warning message</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">wx</span>
+
+    <span class="n">msg</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">MessageDialog</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">wx</span><span class="o">.</span><span class="n">ICON_WARNING</span> <span class="o">|</span> <span class="n">wx</span><span class="o">.</span><span class="n">OK</span><span class="p">)</span>
+    <span class="n">msg</span><span class="o">.</span><span class="n">ShowModal</span><span class="p">()</span>
+    <span class="n">msg</span><span class="o">.</span><span class="n">Destroy</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="CheckValid">
+<a class="viewcode-back" href="../../../refl1d.view.util.html#refl1d.view.util.CheckValid">[docs]</a>
+<span class="k">def</span> <span class="nf">CheckValid</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Translate the string into float, and check it.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> can&#39;t change to float&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">val</span></div>
+
+
+
+<div class="viewcode-block" id="twinx">
+<a class="viewcode-back" href="../../../refl1d.view.util.html#refl1d.view.util.twinx">[docs]</a>
+<span class="k">def</span> <span class="nf">twinx</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Make a second axes overlay ax</span>
+<span class="sd">    (or the current axes if ax is None) sharing the xaxis.</span>
+
+<span class="sd">    The ticks for ax2 will be placed on the right,</span>
+<span class="sd">    and the ax2 instance is returned.  See examples/two_scales.py</span>
+
+<span class="sd">    Warning: This is a function to simulate the pylab.twinx in WX</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">ax2</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">add_axes</span><span class="p">(</span><span class="n">ax</span><span class="o">.</span><span class="n">get_position</span><span class="p">(),</span> <span class="n">sharex</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">frameon</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">tick_right</span><span class="p">()</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_label_position</span><span class="p">(</span><span class="s2">&quot;right&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">tick_left</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">ax2</span></div>
+
+
+
+<div class="viewcode-block" id="clear_axes">
+<a class="viewcode-back" href="../../../refl1d.view.util.html#refl1d.view.util.clear_axes">[docs]</a>
+<span class="k">def</span> <span class="nf">clear_axes</span><span class="p">(</span><span class="n">ax</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Clear axes from a figure</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">legend_</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">draw_idle</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="filterP">
+<a class="viewcode-back" href="../../../refl1d.view.util.html#refl1d.view.util.filterP">[docs]</a>
+<span class="k">def</span> <span class="nf">filterP</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Translate a obj parameter into &quot;string&quot; format</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s2">&quot;build&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">f</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">f</span></div>
+
+
+
+<div class="viewcode-block" id="decodeP">
+<a class="viewcode-back" href="../../../refl1d.view.util.html#refl1d.view.util.decodeP">[docs]</a>
+<span class="k">def</span> <span class="nf">decodeP</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Translate a parameter into obj format</span>
+
+<span class="sd">    Decompose a parameter.</span>
+<span class="sd">    In this code. It only works for spline obj</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="n">p</span>
+    <span class="k">return</span> <span class="n">ret</span></div>
+
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        <a class="uplink" href="../../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

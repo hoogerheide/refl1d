@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>snsdata - SNS Data &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
+    <script src="../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="staj - Staj File" href="staj.html" />
+    <link rel="prev" title="resolution - Resolution" href="resolution.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>snsdata - SNS Data</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        «&#160;&#160;<a href="resolution.html">resolution - Resolution</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="staj.html">staj - Staj File</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="snsdata-sns-data">
+<h1>snsdata - SNS Data<a class="headerlink" href="#snsdata-sns-data" title="Link to this heading">¶</a></h1>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../refl1d.snsdata.html#refl1d.snsdata.Liquids" title="refl1d.snsdata.Liquids"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Liquids</span></code></a></p></td>
+<td><p>Loader for reduced data from the SNS Liquids instrument.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../refl1d.snsdata.html#refl1d.snsdata.Magnetic" title="refl1d.snsdata.Magnetic"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Magnetic</span></code></a></p></td>
+<td><p>Loader for reduced data from the SNS Magnetic instrument.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../refl1d.snsdata.html#refl1d.snsdata.QRL_to_data" title="refl1d.snsdata.QRL_to_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QRL_to_data</span></code></a></p></td>
+<td><p>Convert data to T, L, R</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../refl1d.snsdata.html#refl1d.snsdata.SNSData" title="refl1d.snsdata.SNSData"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SNSData</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../refl1d.snsdata.html#refl1d.snsdata.TOF_to_data" title="refl1d.snsdata.TOF_to_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TOF_to_data</span></code></a></p></td>
+<td><p>Convert TOF data to neutron probe.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../refl1d.snsdata.html#refl1d.snsdata.boltzmann_feather" title="refl1d.snsdata.boltzmann_feather"><code class="xref py py-obj docutils literal notranslate"><span class="pre">boltzmann_feather</span></code></a></p></td>
+<td><p>Return expected intensity as a function of wavelength given the TOF feather range and the total number of counts.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../refl1d.snsdata.html#refl1d.snsdata.has_columns" title="refl1d.snsdata.has_columns"><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_columns</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../refl1d.snsdata.html#refl1d.snsdata.intensity_from_spline" title="refl1d.snsdata.intensity_from_spline"><code class="xref py py-obj docutils literal notranslate"><span class="pre">intensity_from_spline</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../refl1d.snsdata.html#refl1d.snsdata.load" title="refl1d.snsdata.load"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load</span></code></a></p></td>
+<td><p>Return a probe for SNS data.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../refl1d.snsdata.html#refl1d.snsdata.parse_sns_file" title="refl1d.snsdata.parse_sns_file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parse_sns_file</span></code></a></p></td>
+<td><p>Parse SNS reduced data, returning <em>header</em> and <em>data</em>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../refl1d.snsdata.html#refl1d.snsdata.write_file" title="refl1d.snsdata.write_file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_file</span></code></a></p></td>
+<td><p>Save probe as SNS reduced file.</p></td>
+</tr>
+</tbody>
+</table>
+<p id="module-refl1d.snsdata">SNS data loaders</p>
+<p>The following instruments are defined:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Liquids</span><span class="p">,</span> <span class="n">Magnetic</span>
+</pre></div>
+</div>
+<p>These are <code class="xref py py-class docutils literal notranslate"><span class="pre">resolution.Pulsed</span></code> classes tuned with
+default instrument parameters and loaders for reduced SNS data.
+See <code class="xref py py-mod docutils literal notranslate"><span class="pre">resolution</span></code> for details.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">refl1d.snsdata.</span></span><span class="sig-name descname"><span class="pre">Liquids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/snsdata.html#Liquids"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.snsdata.Liquids" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../refl1d.snsdata.html#refl1d.snsdata.SNSData" title="refl1d.snsdata.SNSData"><code class="xref py py-class docutils literal notranslate"><span class="pre">SNSData</span></code></a>, <a class="reference internal" href="../refl1d.instrument.html#refl1d.instrument.Pulsed" title="refl1d.instrument.Pulsed"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pulsed</span></code></a></p>
+<p>Loader for reduced data from the SNS Liquids instrument.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.T">
+<span class="sig-name descname"><span class="pre">T</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#refl1d.snsdata.Liquids.T" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.TOF_range">
+<span class="sig-name descname"><span class="pre">TOF_range</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(6000,</span> <span class="pre">60000)</span></em><a class="headerlink" href="#refl1d.snsdata.Liquids.TOF_range" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.Thi">
+<span class="sig-name descname"><span class="pre">Thi</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">90</span></em><a class="headerlink" href="#refl1d.snsdata.Liquids.Thi" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.Tlo">
+<span class="sig-name descname"><span class="pre">Tlo</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">90</span></em><a class="headerlink" href="#refl1d.snsdata.Liquids.Tlo" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.calc_dT">
+<span class="sig-name descname"><span class="pre">calc_dT</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">T</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slits</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.snsdata.Liquids.calc_dT" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.calc_slits">
+<span class="sig-name descname"><span class="pre">calc_slits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.snsdata.Liquids.calc_slits" title="Link to this definition">¶</a></dt>
+<dd><p>Determines slit openings from measurement pattern.</p>
+<p>If slits are fixed simply return the same slits for every angle,
+otherwise use an opening range [Tlo, Thi] and the value of the
+slits at the start of the opening to define the slits.  Slits
+below Tlo and above Thi can be specified separately.</p>
+<p><em>T</em>              incident angle
+<em>Tlo</em>, <em>Thi</em>     angle range over which slits are opening
+<em>slits_at_Tlo</em>   openings at the start of the range, or fixed opening
+<em>slits_below</em>, <em>slits_above</em>   openings below and above the range</p>
+<p>Use fixed_slits is available, otherwise use opening slits.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.dLoL">
+<span class="sig-name descname"><span class="pre">dLoL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.02</span></em><a class="headerlink" href="#refl1d.snsdata.Liquids.dLoL" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.d_moderator">
+<span class="sig-name descname"><span class="pre">d_moderator</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">14.85</span></em><a class="headerlink" href="#refl1d.snsdata.Liquids.d_moderator" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.d_s1">
+<span class="sig-name descname"><span class="pre">d_s1</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2086.0</span></em><a class="headerlink" href="#refl1d.snsdata.Liquids.d_s1" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.d_s2">
+<span class="sig-name descname"><span class="pre">d_s2</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">230.0</span></em><a class="headerlink" href="#refl1d.snsdata.Liquids.d_s2" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.defaults">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">defaults</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.snsdata.Liquids.defaults" title="Link to this definition">¶</a></dt>
+<dd><p>Return default instrument properties as a printable string.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.feather">
+<span class="sig-name descname"><span class="pre">feather</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">array([[</span> <span class="pre">2.02555</span> <span class="pre">,</span>&#160; <span class="pre">2.29927</span> <span class="pre">,</span>&#160; <span class="pre">2.57299</span> <span class="pre">,</span>&#160; <span class="pre">2.87409</span> <span class="pre">,</span>&#160; <span class="pre">3.22993</span> <span class="pre">,</span>&#160; <span class="pre">3.58577</span> <span class="pre">,</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">4.07847</span> <span class="pre">,</span>&#160; <span class="pre">4.5438</span>&#160; <span class="pre">,</span>&#160; <span class="pre">5.11861</span> <span class="pre">,</span>&#160; <span class="pre">5.7208</span>&#160; <span class="pre">,</span>&#160; <span class="pre">6.37774</span> <span class="pre">,</span>&#160; <span class="pre">7.19891</span> <span class="pre">,</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">8.04745</span> <span class="pre">,</span>&#160; <span class="pre">9.06022</span> <span class="pre">,</span> <span class="pre">10.1825</span>&#160; <span class="pre">,</span> <span class="pre">11.4142</span>&#160; <span class="pre">,</span> <span class="pre">12.8102</span>&#160; <span class="pre">,</span> <span class="pre">14.3431</span>&#160; <span class="pre">],</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">[20.6369</span>&#160; <span class="pre">,</span> <span class="pre">23.6943</span>&#160; <span class="pre">,</span> <span class="pre">23.6943</span>&#160; <span class="pre">,</span> <span class="pre">21.1146</span>&#160; <span class="pre">,</span> <span class="pre">15.5732</span>&#160; <span class="pre">,</span> <span class="pre">12.8981</span>&#160; <span class="pre">,</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">9.4586</span>&#160; <span class="pre">,</span>&#160; <span class="pre">6.59236</span> <span class="pre">,</span>&#160; <span class="pre">4.68153</span> <span class="pre">,</span>&#160; <span class="pre">3.05732</span> <span class="pre">,</span>&#160; <span class="pre">1.91083</span> <span class="pre">,</span>&#160; <span class="pre">1.24204</span> <span class="pre">,</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">0.955414,</span>&#160; <span class="pre">0.573248,</span>&#160; <span class="pre">0.477707,</span>&#160; <span class="pre">0.382166,</span>&#160; <span class="pre">0.191083,</span>&#160; <span class="pre">0.286624]])</span></em><a class="headerlink" href="#refl1d.snsdata.Liquids.feather" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.fixed_slits">
+<span class="sig-name descname"><span class="pre">fixed_slits</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#refl1d.snsdata.Liquids.fixed_slits" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.instrument">
+<span class="sig-name descname"><span class="pre">instrument</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Liquids'</span></em><a class="headerlink" href="#refl1d.snsdata.Liquids.instrument" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.load">
+<span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.snsdata.Liquids.load" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.magnetic_probe">
+<span class="sig-name descname"><span class="pre">magnetic_probe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Aguide</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">270.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shared_beam</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.snsdata.Liquids.magnetic_probe" title="Link to this definition">¶</a></dt>
+<dd><p>Simulate a polarized measurement probe.</p>
+<p>Returns a probe with Q, angle, wavelength and the associated
+uncertainties, but not any data.</p>
+<p>Guide field angle <em>Aguide</em> can be specified, as well as keyword
+arguments for the geometry of the probe cross sections such as
+slit settings <em>slits</em> and <em>T</em> to define the angular divergence
+and <em>dLoL</em> to define the wavelength resolution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.probe">
+<span class="sig-name descname"><span class="pre">probe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.snsdata.Liquids.probe" title="Link to this definition">¶</a></dt>
+<dd><p>Simulate a measurement probe.</p>
+<p>Returns a probe with Q, angle, wavelength and the associated
+uncertainties, but not any data.</p>
+<p>You can override instrument parameters using key=value.
+In particular, slit settings <em>slits</em> and <em>T</em> define
+the angular divergence and <em>dLoL</em> defines the wavelength
+resolution.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.radiation">
+<span class="sig-name descname"><span class="pre">radiation</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'neutron'</span></em><a class="headerlink" href="#refl1d.snsdata.Liquids.radiation" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.resolution">
+<span class="sig-name descname"><span class="pre">resolution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">L</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dL</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.snsdata.Liquids.resolution" title="Link to this definition">¶</a></dt>
+<dd><p>Return the resolution of the measurement.  Needs <em>T</em>, <em>L</em>, <em>dL</em>
+specified as keywords.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.sample_broadening">
+<span class="sig-name descname"><span class="pre">sample_broadening</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#refl1d.snsdata.Liquids.sample_broadening" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.sample_width">
+<span class="sig-name descname"><span class="pre">sample_width</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">10000000000.0</span></em><a class="headerlink" href="#refl1d.snsdata.Liquids.sample_width" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.simulate">
+<span class="sig-name descname"><span class="pre">simulate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.snsdata.Liquids.simulate" title="Link to this definition">¶</a></dt>
+<dd><p>Simulate a run with a particular sample.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><em>sample</em><span class="classifier">Stack</span></dt><dd><p>Reflectometry model</p>
+</dd>
+<dt><em>T</em><span class="classifier">[float] | °</span></dt><dd><p>List of angles to be measured, such as [0.15, 0.4, 1, 2].</p>
+</dd>
+<dt><em>slits</em><span class="classifier">[float] or [(float, float)] | mm</span></dt><dd><p>Slit settings for each angle.</p>
+</dd>
+<dt><em>uncertainty</em> = 1<span class="classifier">float or [float] | %</span></dt><dd><p>Incident intensity is set so that the median dR/R is equal
+to <em>uncertainty</em>, where R is the idealized reflectivity
+of the sample.</p>
+</dd>
+<dt><em>dLoL</em> = 0.02: float</dt><dd><p>Wavelength resolution</p>
+</dd>
+<dt><em>normalize</em> = True<span class="classifier">boolean</span></dt><dd><p>Whether to normalize the intensities</p>
+</dd>
+<dt><em>theta_offset</em> = 0<span class="classifier">float | °</span></dt><dd><p>Sample alignment error</p>
+</dd>
+<dt><em>background</em> = 0<span class="classifier">float</span></dt><dd><p>Background counts per incident neutron (background is
+assumed to be independent of measurement geometry).</p>
+</dd>
+<dt><em>back_reflectivity</em> = False<span class="classifier">boolean</span></dt><dd><p>Whether beam travels through incident medium
+or through substrate.</p>
+</dd>
+<dt><em>back_absorption</em> = 1<span class="classifier">float</span></dt><dd><p>Absorption factor for beam traveling through substrate.
+Only needed for back reflectivity measurements.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.slits">
+<span class="sig-name descname"><span class="pre">slits</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#refl1d.snsdata.Liquids.slits" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.slits_above">
+<span class="sig-name descname"><span class="pre">slits_above</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#refl1d.snsdata.Liquids.slits_above" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.slits_at_Tlo">
+<span class="sig-name descname"><span class="pre">slits_at_Tlo</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#refl1d.snsdata.Liquids.slits_at_Tlo" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.slits_below">
+<span class="sig-name descname"><span class="pre">slits_below</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#refl1d.snsdata.Liquids.slits_below" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Liquids.wavelength">
+<span class="sig-name descname"><span class="pre">wavelength</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(2.0,</span> <span class="pre">15.0)</span></em><a class="headerlink" href="#refl1d.snsdata.Liquids.wavelength" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">refl1d.snsdata.</span></span><span class="sig-name descname"><span class="pre">Magnetic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/snsdata.html#Magnetic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.snsdata.Magnetic" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../refl1d.snsdata.html#refl1d.snsdata.SNSData" title="refl1d.snsdata.SNSData"><code class="xref py py-class docutils literal notranslate"><span class="pre">SNSData</span></code></a>, <a class="reference internal" href="../refl1d.instrument.html#refl1d.instrument.Pulsed" title="refl1d.instrument.Pulsed"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pulsed</span></code></a></p>
+<p>Loader for reduced data from the SNS Magnetic instrument.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic.T">
+<span class="sig-name descname"><span class="pre">T</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#refl1d.snsdata.Magnetic.T" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic.TOF_range">
+<span class="sig-name descname"><span class="pre">TOF_range</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(0,</span> <span class="pre">inf)</span></em><a class="headerlink" href="#refl1d.snsdata.Magnetic.TOF_range" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic.Thi">
+<span class="sig-name descname"><span class="pre">Thi</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">90</span></em><a class="headerlink" href="#refl1d.snsdata.Magnetic.Thi" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic.Tlo">
+<span class="sig-name descname"><span class="pre">Tlo</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">90</span></em><a class="headerlink" href="#refl1d.snsdata.Magnetic.Tlo" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic.calc_dT">
+<span class="sig-name descname"><span class="pre">calc_dT</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">T</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slits</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.snsdata.Magnetic.calc_dT" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic.calc_slits">
+<span class="sig-name descname"><span class="pre">calc_slits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.snsdata.Magnetic.calc_slits" title="Link to this definition">¶</a></dt>
+<dd><p>Determines slit openings from measurement pattern.</p>
+<p>If slits are fixed simply return the same slits for every angle,
+otherwise use an opening range [Tlo, Thi] and the value of the
+slits at the start of the opening to define the slits.  Slits
+below Tlo and above Thi can be specified separately.</p>
+<p><em>T</em>              incident angle
+<em>Tlo</em>, <em>Thi</em>     angle range over which slits are opening
+<em>slits_at_Tlo</em>   openings at the start of the range, or fixed opening
+<em>slits_below</em>, <em>slits_above</em>   openings below and above the range</p>
+<p>Use fixed_slits is available, otherwise use opening slits.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic.dLoL">
+<span class="sig-name descname"><span class="pre">dLoL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.02</span></em><a class="headerlink" href="#refl1d.snsdata.Magnetic.dLoL" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic.d_s1">
+<span class="sig-name descname"><span class="pre">d_s1</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">190.5</span></em><a class="headerlink" href="#refl1d.snsdata.Magnetic.d_s1" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic.d_s2">
+<span class="sig-name descname"><span class="pre">d_s2</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">35.56</span></em><a class="headerlink" href="#refl1d.snsdata.Magnetic.d_s2" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic.defaults">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">defaults</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.snsdata.Magnetic.defaults" title="Link to this definition">¶</a></dt>
+<dd><p>Return default instrument properties as a printable string.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic.fixed_slits">
+<span class="sig-name descname"><span class="pre">fixed_slits</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#refl1d.snsdata.Magnetic.fixed_slits" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic.instrument">
+<span class="sig-name descname"><span class="pre">instrument</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Magnetic'</span></em><a class="headerlink" href="#refl1d.snsdata.Magnetic.instrument" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic.load">
+<span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.snsdata.Magnetic.load" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic.magnetic_probe">
+<span class="sig-name descname"><span class="pre">magnetic_probe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Aguide</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">270.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shared_beam</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.snsdata.Magnetic.magnetic_probe" title="Link to this definition">¶</a></dt>
+<dd><p>Simulate a polarized measurement probe.</p>
+<p>Returns a probe with Q, angle, wavelength and the associated
+uncertainties, but not any data.</p>
+<p>Guide field angle <em>Aguide</em> can be specified, as well as keyword
+arguments for the geometry of the probe cross sections such as
+slit settings <em>slits</em> and <em>T</em> to define the angular divergence
+and <em>dLoL</em> to define the wavelength resolution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic.probe">
+<span class="sig-name descname"><span class="pre">probe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.snsdata.Magnetic.probe" title="Link to this definition">¶</a></dt>
+<dd><p>Simulate a measurement probe.</p>
+<p>Returns a probe with Q, angle, wavelength and the associated
+uncertainties, but not any data.</p>
+<p>You can override instrument parameters using key=value.
+In particular, slit settings <em>slits</em> and <em>T</em> define
+the angular divergence and <em>dLoL</em> defines the wavelength
+resolution.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic.radiation">
+<span class="sig-name descname"><span class="pre">radiation</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'neutron'</span></em><a class="headerlink" href="#refl1d.snsdata.Magnetic.radiation" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic.resolution">
+<span class="sig-name descname"><span class="pre">resolution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">L</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dL</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.snsdata.Magnetic.resolution" title="Link to this definition">¶</a></dt>
+<dd><p>Return the resolution of the measurement.  Needs <em>T</em>, <em>L</em>, <em>dL</em>
+specified as keywords.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic.sample_broadening">
+<span class="sig-name descname"><span class="pre">sample_broadening</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#refl1d.snsdata.Magnetic.sample_broadening" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic.sample_width">
+<span class="sig-name descname"><span class="pre">sample_width</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">10000000000.0</span></em><a class="headerlink" href="#refl1d.snsdata.Magnetic.sample_width" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic.simulate">
+<span class="sig-name descname"><span class="pre">simulate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uncertainty</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#refl1d.snsdata.Magnetic.simulate" title="Link to this definition">¶</a></dt>
+<dd><p>Simulate a run with a particular sample.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><em>sample</em><span class="classifier">Stack</span></dt><dd><p>Reflectometry model</p>
+</dd>
+<dt><em>T</em><span class="classifier">[float] | °</span></dt><dd><p>List of angles to be measured, such as [0.15, 0.4, 1, 2].</p>
+</dd>
+<dt><em>slits</em><span class="classifier">[float] or [(float, float)] | mm</span></dt><dd><p>Slit settings for each angle.</p>
+</dd>
+<dt><em>uncertainty</em> = 1<span class="classifier">float or [float] | %</span></dt><dd><p>Incident intensity is set so that the median dR/R is equal
+to <em>uncertainty</em>, where R is the idealized reflectivity
+of the sample.</p>
+</dd>
+<dt><em>dLoL</em> = 0.02: float</dt><dd><p>Wavelength resolution</p>
+</dd>
+<dt><em>normalize</em> = True<span class="classifier">boolean</span></dt><dd><p>Whether to normalize the intensities</p>
+</dd>
+<dt><em>theta_offset</em> = 0<span class="classifier">float | °</span></dt><dd><p>Sample alignment error</p>
+</dd>
+<dt><em>background</em> = 0<span class="classifier">float</span></dt><dd><p>Background counts per incident neutron (background is
+assumed to be independent of measurement geometry).</p>
+</dd>
+<dt><em>back_reflectivity</em> = False<span class="classifier">boolean</span></dt><dd><p>Whether beam travels through incident medium
+or through substrate.</p>
+</dd>
+<dt><em>back_absorption</em> = 1<span class="classifier">float</span></dt><dd><p>Absorption factor for beam traveling through substrate.
+Only needed for back reflectivity measurements.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic.slits">
+<span class="sig-name descname"><span class="pre">slits</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#refl1d.snsdata.Magnetic.slits" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic.slits_above">
+<span class="sig-name descname"><span class="pre">slits_above</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#refl1d.snsdata.Magnetic.slits_above" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic.slits_at_Tlo">
+<span class="sig-name descname"><span class="pre">slits_at_Tlo</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#refl1d.snsdata.Magnetic.slits_at_Tlo" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic.slits_below">
+<span class="sig-name descname"><span class="pre">slits_below</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#refl1d.snsdata.Magnetic.slits_below" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="refl1d.snsdata.Magnetic.wavelength">
+<span class="sig-name descname"><span class="pre">wavelength</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(1.8,</span> <span class="pre">14)</span></em><a class="headerlink" href="#refl1d.snsdata.Magnetic.wavelength" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.snsdata.QRL_to_data">
+<span class="sig-prename descclassname"><span class="pre">refl1d.snsdata.</span></span><span class="sig-name descname"><span class="pre">QRL_to_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instrument</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/snsdata.html#QRL_to_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.snsdata.QRL_to_data" title="Link to this definition">¶</a></dt>
+<dd><p>Convert data to T, L, R</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="refl1d.snsdata.SNSData">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">refl1d.snsdata.</span></span><span class="sig-name descname"><span class="pre">SNSData</span></span><a class="reference internal" href="../_modules/refl1d/snsdata.html#SNSData"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.snsdata.SNSData" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="refl1d.snsdata.SNSData.load">
+<span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/snsdata.html#SNSData.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.snsdata.SNSData.load" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.snsdata.TOF_to_data">
+<span class="sig-prename descclassname"><span class="pre">refl1d.snsdata.</span></span><span class="sig-name descname"><span class="pre">TOF_to_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instrument</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/snsdata.html#TOF_to_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.snsdata.TOF_to_data" title="Link to this definition">¶</a></dt>
+<dd><p>Convert TOF data to neutron probe.</p>
+<p>Wavelength is set from the average of the times at the edges of the
+bins, not the average of the wavelengths.  Wavelength resolution is
+set assuming the wavelength at the edges of the bins defines the
+full width at half maximum.</p>
+<p>The correct answer is to look at the wavelength distribution within
+the bin including effects of pulse width and intensity as a function
+wavelength and use that distribution, or a gaussian approximation
+thereof, when computing the resolution effects.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.snsdata.boltzmann_feather">
+<span class="sig-prename descclassname"><span class="pre">refl1d.snsdata.</span></span><span class="sig-name descname"><span class="pre">boltzmann_feather</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">L</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">counts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/snsdata.html#boltzmann_feather"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.snsdata.boltzmann_feather" title="Link to this definition">¶</a></dt>
+<dd><p>Return expected intensity as a function of wavelength given the TOF
+feather range and the total number of counts.</p>
+<p>TOF feather is approximately a boltzmann distribution with gaussian
+convolution.  The following looks pretty enough; don’t know how well it
+corresponds to the actual SNS feather.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.snsdata.has_columns">
+<span class="sig-prename descclassname"><span class="pre">refl1d.snsdata.</span></span><span class="sig-name descname"><span class="pre">has_columns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">header</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/snsdata.html#has_columns"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.snsdata.has_columns" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.snsdata.intensity_from_spline">
+<span class="sig-prename descclassname"><span class="pre">refl1d.snsdata.</span></span><span class="sig-name descname"><span class="pre">intensity_from_spline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Lrange</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dLoL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feather</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/snsdata.html#intensity_from_spline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.snsdata.intensity_from_spline" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.snsdata.load">
+<span class="sig-prename descclassname"><span class="pre">refl1d.snsdata.</span></span><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">instrument</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/snsdata.html#load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.snsdata.load" title="Link to this definition">¶</a></dt>
+<dd><p>Return a probe for SNS data.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.snsdata.parse_sns_file">
+<span class="sig-prename descclassname"><span class="pre">refl1d.snsdata.</span></span><span class="sig-name descname"><span class="pre">parse_sns_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/snsdata.html#parse_sns_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.snsdata.parse_sns_file" title="Link to this definition">¶</a></dt>
+<dd><p>Parse SNS reduced data, returning <em>header</em> and <em>data</em>.</p>
+<p><em>header</em> dictionary of fields such as ‘data’, ‘title’, ‘instrument’
+<em>data</em> 2D array of data</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.snsdata.write_file">
+<span class="sig-prename descclassname"><span class="pre">refl1d.snsdata.</span></span><span class="sig-name descname"><span class="pre">write_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">original</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">notes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">charge</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/snsdata.html#write_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.snsdata.write_file" title="Link to this definition">¶</a></dt>
+<dd><p>Save probe as SNS reduced file.</p>
+</dd></dl>
+
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        «&#160;&#160;<a href="resolution.html">resolution - Resolution</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="staj.html">staj - Staj File</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

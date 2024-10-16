@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Functional Layers &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <script src="../../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Random model" href="../random/model.html" />
+    <link rel="prev" title="Anticorrelated parameters" href="../ill_posed/anticor.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>Functional Layers</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        «&#160;&#160;<a href="../ill_posed/anticor.html">Anticorrelated parameters</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../random/model.html">Random model</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="functional-layers">
+<h1>Functional Layers<a class="headerlink" href="#functional-layers" title="Link to this heading">¶</a></h1>
+<p>Reflectometry layers can be arbitrary functions.  This is a rather
+arbitrary example, with a sinusoidal nuclear profile and an exponential
+magnetic profile.  A simulated dataset is generated from the model.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">sin</span><span class="p">,</span> <span class="n">pi</span><span class="p">,</span> <span class="n">log</span><span class="p">,</span> <span class="n">exp</span><span class="p">,</span> <span class="n">hstack</span>
+<span class="kn">from</span> <span class="nn">bumps.util</span> <span class="kn">import</span> <span class="n">push_seed</span>
+
+<span class="kn">from</span> <span class="nn">refl1d.names</span> <span class="kn">import</span> <span class="o">*</span>
+</pre></div>
+</div>
+<p>FunctionalProfile and FunctionalMagnetism are already available from
+refl1d.names, but a couple of aliases make them a little easier to access.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">refl1d.flayer</span> <span class="kn">import</span> <span class="n">FunctionalProfile</span> <span class="k">as</span> <span class="n">FP</span>
+<span class="kn">from</span> <span class="nn">refl1d.flayer</span> <span class="kn">import</span> <span class="n">FunctionalMagnetism</span> <span class="k">as</span> <span class="n">FM</span>
+</pre></div>
+</div>
+<p>Define the nuclear profile function.</p>
+<p>The first parameter to the function is <em>z</em>, which is the points within
+the layer at which to evaluate the function. The <em>z</em> steps are controlled
+by the <em>dz</em> parameter to the <em>Experiment</em> definition, which defaults
+to <span class="math notranslate nohighlight">\(\min(5, \tfrac{1}{10} \tfrac{2 \pi}{Q_\text{max}})\)</span> in angstroms.
+The remaining parameters become fittable parameters in the model.</p>
+<p>The returned value is a complex number whose real part is <em>rho</em> and whose
+imaginary part is <em>irho</em>.  This example is for neutron reflectometry
+which for the most part does not have a strong absorption cross section.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">nuc</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">period</span><span class="p">,</span> <span class="n">phase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Nuclear profile&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span> <span class="o">*</span> <span class="p">(</span><span class="n">z</span> <span class="o">/</span> <span class="n">period</span> <span class="o">+</span> <span class="n">phase</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Define the magnetic profile.  Like the nuclear profile, the first parameter
+is <em>z</em> and the remaining parameters become fittable parameters.  The returned
+value is <em>rhoM</em> or the pair <em>rhoM, thetaM</em>, with <em>thetaM</em> defaulting to 0
+if it is not returned.  Either <em>rhoM</em> or <em>thetaM</em> can be constant.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">mag</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">z1</span><span class="p">,</span> <span class="n">z2</span><span class="p">,</span> <span class="n">M1</span><span class="p">,</span> <span class="n">M2</span><span class="p">,</span> <span class="n">M3</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Magnetic profile</span>
+
+<span class="sd">    Return the following function:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        f(z) = \left{ \begin{array}{ll}</span>
+<span class="sd">            C &amp; \mbox{if } z &lt; z_1 \\</span>
+<span class="sd">            re^{kz} &amp; \mbox{if } z_1 \leq z \leq z_2 \\</span>
+<span class="sd">            az+b &amp; \mbox{if } z &gt; z_2</span>
+<span class="sd">            \end{array} \right.</span>
+
+<span class="sd">    where :math:`C = M_1`, :math:`r,k` are set such that :math:`re^{kz_1} = M_1` and</span>
+<span class="sd">    :math:`re^{kz_2} = M_2`, and :math:`a,b` are set such that :math:`az_2 + b = M_2`</span>
+<span class="sd">    and :math:`az_{\rm end} + b = M_3`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Make sure z1 &gt; z2, swapping if they are different.  Note that in the</span>
+    <span class="c1"># posterior probability this will set P(z1, z2)=P(z2, z1) always.</span>
+    <span class="k">if</span> <span class="n">z1</span> <span class="o">&gt;</span> <span class="n">z2</span><span class="p">:</span>
+        <span class="n">z1</span><span class="p">,</span> <span class="n">z2</span> <span class="o">=</span> <span class="n">z2</span><span class="p">,</span> <span class="n">z1</span>
+    <span class="n">C</span> <span class="o">=</span> <span class="n">M1</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="p">(</span><span class="n">log</span><span class="p">(</span><span class="n">M2</span><span class="p">)</span> <span class="o">-</span> <span class="n">log</span><span class="p">(</span><span class="n">M1</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="n">z2</span> <span class="o">-</span> <span class="n">z1</span><span class="p">)</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">M1</span> <span class="o">/</span> <span class="n">exp</span><span class="p">(</span><span class="n">k</span> <span class="o">*</span> <span class="n">z1</span><span class="p">)</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="p">(</span><span class="n">M3</span> <span class="o">-</span> <span class="n">M2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">z</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">z2</span><span class="p">)</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">M2</span> <span class="o">-</span> <span class="n">a</span> <span class="o">*</span> <span class="n">z2</span>
+
+    <span class="n">part1</span> <span class="o">=</span> <span class="n">z</span><span class="p">[</span><span class="n">z</span> <span class="o">&lt;</span> <span class="n">z1</span><span class="p">]</span> <span class="o">*</span> <span class="mi">0</span> <span class="o">+</span> <span class="n">C</span>
+    <span class="n">part2</span> <span class="o">=</span> <span class="n">r</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="n">k</span> <span class="o">*</span> <span class="n">z</span><span class="p">[(</span><span class="n">z</span> <span class="o">&gt;=</span> <span class="n">z1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">z</span> <span class="o">&lt;=</span> <span class="n">z2</span><span class="p">)])</span>
+    <span class="n">part3</span> <span class="o">=</span> <span class="n">a</span> <span class="o">*</span> <span class="n">z</span><span class="p">[</span><span class="n">z</span> <span class="o">&gt;</span> <span class="n">z2</span><span class="p">]</span> <span class="o">+</span> <span class="n">b</span>
+    <span class="k">return</span> <span class="n">hstack</span><span class="p">((</span><span class="n">part1</span><span class="p">,</span> <span class="n">part2</span><span class="p">,</span> <span class="n">part3</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Use these functions to define the functional layer.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">flayer</span> <span class="o">=</span> <span class="n">FP</span><span class="p">(</span>
+    <span class="mi">100</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;sin&quot;</span><span class="p">,</span> <span class="n">profile</span><span class="o">=</span><span class="n">nuc</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">magnetism</span><span class="o">=</span><span class="n">FM</span><span class="p">(</span><span class="n">profile</span><span class="o">=</span><span class="n">mag</span><span class="p">,</span> <span class="n">M1</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">M2</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">M3</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">z1</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">z2</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The functional layer is a normal layer which can be stacked into
+the model.  <em>flayer.start</em> and <em>flayer.end</em> are materials objects
+whose rho/irho values correspond to the complex <em>rho + j irho</em>
+value returned by the function at the start and end of the layer.
+Similarly, <em>magnetism.start</em> and <em>magnetism.end</em> return a magnetic
+layer defined by the start and end of the magnetic profile.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sample</span> <span class="o">=</span> <span class="n">silicon</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span> <span class="o">|</span> <span class="n">flayer</span> <span class="o">|</span> <span class="n">flayer</span><span class="o">.</span><span class="n">end</span><span class="p">(</span><span class="mi">35</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="n">magnetism</span><span class="o">=</span><span class="n">flayer</span><span class="o">.</span><span class="n">magnetism</span><span class="o">.</span><span class="n">end</span><span class="p">)</span> <span class="o">|</span> <span class="n">air</span>
+</pre></div>
+</div>
+<p>Need to be able to compute the thickness of the functional magnetic
+layer, which unfortunately requires the layer stack and an index.
+The index can be layer number, layer name, or if there are multiple
+layers with the same name, (layer name, k), where the magnetism
+is attached to the kth layer.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">flayer</span><span class="o">.</span><span class="n">magnetism</span><span class="o">.</span><span class="n">set_anchor</span><span class="p">(</span><span class="n">sample</span><span class="p">,</span> <span class="s2">&quot;sin&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Set the fittable parameters.  Note that the parameters to the function
+after the first parameter <em>z</em> become fittable parameters.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sample</span><span class="p">[</span><span class="s2">&quot;sin&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">period</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">sample</span><span class="p">[</span><span class="s2">&quot;sin&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">sample</span><span class="p">[</span><span class="s2">&quot;sin&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">thickness</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+<span class="n">sample</span><span class="p">[</span><span class="s2">&quot;sin&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">magnetism</span><span class="o">.</span><span class="n">M1</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">sample</span><span class="p">[</span><span class="s2">&quot;sin&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">magnetism</span><span class="o">.</span><span class="n">M2</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">sample</span><span class="p">[</span><span class="s2">&quot;sin&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">magnetism</span><span class="o">.</span><span class="n">M3</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">sample</span><span class="p">[</span><span class="s2">&quot;sin&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">magnetism</span><span class="o">.</span><span class="n">z1</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">sample</span><span class="p">[</span><span class="s2">&quot;sin&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">magnetism</span><span class="o">.</span><span class="n">z2</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Define the model.  Since this is a simulation, we need to define the
+incident beam in terms of angles, wavelengths and dispersion.  This
+gets attached to the model forming an experiment.  Finally, we simulate
+data for the experiment with 5% dR/R.  We set the seed for the simulation
+so that the result is reproducible.  We could instead set the seed to
+None so that it pulls a random seed from entropy.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">T</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">xs</span> <span class="o">=</span> <span class="p">[</span><span class="n">NeutronProbe</span><span class="p">(</span><span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="n">dT</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">L</span><span class="o">=</span><span class="mf">4.75</span><span class="p">,</span> <span class="n">dL</span><span class="o">=</span><span class="mf">0.0475</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="s2">&quot;-+&quot;</span><span class="p">,</span> <span class="s2">&quot;+-&quot;</span><span class="p">,</span> <span class="s2">&quot;++&quot;</span><span class="p">)]</span>
+<span class="n">probe</span> <span class="o">=</span> <span class="n">PolarizedNeutronProbe</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span>
+<span class="n">M</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">probe</span><span class="o">=</span><span class="n">probe</span><span class="p">,</span> <span class="n">sample</span><span class="o">=</span><span class="n">sample</span><span class="p">,</span> <span class="n">dz</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="k">with</span> <span class="n">push_seed</span><span class="p">(</span><span class="mi">1</span><span class="p">):</span>
+    <span class="n">M</span><span class="o">.</span><span class="n">simulate_data</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+
+<span class="n">problem</span> <span class="o">=</span> <span class="n">FitProblem</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        «&#160;&#160;<a href="../ill_posed/anticor.html">Anticorrelated parameters</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../random/model.html">Random model</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

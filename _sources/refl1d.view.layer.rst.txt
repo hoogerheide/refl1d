@@ -1,0 +1,7 @@
+refl1d.view.layer module
+========================
+
+.. automodule:: refl1d.view.layer
+   :members:
+   :undoc-members:
+   :show-inheritance:

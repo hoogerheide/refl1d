@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>refl1d.fasta &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <script src="../../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>refl1d.fasta</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <h1>Source code for refl1d.fasta</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Biomolecule support.</span>
+
+<span class="sd">:class:`Molecule` lets you define biomolecules with labile hydrogen atoms</span>
+<span class="sd">specified using tritium (T) in the chemical formula.  The biomolecule object</span>
+<span class="sd">creates forms with natural isotope ratio, all hydrogen and all deuterium.</span>
+<span class="sd">Density can be provided as natural density or cell volume.  A %D2O contrast</span>
+<span class="sd">match value is computed for matching the molecule SLD in the presence of</span>
+<span class="sd">labile hydrogens.  :method:`Molecule.D2Osld` computes the neutron SLD for</span>
+<span class="sd">the solvated molecule in a %D2O solvent.</span>
+
+<span class="sd">:fun:`D2Omatch` computes the %D2O constrast match value given the fully</span>
+<span class="sd">hydrogenated and fully deuterated forms.</span>
+
+<span class="sd">:class:`Sequence` lets you read amino acid and DNA/RNA sequences from FASTA</span>
+<span class="sd">files.</span>
+
+<span class="sd">Tables for common molecules are provided[1]:</span>
+
+<span class="sd">    *AMINO_ACID_CODES* : amino acids indexed by FASTA code</span>
+
+<span class="sd">    *RNA_CODES*, DNA_CODES* : nucleic bases indexed by FASTA code</span>
+
+<span class="sd">    *RNA_BASES*, DNA_BASES* : individual nucleic acid bases</span>
+
+<span class="sd">    *NUCLEIC_ACID_COMPONENTS*, *LIPIDS*, *CARBOHYDRATE_RESIDUES*</span>
+
+<span class="sd">Neutron SLD for water at 20C is also provided as *H2O_SLD* and *D2O_SLD*.</span>
+
+<span class="sd">For unmodified protein need to add 2*T and O for terminations.</span>
+
+<span class="sd">Assumes that proteins were created in an environment with the usual H/D isotope</span>
+<span class="sd">ratio on the non-swappable hydrogens.</span>
+
+<span class="sd">[1] Perkins, Modern Physical Methods in Biochemistry Part B, 143-265 (1988)</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span>
+
+<span class="kn">import</span> <span class="nn">periodictable</span> <span class="k">as</span> <span class="nn">pt</span>
+
+
+<div class="viewcode-block" id="Molecule">
+<a class="viewcode-back" href="../../refl1d.fasta.html#refl1d.fasta.Molecule">[docs]</a>
+<span class="k">class</span> <span class="nc">Molecule</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Specify a biomolecule by name, chemical formula, cell volume and charge.</span>
+
+<span class="sd">    Labile hydrogen positions should be coded using tritium (T) rather than H.  That</span>
+<span class="sd">    way the tritium can be changed to H[1] for solutions with pure water, H for solutions</span>
+<span class="sd">    with a natural abundance of water or D for solutions with pure deuterium.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ==========</span>
+
+<span class="sd">    *formula* is the original tritiated formula.  You can create the hydrogenated or</span>
+<span class="sd">    deuterated forms using::</span>
+
+<span class="sd">        from periodictable import H, D, T, fast</span>
+<span class="sd">        hydrogenated = isotope_substitution</span>
+<span class="sd">    :fun:`isotope_substitution(M.formula, ` with *formula*, T</span>
+<span class="sd">    and periodictable.H or periodictable.D.</span>
+
+<span class="sd">    *D2Omatch* is the % D2O in H2O required to contrast match the molecule, including</span>
+<span class="sd">    the the proton swapping effect.</span>
+
+<span class="sd">    *natural*/*H*/*D* are the formulae with tritium replaced by naturally occurring D/H ratio,</span>
+<span class="sd">    by pure H and by pure D respectively.  *sld*/*H_sld*/*D_sld* are the corresponding slds.</span>
+<span class="sd">    *mass* and *density* are available as *H.mass* and *H.density*, etc.</span>
+
+<span class="sd">    *charge* is the charge on the molecule</span>
+
+<span class="sd">    *cell_volume* is the estimated cell volume for the molecule</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">cell_volume</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">natural_density</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">charge</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="n">M</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">formula</span><span class="p">(</span><span class="n">formula</span><span class="p">,</span> <span class="n">natural_density</span><span class="o">=</span><span class="n">natural_density</span><span class="p">)</span>
+
+        <span class="c1"># Fill in density or cell_volume</span>
+        <span class="k">if</span> <span class="n">cell_volume</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">M</span><span class="o">.</span><span class="n">density</span> <span class="o">=</span> <span class="mf">1e24</span> <span class="o">*</span> <span class="n">M</span><span class="o">.</span><span class="n">molecular_mass</span> <span class="o">/</span> <span class="n">cell_volume</span> <span class="k">if</span> <span class="n">cell_volume</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cell_volume</span> <span class="o">=</span> <span class="mf">1e24</span> <span class="o">*</span> <span class="n">M</span><span class="o">.</span><span class="n">molecular_mass</span> <span class="o">/</span> <span class="n">M</span><span class="o">.</span><span class="n">density</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cell_volume</span> <span class="o">=</span> <span class="n">cell_volume</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">formula</span> <span class="o">=</span> <span class="n">M</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">natural</span> <span class="o">=</span> <span class="n">isotope_substitution</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">pt</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">pt</span><span class="o">.</span><span class="n">H</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">H</span> <span class="o">=</span> <span class="n">isotope_substitution</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">pt</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">pt</span><span class="o">.</span><span class="n">H</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">D</span> <span class="o">=</span> <span class="n">isotope_substitution</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">pt</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">pt</span><span class="o">.</span><span class="n">D</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">sld</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">neutron_sld</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">natural</span><span class="p">,</span> <span class="n">wavelength</span><span class="o">=</span><span class="mi">5</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">H_sld</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">neutron_sld</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">,</span> <span class="n">wavelength</span><span class="o">=</span><span class="mi">5</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">D_sld</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">neutron_sld</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">,</span> <span class="n">wavelength</span><span class="o">=</span><span class="mi">5</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">D2Omatch</span> <span class="o">=</span> <span class="n">D2Omatch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">H_sld</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">D_sld</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">charge</span> <span class="o">=</span> <span class="n">charge</span>
+
+<div class="viewcode-block" id="Molecule.D2Osld">
+<a class="viewcode-back" href="../../refl1d.fasta.html#refl1d.fasta.Molecule.D2Osld">[docs]</a>
+    <span class="k">def</span> <span class="nf">D2Osld</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volume_fraction</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">D2O_fraction</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Neutron SLD of the molecule in a %D2O solvent.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">solvent_sld</span> <span class="o">=</span> <span class="n">D2O_fraction</span> <span class="o">*</span> <span class="n">D2O_SLD</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">D2O_fraction</span><span class="p">)</span> <span class="o">*</span> <span class="n">H2O_SLD</span>
+        <span class="n">solute_sld</span> <span class="o">=</span> <span class="n">D2O_fraction</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">D_sld</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">D2O_fraction</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">H_sld</span>
+        <span class="k">return</span> <span class="n">volume_fraction</span> <span class="o">*</span> <span class="n">solute_sld</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">volume_fraction</span><span class="p">)</span> <span class="o">*</span> <span class="n">solvent_sld</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Sequence">
+<a class="viewcode-back" href="../../refl1d.fasta.html#refl1d.fasta.Sequence">[docs]</a>
+<span class="k">class</span> <span class="nc">Sequence</span><span class="p">(</span><span class="n">Molecule</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert FASTA sequence into chemical formula.</span>
+
+<span class="sd">    *name* sequence name</span>
+<span class="sd">    *sequence* code string</span>
+<span class="sd">    *type* aa|dna|rna</span>
+<span class="sd">       aa: amino acid sequence</span>
+<span class="sd">       dna: dna sequence</span>
+<span class="sd">       rna: rna sequence</span>
+
+<span class="sd">    Note: rna sequence files treat T as U and dna sequence files treat U as T.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Sequence.loadall">
+<a class="viewcode-back" href="../../refl1d.fasta.html#refl1d.fasta.Sequence.loadall">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">loadall</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Iterate over sequences in FASTA file, loading each in turn.</span>
+
+<span class="sd">        Yields one FASTA sequence each cycle.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;rt&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">seq</span> <span class="ow">in</span> <span class="n">read_fasta</span><span class="p">(</span><span class="n">fh</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">Sequence</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">seq</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Sequence.load">
+<a class="viewcode-back" href="../../refl1d.fasta.html#refl1d.fasta.Sequence.load">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load the first FASTA sequence from a file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;rt&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+            <span class="n">name</span><span class="p">,</span> <span class="n">seq</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">read_fasta</span><span class="p">(</span><span class="n">fh</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">Sequence</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">seq</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">sequence</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;aa&quot;</span><span class="p">):</span>
+        <span class="n">codes</span> <span class="o">=</span> <span class="n">_CODE_TABLES</span><span class="p">[</span><span class="nb">type</span><span class="p">]</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">codes</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">sequence</span><span class="p">)</span>
+        <span class="n">cell_volume</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">cell_volume</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">)</span>
+        <span class="n">charge</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">charge</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">)</span>
+        <span class="n">structure</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">:</span>
+            <span class="n">structure</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">formula</span><span class="o">.</span><span class="n">structure</span><span class="p">))</span>
+        <span class="n">formula</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">formula</span><span class="p">(</span><span class="n">structure</span><span class="p">)</span><span class="o">.</span><span class="n">hill</span>
+
+        <span class="n">Molecule</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">cell_volume</span><span class="o">=</span><span class="n">cell_volume</span><span class="p">,</span> <span class="n">charge</span><span class="o">=</span><span class="n">charge</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sequence</span> <span class="o">=</span> <span class="n">sequence</span></div>
+
+
+
+<span class="c1"># Water density at 20C; neutron wavelength doesn&#39;t matter (use 5 A).</span>
+<span class="n">H2O_SLD</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">neutron_sld</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">formula</span><span class="p">(</span><span class="s2">&quot;H2O@0.9982&quot;</span><span class="p">),</span> <span class="n">wavelength</span><span class="o">=</span><span class="mi">5</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">D2O_SLD</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">neutron_sld</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">formula</span><span class="p">(</span><span class="s2">&quot;D2O@0.9982&quot;</span><span class="p">),</span> <span class="n">wavelength</span><span class="o">=</span><span class="mi">5</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="D2Omatch">
+<a class="viewcode-back" href="../../refl1d.fasta.html#refl1d.fasta.D2Omatch">[docs]</a>
+<span class="k">def</span> <span class="nf">D2Omatch</span><span class="p">(</span><span class="n">H_sld</span><span class="p">,</span> <span class="n">D_sld</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Find the D2O% concentration of solvent such that neutron SLD of the</span>
+<span class="sd">    material matches the neutron SLD of the solvent.</span>
+
+<span class="sd">    *H_sld*, *D_sld* are the SLDs for the hydrogenated and deuterated forms</span>
+<span class="sd">    of the material respectively, where *D* includes all the labile protons</span>
+<span class="sd">    swapped for deuterons.  Water SLD is calculated at 20 C.</span>
+
+<span class="sd">    Note that the resulting percentage is only meaningful between</span>
+<span class="sd">    0% to 100%.  Beyond 100% you will need an additional constrast agent</span>
+<span class="sd">    in the 100% D2O solvent to increase the SLD enough to match.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># SLD(%Dsample + (1-%)Hsample) = SLD(%D2O + (1-%)H2O)</span>
+    <span class="c1"># %SLD(Dsample) + (1-%)SLD(Hsample) = %SLD(D2O) + (1-%)SLD(H2O)</span>
+    <span class="c1"># %(SLD(Dsample) - SLD(Hsample) + SLD(H2O) - SLD(D2O)) = SLD(H2O) - SLD(Hsample)</span>
+    <span class="c1"># % = 100*(SLD(H2O) - SLD(Hsample)) / (SLD(Dsample) - SLD(Hsample) + SLD(H2O) - SLD(D2O))</span>
+    <span class="k">return</span> <span class="mi">100</span> <span class="o">*</span> <span class="p">(</span><span class="n">H2O_SLD</span> <span class="o">-</span> <span class="n">H_sld</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">D_sld</span> <span class="o">-</span> <span class="n">H_sld</span> <span class="o">+</span> <span class="n">H2O_SLD</span> <span class="o">-</span> <span class="n">D2O_SLD</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="read_fasta">
+<a class="viewcode-back" href="../../refl1d.fasta.html#refl1d.fasta.read_fasta">[docs]</a>
+<span class="k">def</span> <span class="nf">read_fasta</span><span class="p">(</span><span class="n">fp</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Iterate over the sequences in a FASTA file.</span>
+
+<span class="sd">    Each iteration is a pair (sequence name, sequence codes).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">name</span><span class="p">,</span> <span class="n">seq</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">fp</span><span class="p">:</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;&gt;&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">name</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">seq</span><span class="p">))</span>
+            <span class="n">name</span><span class="p">,</span> <span class="n">seq</span> <span class="o">=</span> <span class="n">line</span><span class="p">,</span> <span class="p">[]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">seq</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">name</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">seq</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="isotope_substitution">
+<a class="viewcode-back" href="../../refl1d.fasta.html#refl1d.fasta.isotope_substitution">[docs]</a>
+<span class="k">def</span> <span class="nf">isotope_substitution</span><span class="p">(</span><span class="n">formula</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">portion</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Substitute one atom/isotope in a formula with another in some proportion.</span>
+
+<span class="sd">    *formula* is the formula being updated.</span>
+
+<span class="sd">    *source* is the isotope/element to be substituted.</span>
+
+<span class="sd">    *target* is the replacement isotope/element.</span>
+
+<span class="sd">    *portion* is the proportion of source which is substituted for target.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Note: formula.atoms creates a new structure each time</span>
+    <span class="n">atoms</span> <span class="o">=</span> <span class="n">formula</span><span class="o">.</span><span class="n">atoms</span>
+    <span class="k">if</span> <span class="n">source</span> <span class="ow">in</span> <span class="n">atoms</span><span class="p">:</span>
+        <span class="n">mass</span> <span class="o">=</span> <span class="n">formula</span><span class="o">.</span><span class="n">mass</span>
+        <span class="n">mass_reduction</span> <span class="o">=</span> <span class="n">atoms</span><span class="p">[</span><span class="n">source</span><span class="p">]</span> <span class="o">*</span> <span class="n">portion</span> <span class="o">*</span> <span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">mass</span> <span class="o">-</span> <span class="n">target</span><span class="o">.</span><span class="n">mass</span><span class="p">)</span>
+        <span class="n">density</span> <span class="o">=</span> <span class="n">formula</span><span class="o">.</span><span class="n">density</span> <span class="o">*</span> <span class="p">(</span><span class="n">mass</span> <span class="o">-</span> <span class="n">mass_reduction</span><span class="p">)</span> <span class="o">/</span> <span class="n">mass</span>
+        <span class="n">atoms</span><span class="p">[</span><span class="n">target</span><span class="p">]</span> <span class="o">=</span> <span class="n">atoms</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">atoms</span><span class="p">[</span><span class="n">source</span><span class="p">]</span> <span class="o">*</span> <span class="n">portion</span>
+        <span class="k">if</span> <span class="n">portion</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">atoms</span><span class="p">[</span><span class="n">source</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">atoms</span><span class="p">[</span><span class="n">source</span><span class="p">]</span> <span class="o">*=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">portion</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">density</span> <span class="o">=</span> <span class="n">formula</span><span class="o">.</span><span class="n">density</span>
+    <span class="k">return</span> <span class="n">pt</span><span class="o">.</span><span class="n">formula</span><span class="p">(</span><span class="n">atoms</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="n">density</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># FASTA code table</span>
+<span class="k">def</span> <span class="nf">_</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">V</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">formula</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;-&quot;</span><span class="p">:</span>
+        <span class="n">charge</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="n">formula</span> <span class="o">=</span> <span class="n">formula</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">formula</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;+&quot;</span><span class="p">:</span>
+        <span class="n">charge</span> <span class="o">=</span> <span class="o">+</span><span class="mi">1</span>
+        <span class="n">formula</span> <span class="o">=</span> <span class="n">formula</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">charge</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">molecule</span> <span class="o">=</span> <span class="n">Molecule</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">cell_volume</span><span class="o">=</span><span class="n">V</span><span class="p">,</span> <span class="n">charge</span><span class="o">=</span><span class="n">charge</span><span class="p">)</span>
+    <span class="n">molecule</span><span class="o">.</span><span class="n">code</span> <span class="o">=</span> <span class="n">code</span>  <span class="c1"># Add code attribute so we can write as well as read</span>
+    <span class="k">return</span> <span class="n">code</span><span class="p">,</span> <span class="n">molecule</span>
+
+
+<span class="n">AMINO_ACID_CODES</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="p">(</span>
+        <span class="c1"># code, volume, formula,        name</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="mf">91.5</span><span class="p">,</span> <span class="s2">&quot;C3H4TNO&quot;</span><span class="p">,</span> <span class="s2">&quot;alanine&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="mf">105.6</span><span class="p">,</span> <span class="s2">&quot;C3H3TNOS&quot;</span><span class="p">,</span> <span class="s2">&quot;cysteine&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;D&quot;</span><span class="p">,</span> <span class="mf">124.5</span><span class="p">,</span> <span class="s2">&quot;C4H3TNO3-&quot;</span><span class="p">,</span> <span class="s2">&quot;aspartic acid&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;E&quot;</span><span class="p">,</span> <span class="mf">155.1</span><span class="p">,</span> <span class="s2">&quot;C5H5TNO3-&quot;</span><span class="p">,</span> <span class="s2">&quot;glutamic acid&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;F&quot;</span><span class="p">,</span> <span class="mf">203.4</span><span class="p">,</span> <span class="s2">&quot;C9H8TNO&quot;</span><span class="p">,</span> <span class="s2">&quot;phenylalanine&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;G&quot;</span><span class="p">,</span> <span class="mf">66.4</span><span class="p">,</span> <span class="s2">&quot;C2H2TNO&quot;</span><span class="p">,</span> <span class="s2">&quot;glycine&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;H&quot;</span><span class="p">,</span> <span class="mf">167.3</span><span class="p">,</span> <span class="s2">&quot;C6H5T3N3O+&quot;</span><span class="p">,</span> <span class="s2">&quot;histidine&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;I&quot;</span><span class="p">,</span> <span class="mf">168.8</span><span class="p">,</span> <span class="s2">&quot;C6H10TNO&quot;</span><span class="p">,</span> <span class="s2">&quot;isoleucine&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;K&quot;</span><span class="p">,</span> <span class="mf">171.3</span><span class="p">,</span> <span class="s2">&quot;C6H9T4N2O+&quot;</span><span class="p">,</span> <span class="s2">&quot;lysine&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;L&quot;</span><span class="p">,</span> <span class="mf">168.8</span><span class="p">,</span> <span class="s2">&quot;C6H10TNO&quot;</span><span class="p">,</span> <span class="s2">&quot;leucine&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;M&quot;</span><span class="p">,</span> <span class="mf">170.8</span><span class="p">,</span> <span class="s2">&quot;C5H8TNOS&quot;</span><span class="p">,</span> <span class="s2">&quot;methionine&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;N&quot;</span><span class="p">,</span> <span class="mf">135.2</span><span class="p">,</span> <span class="s2">&quot;C4H3T3N2O2&quot;</span><span class="p">,</span> <span class="s2">&quot;asparagine&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;P&quot;</span><span class="p">,</span> <span class="mf">129.3</span><span class="p">,</span> <span class="s2">&quot;C5H7NO&quot;</span><span class="p">,</span> <span class="s2">&quot;proline&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Q&quot;</span><span class="p">,</span> <span class="mf">161.1</span><span class="p">,</span> <span class="s2">&quot;C5H5T3N2O2&quot;</span><span class="p">,</span> <span class="s2">&quot;glutamine&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;R&quot;</span><span class="p">,</span> <span class="mf">202.1</span><span class="p">,</span> <span class="s2">&quot;C6H7T6N4O+&quot;</span><span class="p">,</span> <span class="s2">&quot;arginine&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;S&quot;</span><span class="p">,</span> <span class="mf">99.1</span><span class="p">,</span> <span class="s2">&quot;C3H3T2NO2&quot;</span><span class="p">,</span> <span class="s2">&quot;serine&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="mf">122.1</span><span class="p">,</span> <span class="s2">&quot;C4H5T2NO2&quot;</span><span class="p">,</span> <span class="s2">&quot;threonine&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;V&quot;</span><span class="p">,</span> <span class="mf">141.7</span><span class="p">,</span> <span class="s2">&quot;C5H8TNO&quot;</span><span class="p">,</span> <span class="s2">&quot;valine&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;W&quot;</span><span class="p">,</span> <span class="mf">237.6</span><span class="p">,</span> <span class="s2">&quot;C11H8T2N2O&quot;</span><span class="p">,</span> <span class="s2">&quot;tryptophan&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Y&quot;</span><span class="p">,</span> <span class="mf">203.6</span><span class="p">,</span> <span class="s2">&quot;C9H7T2NO2&quot;</span><span class="p">,</span> <span class="s2">&quot;tyrosine&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_</span><span class="p">(</span><span class="n">formula</span><span class="p">,</span> <span class="n">V</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+    <span class="n">molecule</span> <span class="o">=</span> <span class="n">Molecule</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">cell_volume</span><span class="o">=</span><span class="n">V</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">name</span><span class="p">,</span> <span class="n">molecule</span>
+
+
+<span class="n">NUCLEIC_ACID_COMPONENTS</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="p">(</span>
+        <span class="c1"># formula, volume, name</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;NaPO3&quot;</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="s2">&quot;phosphate&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;C5H6TO3&quot;</span><span class="p">,</span> <span class="mi">125</span><span class="p">,</span> <span class="s2">&quot;ribose&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;C5H7O2&quot;</span><span class="p">,</span> <span class="mi">115</span><span class="p">,</span> <span class="s2">&quot;deoxyribose&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;C5H2T2N5&quot;</span><span class="p">,</span> <span class="mi">114</span><span class="p">,</span> <span class="s2">&quot;adenine&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;C4H2TN2O2&quot;</span><span class="p">,</span> <span class="mi">99</span><span class="p">,</span> <span class="s2">&quot;uracil&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;C5H4TN2O2&quot;</span><span class="p">,</span> <span class="mi">126</span><span class="p">,</span> <span class="s2">&quot;thymine&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;C5HT3N5O&quot;</span><span class="p">,</span> <span class="mi">119</span><span class="p">,</span> <span class="s2">&quot;guanine&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;C4H2T2N3O&quot;</span><span class="p">,</span> <span class="mi">103</span><span class="p">,</span> <span class="s2">&quot;cytosine&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+
+<span class="n">CARBOHYDRATE_RESIDUES</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="p">(</span>
+        <span class="c1"># formula, volume, name</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;C6H7T3O5&quot;</span><span class="p">,</span> <span class="mf">171.9</span><span class="p">,</span> <span class="s2">&quot;Glc&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;C6H7T3O5&quot;</span><span class="p">,</span> <span class="mf">166.8</span><span class="p">,</span> <span class="s2">&quot;Gal&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;C6H7T3O5&quot;</span><span class="p">,</span> <span class="mf">170.8</span><span class="p">,</span> <span class="s2">&quot;Man&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;C6H7T4O5&quot;</span><span class="p">,</span> <span class="mf">170.8</span><span class="p">,</span> <span class="s2">&quot;Man (terminal)&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;C8H10T3NO5&quot;</span><span class="p">,</span> <span class="mf">222.0</span><span class="p">,</span> <span class="s2">&quot;GlcNAc&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;C8H10T3NO5&quot;</span><span class="p">,</span> <span class="mf">232.9</span><span class="p">,</span> <span class="s2">&quot;GalNAc&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;C6H7T3O4&quot;</span><span class="p">,</span> <span class="mf">160.8</span><span class="p">,</span> <span class="s2">&quot;Fuc (terminal)&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;C11H11T5NO8&quot;</span><span class="p">,</span> <span class="mf">326.3</span><span class="p">,</span> <span class="s2">&quot;NeuNac (terminal)&quot;</span><span class="p">),</span>
+        <span class="c1"># Glycosaminoglycans</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;C14H15T5NO11Na&quot;</span><span class="p">,</span> <span class="mf">390.7</span><span class="p">,</span> <span class="s2">&quot;hyaluronate&quot;</span><span class="p">),</span>  <span class="c1"># GlcA.GlcNAc</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;C14H17T5NO13SNa&quot;</span><span class="p">,</span> <span class="mf">473.5</span><span class="p">,</span> <span class="s2">&quot;keratan sulphate&quot;</span><span class="p">),</span>  <span class="c1"># Gal.GlcNAc.SO4</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;C14H15T4NO14SNa&quot;</span><span class="p">,</span> <span class="mf">443.5</span><span class="p">,</span> <span class="s2">&quot;chondroitin sulphate&quot;</span><span class="p">),</span>  <span class="c1"># GlcA.GalNAc.SO4</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+
+<span class="n">LIPIDS</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="p">(</span>
+        <span class="c1"># formula, volume, name</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;CH2&quot;</span><span class="p">,</span> <span class="mi">27</span><span class="p">,</span> <span class="s2">&quot;methylene&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;CD2&quot;</span><span class="p">,</span> <span class="mi">27</span><span class="p">,</span> <span class="s2">&quot;methylene-D&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;C10H18NO8P&quot;</span><span class="p">,</span> <span class="mi">350</span><span class="p">,</span> <span class="s2">&quot;phospholipid headgroup&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;C6H5O6&quot;</span><span class="p">,</span> <span class="mi">240</span><span class="p">,</span> <span class="s2">&quot;triglyceride headgroup&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;C36H72NO8P&quot;</span><span class="p">,</span> <span class="mi">1089</span><span class="p">,</span> <span class="s2">&quot;DMPC&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;C36H20D52NO8P&quot;</span><span class="p">,</span> <span class="mi">1089</span><span class="p">,</span> <span class="s2">&quot;DMPC-D52&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;C29H55T3NO8P&quot;</span><span class="p">,</span> <span class="mi">932</span><span class="p">,</span> <span class="s2">&quot;DLPE&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;C27H45TO&quot;</span><span class="p">,</span> <span class="mi">636</span><span class="p">,</span> <span class="s2">&quot;cholesteral&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;C45H78O2&quot;</span><span class="p">,</span> <span class="mi">1168</span><span class="p">,</span> <span class="s2">&quot;oleate&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;C57H104O6&quot;</span><span class="p">,</span> <span class="mi">1617</span><span class="p">,</span> <span class="s2">&quot;trioleate form&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;C39H77T2N2O2P&quot;</span><span class="p">,</span> <span class="mi">1166</span><span class="p">,</span> <span class="s2">&quot;palmitate ester&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">V</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+    <span class="n">molecule</span> <span class="o">=</span> <span class="n">Molecule</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="n">cell_volume</span><span class="o">=</span><span class="n">V</span><span class="p">)</span>
+    <span class="n">molecule</span><span class="o">.</span><span class="n">code</span> <span class="o">=</span> <span class="n">code</span>
+    <span class="k">return</span> <span class="n">code</span><span class="p">,</span> <span class="n">molecule</span>
+
+
+<span class="n">RNA_BASES</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="p">(</span>
+        <span class="c1"># code, formula, volume, name</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;C10H8T3N5O6PNa&quot;</span><span class="p">,</span> <span class="mi">299</span><span class="p">,</span> <span class="s2">&quot;adenosine&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="s2">&quot;C9H8T2N2O8PNa&quot;</span><span class="p">,</span> <span class="mi">284</span><span class="p">,</span> <span class="s2">&quot;uridine&quot;</span><span class="p">),</span>  <span class="c1"># Use T for U in RNA</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;G&quot;</span><span class="p">,</span> <span class="s2">&quot;C10H7T4N5O7PNa&quot;</span><span class="p">,</span> <span class="mi">304</span><span class="p">,</span> <span class="s2">&quot;guanosine&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="s2">&quot;C9H8T3N3O7PNa&quot;</span><span class="p">,</span> <span class="mi">288</span><span class="p">,</span> <span class="s2">&quot;cytidine&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+
+<span class="n">DNA_BASES</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="p">(</span>
+        <span class="c1"># code, formula, volume, %D2O matchpoint, name</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;C10H9T2N5O5PNa&quot;</span><span class="p">,</span> <span class="mi">289</span><span class="p">,</span> <span class="s2">&quot;adenosine&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="s2">&quot;C10H11T1N2O7PNa&quot;</span><span class="p">,</span> <span class="mi">301</span><span class="p">,</span> <span class="s2">&quot;thymidine&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;G&quot;</span><span class="p">,</span> <span class="s2">&quot;C10H8T3N5O6PNa&quot;</span><span class="p">,</span> <span class="mi">294</span><span class="p">,</span> <span class="s2">&quot;guanosine&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="s2">&quot;C9H9T2N3O6PNa&quot;</span><span class="p">,</span> <span class="mi">278</span><span class="p">,</span> <span class="s2">&quot;cytidine&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_nucleic_acid_average</span><span class="p">(</span><span class="n">bases</span><span class="p">,</span> <span class="n">code_table</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute average over possible nucleotides, assuming equal weight if</span>
+<span class="sd">    precise nucleotide is not known</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bases</span><span class="p">)</span>
+    <span class="n">D</span><span class="p">,</span> <span class="n">cell_volume</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">formula</span><span class="p">(),</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">bases</span><span class="p">:</span>
+        <span class="n">D</span> <span class="o">+=</span> <span class="n">code_table</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">formula</span>
+        <span class="n">cell_volume</span> <span class="o">+=</span> <span class="n">code_table</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">cell_volume</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">D</span><span class="p">,</span> <span class="n">cell_volume</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">n</span><span class="p">)</span> <span class="o">*</span> <span class="n">D</span><span class="p">,</span> <span class="n">cell_volume</span> <span class="o">/</span> <span class="n">n</span>
+    <span class="k">return</span> <span class="n">D</span><span class="p">,</span> <span class="n">cell_volume</span>
+
+
+<span class="k">def</span> <span class="nf">_</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+    <span class="n">D</span><span class="p">,</span> <span class="n">V</span> <span class="o">=</span> <span class="n">_nucleic_acid_average</span><span class="p">(</span><span class="n">bases</span><span class="p">,</span> <span class="n">RNA_BASES</span><span class="p">)</span>
+    <span class="n">rna</span> <span class="o">=</span> <span class="n">Molecule</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">D</span><span class="o">.</span><span class="n">hill</span><span class="p">,</span> <span class="n">cell_volume</span><span class="o">=</span><span class="n">V</span><span class="p">)</span>
+    <span class="n">rna</span><span class="o">.</span><span class="n">code</span> <span class="o">=</span> <span class="n">code</span>
+    <span class="n">D</span><span class="p">,</span> <span class="n">V</span> <span class="o">=</span> <span class="n">_nucleic_acid_average</span><span class="p">(</span><span class="n">bases</span><span class="p">,</span> <span class="n">DNA_BASES</span><span class="p">)</span>
+    <span class="n">dna</span> <span class="o">=</span> <span class="n">Molecule</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">D</span><span class="o">.</span><span class="n">hill</span><span class="p">,</span> <span class="n">cell_volume</span><span class="o">=</span><span class="n">V</span><span class="p">)</span>
+    <span class="n">dna</span><span class="o">.</span><span class="n">code</span> <span class="o">=</span> <span class="n">code</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">rna</span><span class="p">),</span> <span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">dna</span><span class="p">)</span>
+
+
+<span class="n">RNA_CODES</span><span class="p">,</span> <span class="n">DNA_CODES</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="nb">dict</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+        <span class="c1"># code, nucleotides,  name</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;adenosine&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="s2">&quot;cytidine&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;G&quot;</span><span class="p">,</span> <span class="s2">&quot;G&quot;</span><span class="p">,</span> <span class="s2">&quot;guanosine&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="s2">&quot;thymidine&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;U&quot;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="s2">&quot;uridine&quot;</span><span class="p">),</span>  <span class="c1"># RNA_BASES[&quot;T&quot;] is uridine</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;R&quot;</span><span class="p">,</span> <span class="s2">&quot;AG&quot;</span><span class="p">,</span> <span class="s2">&quot;purine&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Y&quot;</span><span class="p">,</span> <span class="s2">&quot;CT&quot;</span><span class="p">,</span> <span class="s2">&quot;pyrimidine&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;K&quot;</span><span class="p">,</span> <span class="s2">&quot;GT&quot;</span><span class="p">,</span> <span class="s2">&quot;ketone&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;M&quot;</span><span class="p">,</span> <span class="s2">&quot;AC&quot;</span><span class="p">,</span> <span class="s2">&quot;amino&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;S&quot;</span><span class="p">,</span> <span class="s2">&quot;CG&quot;</span><span class="p">,</span> <span class="s2">&quot;strong&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;W&quot;</span><span class="p">,</span> <span class="s2">&quot;AT&quot;</span><span class="p">,</span> <span class="s2">&quot;weak&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;B&quot;</span><span class="p">,</span> <span class="s2">&quot;CGT&quot;</span><span class="p">,</span> <span class="s2">&quot;not A&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;D&quot;</span><span class="p">,</span> <span class="s2">&quot;AGT&quot;</span><span class="p">,</span> <span class="s2">&quot;not C&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;H&quot;</span><span class="p">,</span> <span class="s2">&quot;ACT&quot;</span><span class="p">,</span> <span class="s2">&quot;not G&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;V&quot;</span><span class="p">,</span> <span class="s2">&quot;ACG&quot;</span><span class="p">,</span> <span class="s2">&quot;not T&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;N&quot;</span><span class="p">,</span> <span class="s2">&quot;ACGT&quot;</span><span class="p">,</span> <span class="s2">&quot;any base&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;masked&quot;</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;gap&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+<span class="p">]</span>
+
+
+<span class="n">_CODE_TABLES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;aa&quot;</span><span class="p">:</span> <span class="n">AMINO_ACID_CODES</span><span class="p">,</span>
+    <span class="s2">&quot;dna&quot;</span><span class="p">:</span> <span class="n">DNA_CODES</span><span class="p">,</span>
+    <span class="s2">&quot;rna&quot;</span><span class="p">:</span> <span class="n">RNA_CODES</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="fasta_table">
+<a class="viewcode-back" href="../../refl1d.fasta.html#refl1d.fasta.fasta_table">[docs]</a>
+<span class="k">def</span> <span class="nf">fasta_table</span><span class="p">():</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">rows</span> <span class="o">+=</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">AMINO_ACID_CODES</span><span class="o">.</span><span class="n">items</span><span class="p">())]</span>
+    <span class="n">rows</span> <span class="o">+=</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">NUCLEIC_ACID_COMPONENTS</span><span class="o">.</span><span class="n">items</span><span class="p">())]</span>
+    <span class="n">rows</span> <span class="o">+=</span> <span class="p">[</span><span class="n">Sequence</span><span class="p">(</span><span class="s2">&quot;beta casein&quot;</span><span class="p">,</span> <span class="n">beta_casein</span><span class="p">)]</span>
+
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="s2">&quot;</span><span class="si">%20s</span><span class="s2"> </span><span class="si">%7s</span><span class="s2"> </span><span class="si">%7s</span><span class="s2"> </span><span class="si">%7s</span><span class="s2"> </span><span class="si">%5s</span><span class="s2"> </span><span class="si">%5s</span><span class="s2"> </span><span class="si">%5s</span><span class="s2"> </span><span class="si">%5s</span><span class="s2"> </span><span class="si">%5s</span><span class="s2"> </span><span class="si">%5s</span><span class="s2">&quot;</span>
+        <span class="o">%</span> <span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;M(H2O)&quot;</span><span class="p">,</span> <span class="s2">&quot;M(D2O)&quot;</span><span class="p">,</span> <span class="s2">&quot;volume&quot;</span><span class="p">,</span> <span class="s2">&quot;den&quot;</span><span class="p">,</span> <span class="s2">&quot;#el&quot;</span><span class="p">,</span> <span class="s2">&quot;xray&quot;</span><span class="p">,</span> <span class="s2">&quot;nH2O&quot;</span><span class="p">,</span> <span class="s2">&quot;nD2O&quot;</span><span class="p">,</span> <span class="s2">&quot;%D2O match&quot;</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+        <span class="n">protons</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">num</span> <span class="o">*</span> <span class="n">el</span><span class="o">.</span><span class="n">number</span> <span class="k">for</span> <span class="n">el</span><span class="p">,</span> <span class="n">num</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">formula</span><span class="o">.</span><span class="n">atoms</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+        <span class="n">electrons</span> <span class="o">=</span> <span class="n">protons</span> <span class="o">-</span> <span class="n">v</span><span class="o">.</span><span class="n">charge</span>
+        <span class="n">xray_sld</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">xray_sld</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">formula</span><span class="p">,</span> <span class="n">wavelength</span><span class="o">=</span><span class="n">pt</span><span class="o">.</span><span class="n">Cu</span><span class="o">.</span><span class="n">K_alpha</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s2">&quot;</span><span class="si">%20s</span><span class="s2"> </span><span class="si">%7.1f</span><span class="s2"> </span><span class="si">%7.1f</span><span class="s2"> </span><span class="si">%7.1f</span><span class="s2"> </span><span class="si">%5.2f</span><span class="s2"> </span><span class="si">%5d</span><span class="s2"> </span><span class="si">%5.2f</span><span class="s2"> </span><span class="si">%5.2f</span><span class="s2"> </span><span class="si">%5.2f</span><span class="s2"> </span><span class="si">%5.1f</span><span class="s2">&quot;</span>
+            <span class="o">%</span> <span class="p">(</span>
+                <span class="n">v</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="n">v</span><span class="o">.</span><span class="n">H</span><span class="o">.</span><span class="n">mass</span><span class="p">,</span>
+                <span class="n">v</span><span class="o">.</span><span class="n">D</span><span class="o">.</span><span class="n">mass</span><span class="p">,</span>
+                <span class="n">v</span><span class="o">.</span><span class="n">cell_volume</span><span class="p">,</span>
+                <span class="n">v</span><span class="o">.</span><span class="n">natural</span><span class="o">.</span><span class="n">density</span><span class="p">,</span>
+                <span class="n">electrons</span><span class="p">,</span>
+                <span class="n">xray_sld</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="n">v</span><span class="o">.</span><span class="n">H_sld</span><span class="p">,</span>
+                <span class="n">v</span><span class="o">.</span><span class="n">D_sld</span><span class="p">,</span>
+                <span class="n">v</span><span class="o">.</span><span class="n">D2Omatch</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span></div>
+
+
+
+<span class="n">beta_casein</span> <span class="o">=</span> <span class="s2">&quot;RELEELNVPGEIVESLSSSEESITRINKKIEKFQSEEQQQTEDELQDKIHPFAQTQSLVYPFPGPIPNSLPQNIPPLTQTPVVVPPFLQPEVMGVSKVKEAMAPKHKEMPFPKYPVEPFTESQSLTLTDVENLHLPLPLLQSWMHQPHQPLPPTVMFPPQSVLSLSQSKVLPVPQKAVPYPQRDMPIQAFLLYQEPVLGPVRGPFPIIV&quot;</span>
+
+
+<div class="viewcode-block" id="test">
+<a class="viewcode-back" href="../../refl1d.fasta.html#refl1d.fasta.test">[docs]</a>
+<span class="k">def</span> <span class="nf">test</span><span class="p">():</span>
+    <span class="kn">from</span> <span class="nn">periodictable.constants</span> <span class="kn">import</span> <span class="n">avogadro_number</span>
+
+    <span class="c1"># Beta casein results checked against Duncan McGillivray&#39;s spreadsheet</span>
+    <span class="c1"># beta casein 23561.9 23880.9 30872.9  1.27 12614 11.55  1.68  2.75</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">Sequence</span><span class="p">(</span><span class="s2">&quot;beta casein&quot;</span><span class="p">,</span> <span class="n">beta_casein</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">abs</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">D</span><span class="o">.</span><span class="n">mass</span> <span class="o">-</span> <span class="mf">23880.9</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.1</span>
+    <span class="c1"># print &quot;density&quot;, s.mass/avogadro_number/s.cell_volume*1e24</span>
+    <span class="k">assert</span> <span class="nb">abs</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">natural</span><span class="o">.</span><span class="n">mass</span> <span class="o">/</span> <span class="n">avogadro_number</span> <span class="o">/</span> <span class="n">s</span><span class="o">.</span><span class="n">cell_volume</span> <span class="o">*</span> <span class="mf">1e24</span> <span class="o">-</span> <span class="mf">1.267</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.01</span>
+    <span class="k">assert</span> <span class="nb">abs</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">D_sld</span> <span class="o">-</span> <span class="mf">2.75</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.01</span>
+
+    <span class="c1"># Check that X-ray sld is independent of isotope</span>
+    <span class="n">H</span> <span class="o">=</span> <span class="n">isotope_substitution</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">formula</span><span class="p">,</span> <span class="n">pt</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">pt</span><span class="o">.</span><span class="n">H</span><span class="p">)</span>
+    <span class="n">D</span> <span class="o">=</span> <span class="n">isotope_substitution</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">formula</span><span class="p">,</span> <span class="n">pt</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">pt</span><span class="o">.</span><span class="n">D</span><span class="p">)</span>
+    <span class="n">H_sld</span><span class="p">,</span> <span class="n">D_sld</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">xray_sld</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">wavelength</span><span class="o">=</span><span class="mf">1.54</span><span class="p">),</span> <span class="n">pt</span><span class="o">.</span><span class="n">xray_sld</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">wavelength</span><span class="o">=</span><span class="mf">1.54</span><span class="p">)</span>
+    <span class="c1"># print H_sld, D_sld</span>
+    <span class="k">assert</span> <span class="nb">abs</span><span class="p">(</span><span class="n">H_sld</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">D_sld</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mf">1e-10</span></div>
+
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../refl1d.fasta.html#refl1d.fasta.main">[docs]</a>
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="kn">import</span> <span class="nn">sys</span>
+    <span class="kn">import</span> <span class="nn">os</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;-h&quot;</span><span class="p">,</span> <span class="s2">&quot;--help&quot;</span><span class="p">,</span> <span class="s2">&quot;-?&quot;</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;usage: python -m periodictable.fasta file|sequence [%D]&quot;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="n">seq_list</span> <span class="o">=</span> <span class="n">Sequence</span><span class="o">.</span><span class="n">loadall</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">seq_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">Sequence</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">concentration</span> <span class="o">=</span> <span class="mf">0.01</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">concentration</span> <span class="o">=</span> <span class="mf">0.50</span>
+
+    <span class="k">for</span> <span class="n">seq</span> <span class="ow">in</span> <span class="n">seq_list</span><span class="p">:</span>
+        <span class="n">mixture_sld</span> <span class="o">=</span> <span class="n">seq</span><span class="o">.</span><span class="n">H_sld</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">concentration</span><span class="p">)</span> <span class="o">+</span> <span class="n">seq</span><span class="o">.</span><span class="n">D_sld</span> <span class="o">*</span> <span class="n">concentration</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> mass:</span><span class="si">%.1f</span><span class="s2"> H-sld: </span><span class="si">%.3f</span><span class="s2">  D-sld: </span><span class="si">%.3f</span><span class="s2">  D[</span><span class="si">%g%%</span><span class="s2">]-sld: </span><span class="si">%.3f</span><span class="s2">&quot;</span>
+            <span class="o">%</span> <span class="p">(</span><span class="n">seq</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">seq</span><span class="o">.</span><span class="n">natural</span><span class="o">.</span><span class="n">mass</span><span class="p">,</span> <span class="n">seq</span><span class="o">.</span><span class="n">H_sld</span><span class="p">,</span> <span class="n">seq</span><span class="o">.</span><span class="n">D_sld</span><span class="p">,</span> <span class="mi">100</span> <span class="o">*</span> <span class="n">concentration</span><span class="p">,</span> <span class="n">mixture_sld</span><span class="p">)</span>
+        <span class="p">)</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c1"># main()</span>
+    <span class="n">fasta_table</span><span class="p">()</span>
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

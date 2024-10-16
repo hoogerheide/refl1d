@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>refl1d.lib.python.convolve &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/plot_directive.css" />
+    <script src="../../../../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../../../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>refl1d.lib.python.convolve</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        <a class="uplink" href="../../../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <h1>Source code for refl1d.lib.python.convolve</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">erf</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">exp</span>
+
+<span class="n">PI4</span> <span class="o">=</span> <span class="mf">12.56637061435917295385</span>
+<span class="n">PI_180</span> <span class="o">=</span> <span class="mf">0.01745329251994329576</span>
+<span class="n">LN256</span> <span class="o">=</span> <span class="mf">5.54517744447956247533</span>
+<span class="n">SQRT2</span> <span class="o">=</span> <span class="mf">1.41421356237309504880</span>
+<span class="n">SQRT2PI</span> <span class="o">=</span> <span class="mf">2.50662827463100050241</span>
+<span class="n">LOG_RESLIMIT</span> <span class="o">=</span> <span class="o">-</span><span class="mf">6.90775527898213703123</span>
+<span class="n">root_12_over_2</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+
+<span class="n">prange</span> <span class="o">=</span> <span class="nb">range</span>
+
+
+<div class="viewcode-block" id="convolve_uniform">
+<a class="viewcode-back" href="../../../../refl1d.lib.python.convolve.html#refl1d.lib.numba.convolve_uniform">[docs]</a>
+<span class="k">def</span> <span class="nf">convolve_uniform</span><span class="p">(</span><span class="n">xi</span><span class="p">,</span> <span class="n">yi</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">dx</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="n">left_index</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">N_xi</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">xi</span><span class="p">)</span>
+    <span class="n">N_x</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">prange</span><span class="p">(</span><span class="n">N_x</span><span class="p">):</span>
+        <span class="n">x_k</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+        <span class="c1"># Convert 1-sigma width to 1/2 width of the region</span>
+        <span class="n">limit</span> <span class="o">=</span> <span class="n">dx</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">*</span> <span class="n">root_12_over_2</span>
+        <span class="c1"># print(f&quot;point {x_k} +/- {limit}&quot;)</span>
+        <span class="c1"># Find integration limits, bound by the range of the data</span>
+        <span class="n">left</span><span class="p">,</span> <span class="n">right</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">x_k</span> <span class="o">-</span> <span class="n">limit</span><span class="p">,</span> <span class="n">xi</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">min</span><span class="p">(</span><span class="n">x_k</span> <span class="o">+</span> <span class="n">limit</span><span class="p">,</span> <span class="n">xi</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">right</span> <span class="o">&lt;</span> <span class="n">left</span><span class="p">:</span>
+            <span class="c1"># Convolution does not overlap data range.</span>
+            <span class="n">y</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="k">continue</span>
+
+        <span class="c1"># Find the starting point for the convolution by first scanning</span>
+        <span class="c1"># forward until we reach the next point greater than the limit</span>
+        <span class="c1"># (we might already be there if the next output point has wider</span>
+        <span class="c1"># resolution than the current point), then scanning backwards to</span>
+        <span class="c1"># get to the last point before the limit. Make sure we have at</span>
+        <span class="c1"># least one interval so that we don&#39;t have to check edge cases</span>
+        <span class="c1"># later.</span>
+        <span class="k">while</span> <span class="n">left_index</span> <span class="o">&lt;</span> <span class="n">N_xi</span> <span class="o">-</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">xi</span><span class="p">[</span><span class="n">left_index</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">left</span><span class="p">:</span>
+            <span class="n">left_index</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">while</span> <span class="n">left_index</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">xi</span><span class="p">[</span><span class="n">left_index</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">left</span><span class="p">:</span>
+            <span class="n">left_index</span> <span class="o">-=</span> <span class="mi">1</span>
+
+        <span class="c1"># Set the first interval.</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">right_index</span> <span class="o">=</span> <span class="n">left_index</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="n">xi</span><span class="p">[</span><span class="n">left_index</span><span class="p">],</span> <span class="n">yi</span><span class="p">[</span><span class="n">left_index</span><span class="p">]</span>
+        <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">xi</span><span class="p">[</span><span class="n">right_index</span><span class="p">],</span> <span class="n">yi</span><span class="p">[</span><span class="n">right_index</span><span class="p">]</span>
+
+        <span class="c1"># Subtract the excess from left interval before the left edge.</span>
+        <span class="c1"># print(f&quot; left {left} in {(x1, y1)}, {(x2, y2)}&quot;)</span>
+        <span class="k">if</span> <span class="n">x1</span> <span class="o">&lt;</span> <span class="n">left</span><span class="p">:</span>
+            <span class="c1"># Subtract the area of the rectangle from (x1, 0) to (left, y1)</span>
+            <span class="c1"># plus 1/2 the rectangle from (x1, y1) to (left, y&#39;),</span>
+            <span class="c1"># where y&#39; is y value where the line (x1, y1) to (x2, y2)</span>
+            <span class="c1"># intersects x=left. This can be computed as follows:</span>
+            <span class="c1">#    offset = left - x1</span>
+            <span class="c1">#    slope = (y2 - y1)/(x2 - x1)</span>
+            <span class="c1">#    yleft = y1 + slope*offset</span>
+            <span class="c1">#    area = offset * y1 + offset * (yleft-y1)/2</span>
+            <span class="c1"># It can be simplified to the following:</span>
+            <span class="c1">#    area = offset * (y1 + slope*offset/2)</span>
+            <span class="n">offset</span> <span class="o">=</span> <span class="n">left</span> <span class="o">-</span> <span class="n">x1</span>
+            <span class="n">slope</span> <span class="o">=</span> <span class="p">(</span><span class="n">y2</span> <span class="o">-</span> <span class="n">y1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">x2</span> <span class="o">-</span> <span class="n">x1</span><span class="p">)</span>
+            <span class="n">area</span> <span class="o">=</span> <span class="n">offset</span> <span class="o">*</span> <span class="p">(</span><span class="n">y1</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">slope</span> <span class="o">*</span> <span class="n">offset</span><span class="p">)</span>
+            <span class="n">total</span> <span class="o">-=</span> <span class="n">area</span>
+            <span class="c1"># print(f&quot; left correction {area}&quot;)</span>
+
+        <span class="c1"># Do trapezoidal integration up to and including the end interval</span>
+        <span class="k">while</span> <span class="n">right_index</span> <span class="o">&lt;</span> <span class="n">N_xi</span> <span class="o">-</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">x2</span> <span class="o">&lt;</span> <span class="n">right</span><span class="p">:</span>
+            <span class="c1"># Add the current interval if it isn&#39;t empty</span>
+            <span class="k">if</span> <span class="n">x1</span> <span class="o">!=</span> <span class="n">x2</span><span class="p">:</span>
+                <span class="n">area</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">y1</span> <span class="o">+</span> <span class="n">y2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">x2</span> <span class="o">-</span> <span class="n">x1</span><span class="p">)</span>
+                <span class="n">total</span> <span class="o">+=</span> <span class="n">area</span>
+                <span class="c1"># print(f&quot; adding {(x1,y1)}, {(x2, y2)} as {area}&quot;)</span>
+            <span class="c1"># Move to the next interval</span>
+            <span class="n">right_index</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">,</span> <span class="n">xi</span><span class="p">[</span><span class="n">right_index</span><span class="p">],</span> <span class="n">yi</span><span class="p">[</span><span class="n">right_index</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">x1</span> <span class="o">!=</span> <span class="n">x2</span><span class="p">:</span>
+            <span class="n">area</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">y1</span> <span class="o">+</span> <span class="n">y2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">x2</span> <span class="o">-</span> <span class="n">x1</span><span class="p">)</span>
+            <span class="n">total</span> <span class="o">+=</span> <span class="n">area</span>
+            <span class="c1"># print(f&quot; adding final {(x1,y1)}, {(x2, y2)} as {area}&quot;)</span>
+
+        <span class="c1"># Subtract the excess from the right interval after the right edge.</span>
+        <span class="c1"># print(f&quot; right {right} in {(x1, y1)}, {(x2, y2)}&quot;)</span>
+        <span class="k">if</span> <span class="n">x2</span> <span class="o">&gt;</span> <span class="n">right</span><span class="p">:</span>
+            <span class="c1"># Expression for area to subtract using rectangles is as follows:</span>
+            <span class="c1">#    offset = x2 - right</span>
+            <span class="c1">#    slope = (y2 - y1)/(x2 - x1)</span>
+            <span class="c1">#    yright = y2 - slope*offset</span>
+            <span class="c1">#    area = -(offset * yright + offset * (y2-yright)/2)</span>
+            <span class="c1"># It can be simplified to the following:</span>
+            <span class="c1">#    area = -offset * (y2 - slope*offset/2)</span>
+            <span class="n">offset</span> <span class="o">=</span> <span class="n">x2</span> <span class="o">-</span> <span class="n">right</span>
+            <span class="n">slope</span> <span class="o">=</span> <span class="p">(</span><span class="n">y2</span> <span class="o">-</span> <span class="n">y1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">x2</span> <span class="o">-</span> <span class="n">x1</span><span class="p">)</span>
+            <span class="n">area</span> <span class="o">=</span> <span class="n">offset</span> <span class="o">*</span> <span class="p">(</span><span class="n">y2</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">slope</span> <span class="o">*</span> <span class="n">offset</span><span class="p">)</span>
+            <span class="n">total</span> <span class="o">-=</span> <span class="n">area</span>
+            <span class="c1"># print(f&quot; right correction {area}&quot;)</span>
+
+        <span class="c1"># Normalize by interval length</span>
+        <span class="k">if</span> <span class="n">left</span> <span class="o">&lt;</span> <span class="n">right</span><span class="p">:</span>
+            <span class="c1"># print(f&quot; normalize by length {right} - {left}&quot;)</span>
+            <span class="n">y</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">total</span> <span class="o">/</span> <span class="p">(</span><span class="n">right</span> <span class="o">-</span> <span class="n">left</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">x1</span> <span class="o">&lt;</span> <span class="n">x2</span><span class="p">:</span>
+            <span class="c1"># If dx = 0 using the value interpolated at x (with left=right=x).</span>
+            <span class="c1"># print(f&quot; dirac delta at {left} = {right} in {(x1, y1)}, {(x2, y2)}&quot;)</span>
+            <span class="n">offset</span> <span class="o">=</span> <span class="n">left</span> <span class="o">-</span> <span class="n">x1</span>
+            <span class="n">slope</span> <span class="o">=</span> <span class="p">(</span><span class="n">y2</span> <span class="o">-</span> <span class="n">y1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">x2</span> <span class="o">-</span> <span class="n">x1</span><span class="p">)</span>
+            <span class="n">y</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">y1</span> <span class="o">+</span> <span class="n">slope</span> <span class="o">*</span> <span class="n">offset</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># At an empty interval in the theory function. Average the y.</span>
+            <span class="c1"># print(f&quot; empty interval with {left} = {right} in {(x1, y1)}, {(x2, y2)}&quot;)</span>
+            <span class="n">y</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">y1</span> <span class="o">+</span> <span class="n">y2</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="convolve_gaussian_point">
+<a class="viewcode-back" href="../../../../refl1d.lib.python.convolve.html#refl1d.lib.numba.convolve_gaussian_point">[docs]</a>
+<span class="k">def</span> <span class="nf">convolve_gaussian_point</span><span class="p">(</span><span class="n">xin</span><span class="p">,</span> <span class="n">yin</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">xo</span><span class="p">,</span> <span class="n">limit</span><span class="p">,</span> <span class="n">sigma</span><span class="p">):</span>
+    <span class="n">two_sigma_sq</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">sigma</span> <span class="o">*</span> <span class="n">sigma</span>
+    <span class="c1"># double z, Glo, erflo, erfmin, y</span>
+
+    <span class="n">z</span> <span class="o">=</span> <span class="n">xo</span> <span class="o">-</span> <span class="n">xin</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+    <span class="n">Glo</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">z</span> <span class="o">*</span> <span class="n">z</span> <span class="o">/</span> <span class="n">two_sigma_sq</span><span class="p">)</span>
+    <span class="n">erfmin</span> <span class="o">=</span> <span class="n">erflo</span> <span class="o">=</span> <span class="n">erf</span><span class="p">(</span><span class="o">-</span><span class="n">z</span> <span class="o">/</span> <span class="p">(</span><span class="n">SQRT2</span> <span class="o">*</span> <span class="n">sigma</span><span class="p">))</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="c1"># /* printf(&quot;%5.3f: (%5.3f,%11.5g)&quot;,xo,xin[k],yin[k]); */</span>
+    <span class="k">while</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">k</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">xin</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">!=</span> <span class="n">xin</span><span class="p">[</span><span class="n">k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]:</span>
+            <span class="c1"># /* No additional contribution from duplicate points. */</span>
+
+            <span class="c1"># /* Compute the next endpoint */</span>
+            <span class="n">zhi</span> <span class="o">=</span> <span class="n">xo</span> <span class="o">-</span> <span class="n">xin</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+            <span class="n">Ghi</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">zhi</span> <span class="o">*</span> <span class="n">zhi</span> <span class="o">/</span> <span class="n">two_sigma_sq</span><span class="p">)</span>
+            <span class="n">erfhi</span> <span class="o">=</span> <span class="n">erf</span><span class="p">(</span><span class="o">-</span><span class="n">zhi</span> <span class="o">/</span> <span class="p">(</span><span class="n">SQRT2</span> <span class="o">*</span> <span class="n">sigma</span><span class="p">))</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="p">(</span><span class="n">yin</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">-</span> <span class="n">yin</span><span class="p">[</span><span class="n">k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">xin</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">-</span> <span class="n">xin</span><span class="p">[</span><span class="n">k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">yin</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">-</span> <span class="n">m</span> <span class="o">*</span> <span class="n">xin</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+
+            <span class="c1"># /* Add the integrals. */</span>
+            <span class="n">y</span> <span class="o">+=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">m</span> <span class="o">*</span> <span class="n">xo</span> <span class="o">+</span> <span class="n">b</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">erfhi</span> <span class="o">-</span> <span class="n">erflo</span><span class="p">)</span> <span class="o">-</span> <span class="n">sigma</span> <span class="o">/</span> <span class="n">SQRT2PI</span> <span class="o">*</span> <span class="n">m</span> <span class="o">*</span> <span class="p">(</span><span class="n">Ghi</span> <span class="o">-</span> <span class="n">Glo</span><span class="p">)</span>
+
+            <span class="c1"># /* Debug computation failures. */</span>
+            <span class="c1"># if isnan(y) {</span>
+            <span class="c1">#     print(&quot;NaN from %d: zhi=%g, Ghi=%g, erfhi=%g, m=%g, b=%g\n&quot;,</span>
+            <span class="c1">#          % (k,zhi,Ghi,erfhi,m,b))</span>
+            <span class="c1"># }</span>
+
+            <span class="c1"># /* Save the endpoint for next trapezoid. */</span>
+            <span class="n">Glo</span> <span class="o">=</span> <span class="n">Ghi</span>
+            <span class="n">erflo</span> <span class="o">=</span> <span class="n">erfhi</span>
+
+            <span class="c1"># /* Check if we&#39;ve calculated far enough */</span>
+            <span class="k">if</span> <span class="n">xin</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">xo</span> <span class="o">+</span> <span class="n">limit</span><span class="p">:</span>
+                <span class="k">break</span>
+
+    <span class="c1"># /* printf(&quot; (%5.3f,%11.5g)&quot;,xin[k&lt;n?k:n-1],yin[k&lt;n?k:n-1]); */</span>
+
+    <span class="c1"># /* Normalize by the area of the truncated gaussian */</span>
+    <span class="c1"># /* At this point erflo = erfmax */</span>
+    <span class="c1"># /* printf (&quot;---&gt; %11.5g\n&quot;,2*y/(erflo-erfmin)); */</span>
+    <span class="k">return</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">y</span> <span class="o">/</span> <span class="p">(</span><span class="n">erflo</span> <span class="o">-</span> <span class="n">erfmin</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="convolve_gaussian">
+<a class="viewcode-back" href="../../../../refl1d.lib.python.convolve.html#refl1d.lib.numba.convolve_gaussian">[docs]</a>
+<span class="k">def</span> <span class="nf">convolve_gaussian</span><span class="p">(</span><span class="n">xin</span><span class="p">,</span> <span class="n">yin</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">dx</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="c1"># size_t in,out;</span>
+    <span class="n">Nin</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">xin</span><span class="p">)</span>
+    <span class="n">Nout</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="c1"># /* FIXME fails if xin are not sorted; slow if x not sorted */</span>
+    <span class="c1"># assert(Nin&gt;1)</span>
+
+    <span class="c1"># /* Scan through all x values to be calculated */</span>
+    <span class="c1"># /* Re: omp, each thread is going through the entire input array,</span>
+    <span class="c1"># * independently, computing the resolution from the neighbourhood</span>
+    <span class="c1"># * around its individual output points.  The firstprivate(in)</span>
+    <span class="c1"># * clause sets each thread to keep its own copy of in, initialized</span>
+    <span class="c1"># * at in&#39;s initial value of zero.  The &quot;schedule(static,1)&quot; clause</span>
+    <span class="c1"># * puts neighbouring points in separate threads, which is a benefit</span>
+    <span class="c1"># * since there will be less backtracking if resolution width increases</span>
+    <span class="c1"># * from point to point.  Because the schedule is static, this does not</span>
+    <span class="c1"># * significantly increase the parallelization overhead.  Because the</span>
+    <span class="c1"># * threads are operating on interleaved points, there should be fewer cache</span>
+    <span class="c1"># * misses than if each thread were given different stretches of x to</span>
+    <span class="c1"># * convolve.</span>
+    <span class="c1"># */</span>
+    <span class="n">k_in</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">for</span> <span class="n">k_out</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Nout</span><span class="p">):</span>
+        <span class="c1"># /* width of resolution window for x is w = 2 dx^2. */</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="n">dx</span><span class="p">[</span><span class="n">k_out</span><span class="p">]</span>
+        <span class="n">xo</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">k_out</span><span class="p">]</span>
+        <span class="n">limit</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">sigma</span> <span class="o">*</span> <span class="n">sigma</span> <span class="o">*</span> <span class="n">LOG_RESLIMIT</span><span class="p">)</span>
+
+        <span class="c1"># // if (out%20==0)</span>
+
+        <span class="c1"># /* Line up the left edge of the convolution window */</span>
+        <span class="c1"># /* It is probably forward from the current position, */</span>
+        <span class="c1"># /* but if the next dx is a lot higher than the current */</span>
+        <span class="c1"># /* dx or if the x are not sorted, then it may be before */</span>
+        <span class="c1"># /* the current position. */</span>
+        <span class="c1"># /* FIXME verify that the convolution window is just right */</span>
+        <span class="k">while</span> <span class="n">k_in</span> <span class="o">&lt;</span> <span class="n">Nin</span> <span class="o">-</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">xin</span><span class="p">[</span><span class="n">k_in</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">xo</span> <span class="o">-</span> <span class="n">limit</span><span class="p">:</span>
+            <span class="n">k_in</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">while</span> <span class="n">k_in</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">xin</span><span class="p">[</span><span class="n">k_in</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">xo</span> <span class="o">-</span> <span class="n">limit</span><span class="p">:</span>
+            <span class="n">k_in</span> <span class="o">-=</span> <span class="mi">1</span>
+
+        <span class="c1"># /* Special handling to avoid 0/0 for w=0. */</span>
+        <span class="k">if</span> <span class="n">sigma</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="n">y</span><span class="p">[</span><span class="n">k_out</span><span class="p">]</span> <span class="o">=</span> <span class="n">convolve_gaussian_point</span><span class="p">(</span><span class="n">xin</span><span class="p">,</span> <span class="n">yin</span><span class="p">,</span> <span class="n">k_in</span><span class="p">,</span> <span class="n">Nin</span><span class="p">,</span> <span class="n">xo</span><span class="p">,</span> <span class="n">limit</span><span class="p">,</span> <span class="n">sigma</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">k_in</span> <span class="o">&lt;</span> <span class="n">Nin</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># /* Linear interpolation */</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="p">(</span><span class="n">yin</span><span class="p">[</span><span class="n">k_in</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">yin</span><span class="p">[</span><span class="n">k_in</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">xin</span><span class="p">[</span><span class="n">k_in</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">xin</span><span class="p">[</span><span class="n">k_in</span><span class="p">])</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">yin</span><span class="p">[</span><span class="n">k_in</span><span class="p">]</span> <span class="o">-</span> <span class="n">m</span> <span class="o">*</span> <span class="n">xin</span><span class="p">[</span><span class="n">k_in</span><span class="p">]</span>
+            <span class="n">y</span><span class="p">[</span><span class="n">k_out</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span> <span class="o">*</span> <span class="n">xo</span> <span class="o">+</span> <span class="n">b</span>
+        <span class="k">elif</span> <span class="n">k_in</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># /* Linear extrapolation */</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="p">(</span><span class="n">yin</span><span class="p">[</span><span class="n">k_in</span><span class="p">]</span> <span class="o">-</span> <span class="n">yin</span><span class="p">[</span><span class="n">k_in</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">xin</span><span class="p">[</span><span class="n">k_in</span><span class="p">]</span> <span class="o">-</span> <span class="n">xin</span><span class="p">[</span><span class="n">k_in</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">yin</span><span class="p">[</span><span class="n">k_in</span><span class="p">]</span> <span class="o">-</span> <span class="n">m</span> <span class="o">*</span> <span class="n">xin</span><span class="p">[</span><span class="n">k_in</span><span class="p">]</span>
+            <span class="n">y</span><span class="p">[</span><span class="n">k_out</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span> <span class="o">*</span> <span class="n">xo</span> <span class="o">+</span> <span class="n">b</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># /* Can&#39;t happen because there is more than one point in xin. */</span>
+            <span class="c1"># assert(Nin&gt;1)</span>
+            <span class="k">pass</span></div>
+
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        <a class="uplink" href="../../../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

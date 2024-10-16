@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Defining a film &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <script src="../../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Choosing an instrument" href="nifilm-tof.html" />
+    <link rel="prev" title="Simple films" href="readme.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>Defining a film</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        «&#160;&#160;<a href="readme.html">Simple films</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="nifilm-tof.html">Choosing an instrument</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="defining-a-film">
+<h1>Defining a film<a class="headerlink" href="#defining-a-film" title="Link to this heading">¶</a></h1>
+<p>We start with a basic example, a nickel film on silicon:</p>
+<p>(<a class="reference download internal" download="" href="../../_downloads/8b8c9928a3876bfa7b18b85e9d4c93e8/nifilm-1.py"><code class="xref download docutils literal notranslate"><span class="pre">Source</span> <span class="pre">code</span></code></a>, <a class="reference download internal" download="" href="../../_downloads/ab5d6f489cfa292a2d9b6ab834d8576d/nifilm-1.png"><code class="xref download docutils literal notranslate"><span class="pre">png</span></code></a>, <a class="reference download internal" download="" href="../../_downloads/906963cbd0f738e0dacc36c4a2450bdd/nifilm-1.hires.png"><code class="xref download docutils literal notranslate"><span class="pre">hires.png</span></code></a>, <a class="reference download internal" download="" href="../../_downloads/bd9b6435e44361b7e9cb544b503b3220/nifilm-1.pdf"><code class="xref download docutils literal notranslate"><span class="pre">pdf</span></code></a>)</p>
+<figure class="align-default">
+<img alt="../../_images/nifilm-1.png" class="plot-directive" src="../../_images/nifilm-1.png" />
+</figure>
+<p>This model shows three layers (silicon, nickel, and air) as seen in the
+solid green line (the step profile).  In addition we have a dashed green
+line (the smoothed profile) which corresponds the effective reflectivity
+profile, with the <span class="math notranslate nohighlight">\(\exp(-2 k_n k_{n+1} \sigma^2)\)</span> interface factored in.</p>
+<p>This model is defined in <a class="reference download internal" download="" href="../../_downloads/750fa8bada44c2c6523f0db633269d94/nifilm.py"><code class="xref download docutils literal notranslate"><span class="pre">nifilm.py</span></code></a>.</p>
+<p>You can preview the model on the command line:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ refl1d nifilm.py --preview
+</pre></div>
+</div>
+<p>Lets examine the code down on a line by line basis to understand what is
+going on.</p>
+<p>The first step in any model is to load the names of the functions and
+data that we are going to use.  These are defined in a module named
+refl1d.names, and we import them all as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">refl1d.names</span> <span class="kn">import</span> <span class="o">*</span>
+</pre></div>
+</div>
+<p>This statement imports functions like SLD and Material for defining
+materials, Parameter, Slab and Stack for defining materials,
+NeutronProbe and XrayProbe for defining data, and Experiment and
+FitProblem to tie everything together.</p>
+<p>Note that ‘import *’ is bad style for anything but simple scripts.  As
+programs get larger, it is much less confusing to list the specific
+functions that you need from a module rather than importing everything.</p>
+<p>Next we define the materials that we are going to use in our sample.
+silicon and air are common, so we don’t need to define them.  We just
+need to define nickel, which we do as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nickel</span> <span class="o">=</span> <span class="n">Material</span><span class="p">(</span><span class="s2">&quot;Ni&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This defines a chemical formula, Ni, for which the program knows the
+density in advance since it has densities for all elements.  By using
+chemical composition, we can compute scattering length densities for
+both X-ray and neutron beams from the same sample description.
+Alternatively, we could take a more traditional approach and define
+nickel as a specific SLD for our beam</p>
+<p>nickel = SLD(rho=9.4)</p>
+<p>The ‘#’ character on the above line means that line is a comment, and
+it won’t be evaluated.</p>
+<p>With our materials defined (silicon, nickel and air), we can combine
+them into a sample. The substrate will be silicon with a 5 Å
+1-<span class="math notranslate nohighlight">\(\sigma\)</span> Si:Ni interface.  The nickel layer is 100 Å thick
+with a 5 Å Ni:Air interface.  Air is on the surface.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sample</span> <span class="o">=</span> <span class="n">silicon</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span> <span class="o">|</span> <span class="n">nickel</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span> <span class="o">|</span> <span class="n">air</span>
+</pre></div>
+</div>
+<p>Our sample definition is complete, so now we need to specify the
+range of values we are going to view.  We will use the
+<a class="reference external" href="http://numpy.scipy.org/">numpy</a> library, which extends python
+with vector and matrix operations.  The <cite>linspace</cite> function below
+returns values from 0 to 5 in 100 steps for incident angles
+from 0° to 5°.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">T</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>From the range of reflection angles, we can create a neutron probe. The probe
+defines the wavelengths and angles which are used for the measurement as well
+as their uncertainties.  From this the resolution of each point can be
+calculated.  We use constants for angular divergence <code class="docutils literal notranslate"><span class="pre">dT=0.01</span></code>°,
+wavelength <code class="docutils literal notranslate"><span class="pre">L=4.75</span></code> Å and wavelength dispersion <code class="docutils literal notranslate"><span class="pre">dL=0.0475</span></code> in this
+example, but each angle and wavelength is independent.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">probe</span> <span class="o">=</span> <span class="n">NeutronProbe</span><span class="p">(</span><span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="n">dT</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">L</span><span class="o">=</span><span class="mf">4.75</span><span class="p">,</span> <span class="n">dL</span><span class="o">=</span><span class="mf">0.0475</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Combine the neutron probe with the sample stack to define an
+experiment.  Using chemical formula and mass density, the same
+sample can be simulated for both neutron and x-ray experiments.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">M</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">probe</span><span class="o">=</span><span class="n">probe</span><span class="p">,</span> <span class="n">sample</span><span class="o">=</span><span class="n">sample</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Generate a random data set with 5% noise. While not necessary
+to display a reflectivity curve, it is useful in showing how
+the data set should look.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">M</span><span class="o">.</span><span class="n">simulate_data</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Combine a set of experiments into a fitting problem.  The problem
+is used by refl1d for all operations on the model.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">problem</span> <span class="o">=</span> <span class="n">FitProblem</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        «&#160;&#160;<a href="readme.html">Simple films</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="nifilm-tof.html">Choosing an instrument</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

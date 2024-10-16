@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>refl1d.rebin &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <script src="../../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>refl1d.rebin</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <h1>Source code for refl1d.rebin</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">1-D and 2-D rebinning code.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;bin_edges&quot;</span><span class="p">,</span> <span class="s2">&quot;logbin_edges&quot;</span><span class="p">,</span> <span class="s2">&quot;rebin&quot;</span><span class="p">,</span> <span class="s2">&quot;rebin2d&quot;</span><span class="p">]</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+
+<div class="viewcode-block" id="bin_edges">
+<a class="viewcode-back" href="../../refl1d.rebin.html#refl1d.rebin.bin_edges">[docs]</a>
+<span class="k">def</span> <span class="nf">bin_edges</span><span class="p">(</span><span class="n">C</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Construct bin edges *E* from equally spaced bin centers *C*.</span>
+
+<span class="sd">    Assumes the edges lie half way between the centers.  This will only</span>
+<span class="sd">    be true if the centers are evenly spaced, but may be good enough for</span>
+<span class="sd">    visualization purposes even when they are not.  Ideally analysis would</span>
+<span class="sd">    be performed on the raw data without rebinning.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">E</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">C</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">C</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">C</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">E</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">C</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">E</span><span class="p">,</span> <span class="n">C</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">C</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">E</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])))</span></div>
+
+
+
+<div class="viewcode-block" id="logbin_edges">
+<a class="viewcode-back" href="../../refl1d.rebin.html#refl1d.rebin.logbin_edges">[docs]</a>
+<span class="k">def</span> <span class="nf">logbin_edges</span><span class="p">(</span><span class="n">L</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Construct bin edges *E* from logarithmically spaced bin centers *L*.</span>
+
+<span class="sd">    Assuming fixed $\omega = \Delta\lambda/\lambda$ in the bins, the</span>
+<span class="sd">    edges will be spaced logarithmically at:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        E_0     &amp;= \min \lambda \\</span>
+<span class="sd">        E_{i+1} &amp;= E_i + \omega E_i = E_i (1+\omega)</span>
+
+<span class="sd">    with centers $L$ half way between the edges:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        L_i = (E_i+E_{i+1})/2</span>
+<span class="sd">            = (E_i + E_i (1+\omega))/2</span>
+<span class="sd">            = E_i (2 + \omega)/2</span>
+
+<span class="sd">    Solving for $E_i$, we can recover the edges from the centers:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        E_i = L_i \frac{2}{2+\omega}</span>
+
+<span class="sd">    The final edge, $E_{n+1}$, does not have a corresponding center</span>
+<span class="sd">    $L_{n+1}$ so we must determine it from the previous edge $E_n$:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        E_{n+1} = L_n \frac{2}{2+\omega}(1+\omega)</span>
+
+<span class="sd">    The fixed $\omega$ can be retrieved from the ratio of any pair</span>
+<span class="sd">    of bin centers using:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \frac{L_{i+1}}{L_i} = \frac{ (E_{i+2}+E_{i+1})/2 }{ (E_{i+1}+E_i)/2 }</span>
+<span class="sd">                          = \frac{ (E_{i+1}(1+\omega)+E_{i+1} }</span>
+<span class="sd">                                  { (E_i(1+\omega)+E_i }</span>
+<span class="sd">                          = \frac{E_{i+1}}{E_i}</span>
+<span class="sd">                          = \frac{E_i(1+\omega)}{E_i} = 1 + \omega</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">L</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">L</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+        <span class="n">dLoL</span> <span class="o">=</span> <span class="n">L</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">L</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">last</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">dLoL</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">dLoL</span> <span class="o">=</span> <span class="n">L</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">L</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">last</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">dLoL</span><span class="p">)</span>
+    <span class="n">E</span> <span class="o">=</span> <span class="n">L</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">+</span> <span class="n">dLoL</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">E</span><span class="p">,</span> <span class="n">E</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">last</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="rebin">
+<a class="viewcode-back" href="../../refl1d.rebin.html#refl1d.rebin.rebin">[docs]</a>
+<span class="k">def</span> <span class="nf">rebin</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">xo</span><span class="p">,</span> <span class="n">Io</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Rebin a vector.</span>
+
+<span class="sd">    x are the existing bin edges</span>
+<span class="sd">    xo are the new bin edges</span>
+<span class="sd">    I are the existing counts (one fewer than edges)</span>
+
+<span class="sd">    Io will be used if present, but be sure that it is a contiguous</span>
+<span class="sd">    array of the correct shape and size.</span>
+
+<span class="sd">    dtype is the type to use for the intensity vectors.  This can be</span>
+<span class="sd">    integer (uint8, uint16, uint32) or real (float32 or f, float64 or d).</span>
+<span class="sd">    The edge vectors are all coerced to doubles.</span>
+
+<span class="sd">    Note that total intensity is not preserved for integer rebinning.</span>
+<span class="sd">    The algorithm uses truncation so total intensity will be down on</span>
+<span class="sd">    average by half the total number of bins.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">.refllib</span> <span class="kn">import</span> <span class="n">backend</span>
+
+    <span class="c1"># Coerce axes to float arrays</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">xo</span> <span class="o">=</span> <span class="n">_input</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;d&quot;</span><span class="p">),</span> <span class="n">_input</span><span class="p">(</span><span class="n">xo</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;d&quot;</span><span class="p">)</span>
+    <span class="n">shape_in</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="n">shape_out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">xo</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+
+    <span class="c1"># Coerce counts to correct type and check shape</span>
+    <span class="k">if</span> <span class="n">dtype</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">dtype</span> <span class="o">=</span> <span class="n">I</span><span class="o">.</span><span class="n">dtype</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span>
+    <span class="n">I</span> <span class="o">=</span> <span class="n">_input</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">shape_in</span> <span class="o">!=</span> <span class="n">I</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;input array incorrect shape </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">I</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+    <span class="c1"># Create output vector</span>
+    <span class="n">Io</span> <span class="o">=</span> <span class="n">_output</span><span class="p">(</span><span class="n">Io</span><span class="p">,</span> <span class="n">shape_out</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+
+    <span class="c1"># Call rebin on type if it is available</span>
+    <span class="c1"># try:</span>
+    <span class="c1">#     rebincore = getattr(_cmodule, &#39;rebin_&#39; + I.dtype.name)</span>
+    <span class="c1"># except AttributeError:</span>
+    <span class="c1">#     raise TypeError(&quot;rebin supports uint 8/16/32/64 and float 32/64, not &quot;</span>
+    <span class="c1">#                     + I.dtype.name)</span>
+    <span class="c1"># rebincore(x, I, xo, Io)</span>
+    <span class="n">backend</span><span class="o">.</span><span class="n">rebin_counts</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">xo</span><span class="p">,</span> <span class="n">Io</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Io</span></div>
+
+
+
+<div class="viewcode-block" id="rebin2d">
+<a class="viewcode-back" href="../../refl1d.rebin.html#refl1d.rebin.rebin2d">[docs]</a>
+<span class="k">def</span> <span class="nf">rebin2d</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">xo</span><span class="p">,</span> <span class="n">yo</span><span class="p">,</span> <span class="n">Io</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Rebin a matrix.</span>
+
+<span class="sd">    x, y are the existing bin edges</span>
+<span class="sd">    xo, yo are the new bin edges</span>
+<span class="sd">    I is the existing counts (one fewer than edges in each direction)</span>
+
+<span class="sd">    For example, with x representing the column edges in each row and</span>
+<span class="sd">    y representing the row edges in each column, the following</span>
+<span class="sd">    represents a uniform field::</span>
+
+<span class="sd">        &gt;&gt;&gt; #from bumps.rebin import rebin2d</span>
+<span class="sd">        &gt;&gt;&gt; x, y = [0, 2, 4, 5], [0, 1, 3]</span>
+<span class="sd">        &gt;&gt;&gt; z = [[2, 2, 1], [4, 4, 2]]</span>
+
+<span class="sd">    We can check this by rebinning with uniform size bins::</span>
+
+<span class="sd">        &gt;&gt;&gt; xo, yo = range(6), range(4)</span>
+<span class="sd">        &gt;&gt;&gt; zo = rebin2d(y, x, z, yo, xo)</span>
+<span class="sd">        &gt;&gt;&gt; bool((zo == 1.).all())</span>
+<span class="sd">        True</span>
+
+<span class="sd">    dtype is the type to use for the intensity vectors.  This can be</span>
+<span class="sd">    integer (uint8, uint16, uint32) or real (float32 or f, float64 or d).</span>
+<span class="sd">    The edge vectors are all coerced to doubles.</span>
+
+<span class="sd">    Note that total intensity is not preserved for integer rebinning.</span>
+<span class="sd">    The algorithm uses truncation so total intensity will be down on</span>
+<span class="sd">    average by half the total number of bins.</span>
+
+<span class="sd">    Io will be used if present, if it is contiguous and if it has the</span>
+<span class="sd">    correct shape and type for the input.  Otherwise it will raise a</span>
+<span class="sd">    TypeError.  This will allow you to rebin the slices of an appropriately</span>
+<span class="sd">    ordered matrix without making copies.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">.refllib</span> <span class="kn">import</span> <span class="n">backend</span>
+
+    <span class="c1"># Coerce axes to float arrays</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">xo</span><span class="p">,</span> <span class="n">yo</span> <span class="o">=</span> <span class="p">[</span><span class="n">_input</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;d&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">xo</span><span class="p">,</span> <span class="n">yo</span><span class="p">)]</span>
+    <span class="n">shape_in</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="n">shape_out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">xo</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">yo</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+
+    <span class="c1"># Coerce counts to correct type and check shape</span>
+    <span class="k">if</span> <span class="n">dtype</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">dtype</span> <span class="o">=</span> <span class="n">I</span><span class="o">.</span><span class="n">dtype</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span>
+    <span class="n">I</span> <span class="o">=</span> <span class="n">_input</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">shape_in</span> <span class="o">!=</span> <span class="n">I</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;input array incorrect shape </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">I</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+
+    <span class="c1"># Create output vector</span>
+    <span class="n">Io</span> <span class="o">=</span> <span class="n">_output</span><span class="p">(</span><span class="n">Io</span><span class="p">,</span> <span class="n">shape_out</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+
+    <span class="c1"># # Call rebin on type if it is available</span>
+    <span class="c1"># try:</span>
+    <span class="c1">#     rebincore = getattr(_cmodule, &#39;rebin2d_&#39; + I.dtype.name)</span>
+    <span class="c1"># except AttributeError:</span>
+    <span class="c1">#     raise TypeError(&quot;rebin2d supports uint 8/16/32/64 and float 32/64, not &quot;</span>
+    <span class="c1">#                     + I.dtype.name)</span>
+    <span class="c1"># print(x.shape, y.shape, I.shape, xo.shape, yo.shape, Io.shape)</span>
+    <span class="c1"># print(x.dtype, y.dtype, I.dtype, xo.dtype, yo.dtype, Io.dtype)</span>
+    <span class="n">backend</span><span class="o">.</span><span class="n">rebin_counts_2D</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">xo</span><span class="p">,</span> <span class="n">yo</span><span class="p">,</span> <span class="n">Io</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Io</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">_input</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;d&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Force v to be a contiguous array of the correct type, avoiding copies</span>
+<span class="sd">    if possible.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">ascontiguousarray</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_output</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a contiguous array of the correct shape and type to hold a</span>
+<span class="sd">    returned array, reusing an existing array if possible.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+        <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">and</span> <span class="n">v</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">shape</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span> <span class="ow">and</span> <span class="n">v</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">contiguous</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;output vector must be contiguous </span><span class="si">%s</span><span class="s2"> of size </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">dtype</span><span class="p">,</span> <span class="n">shape</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">v</span>
+
+
+<span class="c1"># ================ Test code ==================</span>
+<span class="c1"># TODO: move test code to its own file</span>
+<span class="k">def</span> <span class="nf">_check_one_1d</span><span class="p">(</span><span class="n">from_bins</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">to_bins</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
+    <span class="n">target</span> <span class="o">=</span> <span class="n">_input</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">f</span><span class="p">,</span> <span class="n">F</span> <span class="ow">in</span> <span class="p">[(</span><span class="n">from_bins</span><span class="p">,</span> <span class="n">val</span><span class="p">),</span> <span class="p">(</span><span class="n">from_bins</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">val</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">])]:</span>
+        <span class="k">for</span> <span class="n">t</span><span class="p">,</span> <span class="n">T</span> <span class="ow">in</span> <span class="p">[(</span><span class="n">to_bins</span><span class="p">,</span> <span class="n">target</span><span class="p">),</span> <span class="p">(</span><span class="n">to_bins</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">target</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">])]:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">rebin</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">T</span> <span class="o">-</span> <span class="n">result</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-14</span><span class="p">,</span> <span class="s2">&quot;rebin failed for </span><span class="si">%s</span><span class="s2">-&gt;</span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_check_all_1d</span><span class="p">():</span>
+    <span class="c1"># Split a value</span>
+    <span class="n">_check_one_1d</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">20</span><span class="p">,</span> <span class="mi">40</span><span class="p">])</span>
+
+    <span class="c1"># bin is a superset of rebin</span>
+    <span class="n">_check_one_1d</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">20</span><span class="p">,</span> <span class="mi">10</span><span class="p">])</span>
+
+    <span class="c1"># bin is a subset of rebin</span>
+    <span class="n">_check_one_1d</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">50</span><span class="p">],</span> <span class="p">[</span><span class="mf">2.5</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">],</span> <span class="p">[</span><span class="mi">25</span><span class="p">])</span>
+
+    <span class="c1"># one bin to many</span>
+    <span class="n">_check_one_1d</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">50</span><span class="p">],</span> <span class="p">[</span><span class="mf">2.1</span><span class="p">,</span> <span class="mf">2.2</span><span class="p">,</span> <span class="mf">2.3</span><span class="p">,</span> <span class="mf">2.4</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+
+    <span class="c1"># many bins to one</span>
+    <span class="n">_check_one_1d</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">50</span><span class="p">],</span> <span class="p">[</span><span class="mf">2.5</span><span class="p">,</span> <span class="mf">4.5</span><span class="p">],</span> <span class="p">[</span><span class="mi">60</span><span class="p">])</span>
+
+
+<span class="k">def</span> <span class="nf">_check_one_2d</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">xo</span><span class="p">,</span> <span class="n">yo</span><span class="p">,</span> <span class="n">zo</span><span class="p">):</span>
+    <span class="c1"># print(&quot;checking&quot;)</span>
+    <span class="c1"># print(x, y, z)</span>
+    <span class="c1"># print(xo, yo, zo)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">rebin2d</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">xo</span><span class="p">,</span> <span class="n">yo</span><span class="p">)</span>
+    <span class="n">target</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">zo</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">target</span> <span class="o">-</span> <span class="n">result</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-14</span><span class="p">,</span> <span class="s2">&quot;rebin2d failed for </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">-&gt;</span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="se">\n</span><span class="s2">expected: </span><span class="si">%s</span><span class="se">\n</span><span class="s2">but got: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+        <span class="n">x</span><span class="p">,</span>
+        <span class="n">y</span><span class="p">,</span>
+        <span class="n">xo</span><span class="p">,</span>
+        <span class="n">yo</span><span class="p">,</span>
+        <span class="n">zo</span><span class="p">,</span>
+        <span class="n">z</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_check_uniform_2d</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">y</span><span class="p">],</span> <span class="s2">&quot;d&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="p">],</span> <span class="s2">&quot;d&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+    <span class="n">xedges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([(</span><span class="mi">0</span><span class="p">,),</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">x</span><span class="p">)])</span>
+    <span class="n">yedges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([(</span><span class="mi">0</span><span class="p">,),</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">y</span><span class="p">)])</span>
+    <span class="n">nx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">xedges</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="n">ny</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">yedges</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="n">ox</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">nx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">oy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">ny</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">target</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">([</span><span class="n">nx</span><span class="p">,</span> <span class="n">ny</span><span class="p">],</span> <span class="s2">&quot;d&quot;</span><span class="p">)</span>
+    <span class="n">_check_one_2d</span><span class="p">(</span><span class="n">xedges</span><span class="p">,</span> <span class="n">yedges</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">ox</span><span class="p">,</span> <span class="n">oy</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_check_all_2d</span><span class="p">():</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">I</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">]]</span>
+    <span class="n">xo</span><span class="p">,</span> <span class="n">yo</span><span class="p">,</span> <span class="n">Io</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">),</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">),</span> <span class="p">[[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mi">3</span><span class="p">]</span> <span class="o">*</span> <span class="mi">7</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">xo</span><span class="p">,</span> <span class="n">yo</span><span class="p">,</span> <span class="n">Io</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">A</span> <span class="ow">in</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">xo</span><span class="p">,</span> <span class="n">yo</span><span class="p">,</span> <span class="n">Io</span><span class="p">)]</span>
+
+    <span class="c1"># Try various types and orders on a non-square matrix</span>
+    <span class="n">_check_one_2d</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">xo</span><span class="p">,</span> <span class="n">yo</span><span class="p">,</span> <span class="n">Io</span><span class="p">)</span>
+    <span class="n">_check_one_2d</span><span class="p">(</span><span class="n">x</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">y</span><span class="p">,</span> <span class="n">I</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:],</span> <span class="n">xo</span><span class="p">,</span> <span class="n">yo</span><span class="p">,</span> <span class="n">Io</span><span class="p">)</span>
+    <span class="n">_check_one_2d</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">I</span><span class="p">[:,</span> <span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">xo</span><span class="p">,</span> <span class="n">yo</span><span class="p">,</span> <span class="n">Io</span><span class="p">)</span>
+    <span class="n">_check_one_2d</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="p">[</span><span class="mi">7</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">yo</span><span class="p">,</span> <span class="p">[[</span><span class="mi">4</span><span class="p">]</span> <span class="o">*</span> <span class="mi">3</span><span class="p">,</span> <span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">*</span> <span class="mi">3</span><span class="p">])</span>
+    <span class="n">_check_one_2d</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">xo</span><span class="p">,</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]]</span> <span class="o">*</span> <span class="mi">7</span><span class="p">)</span>
+    <span class="n">_check_one_2d</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">I</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">yo</span><span class="p">,</span> <span class="n">xo</span><span class="p">,</span> <span class="n">Io</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>  <span class="c1"># C vs. Fortran ordering</span>
+
+    <span class="c1"># Test smallest possible result</span>
+    <span class="n">_check_one_2d</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">]],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="c1"># subset/superset</span>
+    <span class="n">_check_one_2d</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mi">3</span><span class="p">]</span> <span class="o">*</span> <span class="mi">3</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">],</span> <span class="p">[[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;uint8&quot;</span><span class="p">,</span> <span class="s2">&quot;uint16&quot;</span><span class="p">,</span> <span class="s2">&quot;uint32&quot;</span><span class="p">,</span> <span class="s2">&quot;float32&quot;</span><span class="p">,</span> <span class="s2">&quot;float64&quot;</span><span class="p">]:</span>
+        <span class="n">_check_one_2d</span><span class="p">(</span>
+            <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span>
+            <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mi">4</span><span class="p">]</span> <span class="o">*</span> <span class="mi">4</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">),</span>
+            <span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span>
+            <span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">),</span>
+        <span class="p">)</span>
+    <span class="c1"># non-square test</span>
+    <span class="n">_check_uniform_2d</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">])</span>
+    <span class="n">_check_uniform_2d</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+
+
+<span class="k">def</span> <span class="nf">_check_bin_edges</span><span class="p">():</span>
+    <span class="n">log_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="mi">2</span> <span class="o">*</span> <span class="mf">1.2</span><span class="o">**</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">)])</span>
+    <span class="n">log_centers</span> <span class="o">=</span> <span class="p">(</span><span class="n">log_edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">+</span> <span class="n">log_edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">logbin_edges</span><span class="p">(</span><span class="n">log_centers</span><span class="p">)</span> <span class="o">-</span> <span class="n">log_edges</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-10</span>
+
+    <span class="n">lin_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+    <span class="n">lin_centers</span> <span class="o">=</span> <span class="p">(</span><span class="n">lin_edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">+</span> <span class="n">lin_edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">bin_edges</span><span class="p">(</span><span class="n">lin_centers</span><span class="p">)</span> <span class="o">-</span> <span class="n">lin_edges</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-10</span>
+
+
+<span class="k">def</span> <span class="nf">test</span><span class="p">():</span>
+    <span class="n">_check_all_1d</span><span class="p">()</span>
+    <span class="n">_check_all_2d</span><span class="p">()</span>
+    <span class="n">_check_bin_edges</span><span class="p">()</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">test</span><span class="p">()</span>
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

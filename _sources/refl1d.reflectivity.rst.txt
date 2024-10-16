@@ -1,0 +1,7 @@
+refl1d.reflectivity module
+==========================
+
+.. automodule:: refl1d.reflectivity
+   :members:
+   :undoc-members:
+   :show-inheritance:

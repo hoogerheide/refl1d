@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Adding an SiOx layer &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <script src="../../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Tethered Polymer" href="../polymer/readme.html" />
+    <link rel="prev" title="Back reflectivity" href="nifilm-back.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>Adding an SiOx layer</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        «&#160;&#160;<a href="nifilm-back.html">Back reflectivity</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../polymer/readme.html">Tethered Polymer</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="adding-an-siox-layer">
+<h1>Adding an SiOx layer<a class="headerlink" href="#adding-an-siox-layer" title="Link to this heading">¶</a></h1>
+<p>We will tweak the fitting model a little to add an SiOx layer between
+the silicon and the nickel.  There is no justification for doing so for
+this data (and indeeded, it sets the SiOx layer to almost pure Si), but
+it does demonstrate a way to form a mixture of two materials by volume
+<a class="reference download internal" download="" href="../../_downloads/0d115a19aa26b494fb2efbc401df9539/nifilm-mixture.py"><code class="xref download docutils literal notranslate"><span class="pre">nifilm-mixture.py</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">refl1d.names</span> <span class="kn">import</span> <span class="o">*</span>
+</pre></div>
+</div>
+<p>Here is the mixture formula.  We are giving the mass density along with the
+chemical formula for each part, followed by the percentage for that part.
+We are giving it the name SiOx so we can reference it later.  Additional
+components woudl be added as material, fraction, material, fraction, …
+The bulk material will sum the fractions to 100%.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SiOx</span> <span class="o">=</span> <span class="n">Mixture</span><span class="o">.</span><span class="n">byvolume</span><span class="p">(</span><span class="s2">&quot;Si@2.329&quot;</span><span class="p">,</span> <span class="s2">&quot;SiO2@26.5&quot;</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;SiOx&quot;</span><span class="p">)</span>
+
+<span class="n">nickel</span> <span class="o">=</span> <span class="n">Material</span><span class="p">(</span><span class="s2">&quot;Ni&quot;</span><span class="p">)</span>
+<span class="n">sample</span> <span class="o">=</span> <span class="n">silicon</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span> <span class="o">|</span> <span class="n">SiOx</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">|</span> <span class="n">nickel</span><span class="p">(</span><span class="mi">125</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span> <span class="o">|</span> <span class="n">air</span>
+</pre></div>
+</div>
+<p>The same fitting parameters as before…</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sample</span><span class="p">[</span><span class="s2">&quot;Ni&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">thickness</span><span class="o">.</span><span class="n">pm</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">sample</span><span class="p">[</span><span class="s2">&quot;Si&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">12</span><span class="p">)</span>
+<span class="n">sample</span><span class="p">[</span><span class="s2">&quot;Ni&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>…with the addition of a volume fraction between 0 and 100% for
+the SiOx layer.  The thickness on this layer is not fitted in this
+example because the system is already overparameterized (the sample
+data was generated without an SiOx layer).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sample</span><span class="p">[</span><span class="s2">&quot;SiOx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">12</span><span class="p">)</span>
+<span class="n">sample</span><span class="p">[</span><span class="s2">&quot;SiOx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">thickness</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+<span class="n">sample</span><span class="p">[</span><span class="s2">&quot;SiOx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">material</span><span class="o">.</span><span class="n">fraction</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The remainder of the problem setup is the same.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">instrument</span> <span class="o">=</span> <span class="n">SNS</span><span class="o">.</span><span class="n">Liquids</span><span class="p">()</span>
+<span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;nifilm-tof-</span><span class="si">%d</span><span class="s2">.dat&quot;</span> <span class="o">%</span> <span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)]</span>
+<span class="n">probe</span> <span class="o">=</span> <span class="n">ProbeSet</span><span class="p">(</span><span class="n">instrument</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">files</span><span class="p">)</span>
+
+<span class="n">M</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">probe</span><span class="o">=</span><span class="n">probe</span><span class="p">,</span> <span class="n">sample</span><span class="o">=</span><span class="n">sample</span><span class="p">)</span>
+
+<span class="n">problem</span> <span class="o">=</span> <span class="n">FitProblem</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        «&#160;&#160;<a href="nifilm-back.html">Back reflectivity</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../polymer/readme.html">Tethered Polymer</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

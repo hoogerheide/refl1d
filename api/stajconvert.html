@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>stajconvert - Staj File Converter &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
+    <script src="../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="stitch - Overlapping reflectivity curve stitching" href="stitch.html" />
+    <link rel="prev" title="staj - Staj File" href="staj.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>stajconvert - Staj File Converter</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        «&#160;&#160;<a href="staj.html">staj - Staj File</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="stitch.html">stitch - Overlapping reflectivity curve stitching</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="stajconvert-staj-file-converter">
+<h1>stajconvert - Staj File Converter<a class="headerlink" href="#stajconvert-staj-file-converter" title="Link to this heading">¶</a></h1>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../refl1d.stajconvert.html#refl1d.stajconvert.fit_all" title="refl1d.stajconvert.fit_all"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_all</span></code></a></p></td>
+<td><p>Set all non-zero parameters to fitted parameters inside the model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../refl1d.stajconvert.html#refl1d.stajconvert.load_mlayer" title="refl1d.stajconvert.load_mlayer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_mlayer</span></code></a></p></td>
+<td><p>Load a staj file as a model.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../refl1d.stajconvert.html#refl1d.stajconvert.mlayer_magnetic_to_model" title="refl1d.stajconvert.mlayer_magnetic_to_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mlayer_magnetic_to_model</span></code></a></p></td>
+<td><p>Convert a loaded sta file to a refl1d experiment.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../refl1d.stajconvert.html#refl1d.stajconvert.mlayer_to_model" title="refl1d.stajconvert.mlayer_to_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mlayer_to_model</span></code></a></p></td>
+<td><p>Convert a loaded staj file to a refl1d experiment.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../refl1d.stajconvert.html#refl1d.stajconvert.model_to_mlayer" title="refl1d.stajconvert.model_to_mlayer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">model_to_mlayer</span></code></a></p></td>
+<td><p>Return an mlayer model based on the a slab stack.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../refl1d.stajconvert.html#refl1d.stajconvert.save_mlayer" title="refl1d.stajconvert.save_mlayer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">save_mlayer</span></code></a></p></td>
+<td><p>Save a model to a staj file.</p></td>
+</tr>
+</tbody>
+</table>
+<p id="module-refl1d.stajconvert">Convert staj files to Refl1D models</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.stajconvert.fit_all">
+<span class="sig-prename descclassname"><span class="pre">refl1d.stajconvert.</span></span><span class="sig-name descname"><span class="pre">fit_all</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">M</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pmp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/stajconvert.html#fit_all"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.stajconvert.fit_all" title="Link to this definition">¶</a></dt>
+<dd><p>Set all non-zero parameters to fitted parameters inside the model.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.stajconvert.load_mlayer">
+<span class="sig-prename descclassname"><span class="pre">refl1d.stajconvert.</span></span><span class="sig-name descname"><span class="pre">load_mlayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_pmp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/stajconvert.html#load_mlayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.stajconvert.load_mlayer" title="Link to this definition">¶</a></dt>
+<dd><p>Load a staj file as a model.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.stajconvert.mlayer_magnetic_to_model">
+<span class="sig-prename descclassname"><span class="pre">refl1d.stajconvert.</span></span><span class="sig-name descname"><span class="pre">mlayer_magnetic_to_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/stajconvert.html#mlayer_magnetic_to_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.stajconvert.mlayer_magnetic_to_model" title="Link to this definition">¶</a></dt>
+<dd><p>Convert a loaded sta file to a refl1d experiment.</p>
+<p>Returns a new experiment</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.stajconvert.mlayer_to_model">
+<span class="sig-prename descclassname"><span class="pre">refl1d.stajconvert.</span></span><span class="sig-name descname"><span class="pre">mlayer_to_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">staj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/stajconvert.html#mlayer_to_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.stajconvert.mlayer_to_model" title="Link to this definition">¶</a></dt>
+<dd><p>Convert a loaded staj file to a refl1d experiment.</p>
+<p>Returns a new experiment</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.stajconvert.model_to_mlayer">
+<span class="sig-prename descclassname"><span class="pre">refl1d.stajconvert.</span></span><span class="sig-name descname"><span class="pre">model_to_mlayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datafile</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/stajconvert.html#model_to_mlayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.stajconvert.model_to_mlayer" title="Link to this definition">¶</a></dt>
+<dd><p>Return an mlayer model based on the a slab stack.</p>
+<p>Raises TypeError if model cannot be stored as a staj file.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.stajconvert.save_mlayer">
+<span class="sig-prename descclassname"><span class="pre">refl1d.stajconvert.</span></span><span class="sig-name descname"><span class="pre">save_mlayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">experiment</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datafile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/refl1d/stajconvert.html#save_mlayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.stajconvert.save_mlayer" title="Link to this definition">¶</a></dt>
+<dd><p>Save a model to a staj file.</p>
+</dd></dl>
+
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        «&#160;&#160;<a href="staj.html">staj - Staj File</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="stitch.html">stitch - Overlapping reflectivity curve stitching</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

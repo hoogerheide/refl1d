@@ -1,0 +1,7 @@
+refl1d.view.polymeri module
+===========================
+
+.. automodule:: refl1d.view.polymeri
+   :members:
+   :undoc-members:
+   :show-inheritance:

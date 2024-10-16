@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>refl1d.stitch &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <script src="../../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>refl1d.stitch</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <h1>Source code for refl1d.stitch</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Data stitching.</span>
+
+<span class="sd">Join together datasets yielding unique sorted x.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">hstack</span><span class="p">,</span> <span class="n">vstack</span><span class="p">,</span> <span class="n">argsort</span><span class="p">,</span> <span class="nb">sum</span><span class="p">,</span> <span class="n">sqrt</span>
+
+
+<div class="viewcode-block" id="stitch">
+<a class="viewcode-back" href="../../refl1d.stitch.html#refl1d.stitch.stitch">[docs]</a>
+<span class="k">def</span> <span class="nf">stitch</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">same_x</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">same_dx</span><span class="o">=</span><span class="mf">0.001</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stitch together multiple measurements into one.</span>
+
+<span class="sd">    *data* a list of datasets with x, dx, y, dy attributes</span>
+<span class="sd">    *same_x* minimum point separation (default is 0.001).</span>
+<span class="sd">    *same_dx* minimum change in resolution that may be averaged (default is 0.001).</span>
+
+<span class="sd">    WARNING: the returned x values may be data dependent, with two measured</span>
+<span class="sd">    sets having different x after stitching, even though the measurement</span>
+<span class="sd">    conditions are identical!!</span>
+
+<span class="sd">    Either add an intensity weight to the datasets::</span>
+
+<span class="sd">        probe.I = slitscan</span>
+
+<span class="sd">    or use interpolation if you need to align two stitched scans::</span>
+
+<span class="sd">        import numpy as np</span>
+<span class="sd">        x1, dx1, y1, dy1 = stitch([a1, b1, c1, d1])</span>
+<span class="sd">        x2, dx2, y2, dy2 = stitch([a2, b2, c2, d2])</span>
+<span class="sd">        x2[0], x2[-1] = x1[0], x1[-1] # Force matching end points</span>
+<span class="sd">        y2 = np.interp(x1, x2, y2)</span>
+<span class="sd">        dy2 = np.interp(x1, x2, dy2)</span>
+<span class="sd">        x2 = x1</span>
+
+<span class="sd">    WARNING: the returned dx value underestimates the true x, depending on</span>
+<span class="sd">    the relative weights of the averaged data points.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">same_dx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">same_dx</span> <span class="o">=</span> <span class="n">same_x</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">hstack</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">x</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">data</span><span class="p">)</span>
+    <span class="n">dx</span> <span class="o">=</span> <span class="n">hstack</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">dx</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">data</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">hstack</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">y</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">data</span><span class="p">)</span>
+    <span class="n">dy</span> <span class="o">=</span> <span class="n">hstack</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">dy</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">data</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="s2">&quot;I&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">weight</span> <span class="o">=</span> <span class="n">hstack</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">I</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">data</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">weight</span> <span class="o">=</span> <span class="n">y</span> <span class="o">/</span> <span class="n">dy</span><span class="o">**</span><span class="mi">2</span>  <span class="c1"># y/dy**2 is approximately the intensity</span>
+
+    <span class="c1"># Sort the data by increasing x</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">argsort</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">vstack</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">dx</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">dy</span><span class="p">,</span> <span class="n">weight</span><span class="p">))</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span> <span class="n">idx</span><span class="p">]</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="n">dx</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
+
+    <span class="c1"># Skip through the data looking for regions of overlap.</span>
+    <span class="n">keep</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">n</span><span class="p">,</span> <span class="n">last</span><span class="p">,</span> <span class="nb">next</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span>
+    <span class="k">while</span> <span class="nb">next</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
+        <span class="k">while</span> <span class="nb">next</span> <span class="o">&lt;</span> <span class="n">n</span> <span class="ow">and</span> <span class="nb">abs</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="nb">next</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="n">last</span><span class="p">])</span> <span class="o">&lt;=</span> <span class="n">same_x</span><span class="p">:</span>
+            <span class="nb">next</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="nb">next</span> <span class="o">-</span> <span class="n">last</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># Only one point, so no averaging necessary</span>
+            <span class="n">keep</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">last</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Pick the x in [last:next] with the best resolution and average</span>
+            <span class="c1"># them using Poisson averages.  Repeat until all points are used</span>
+            <span class="n">remainder</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span> <span class="n">last</span><span class="p">:</span><span class="nb">next</span><span class="p">]</span>
+            <span class="n">avg</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">while</span> <span class="n">remainder</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">best_dx</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">remainder</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">:])</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="n">remainder</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">best_dx</span> <span class="o">&lt;=</span> <span class="n">same_dx</span>
+                <span class="n">avg</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">poisson_average</span><span class="p">(</span><span class="n">remainder</span><span class="p">[:,</span> <span class="n">idx</span><span class="p">]))</span>
+                <span class="n">remainder</span> <span class="o">=</span> <span class="n">remainder</span><span class="p">[:,</span> <span class="o">~</span><span class="n">idx</span><span class="p">]</span>
+            <span class="c1"># Store the result in worst to best resolution order.</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">avg</span><span class="p">)):</span>
+                <span class="n">data</span><span class="p">[:,</span> <span class="n">last</span> <span class="o">+</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span>
+                <span class="n">keep</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">last</span> <span class="o">+</span> <span class="n">i</span><span class="p">)</span>
+        <span class="n">last</span> <span class="o">=</span> <span class="nb">next</span>
+
+    <span class="k">return</span> <span class="n">data</span><span class="p">[:</span><span class="mi">4</span><span class="p">,</span> <span class="n">keep</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="poisson_average">
+<a class="viewcode-back" href="../../refl1d.stitch.html#refl1d.stitch.poisson_average">[docs]</a>
+<span class="k">def</span> <span class="nf">poisson_average</span><span class="p">(</span><span class="n">xdxydyw</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the poisson average of y/dy using a set of data points.</span>
+
+<span class="sd">    The returned x, dx is the weighted average of the inputs::</span>
+
+<span class="sd">        x = sum(x*I)/sum(I)</span>
+<span class="sd">        dx = sum(dx*I)/sum(I)</span>
+
+<span class="sd">    The returned y, dy use Poisson averaging::</span>
+
+<span class="sd">        w = sum(y/dy^2)</span>
+<span class="sd">        y = sum((y/dy)^2)/w</span>
+<span class="sd">        dy = sqrt(y/w)</span>
+
+<span class="sd">    The above formula gives the expected result for combining two</span>
+<span class="sd">    measurements, assuming there is no uncertainty in the monitor.</span>
+
+<span class="sd">    ::</span>
+
+<span class="sd">        measure N counts during M monitors</span>
+<span class="sd">          rate:                   r = N/M</span>
+<span class="sd">          rate uncertainty:       dr = sqrt(N)/M</span>
+<span class="sd">          weighted rate:          r/dr^2 = (N/M) / (N/M^2) =  M</span>
+<span class="sd">          weighted rate squared:  r^2/dr^2 = (N^2/M^2) / (N/M^2) = N</span>
+
+<span class="sd">        for two measurements Na, Nb</span>
+<span class="sd">          w = ra/dra^2 + rb/drb^2 = Ma + Mb</span>
+<span class="sd">          y = ((ra/dra)^2 + (rb/drb)^2)/w = (Na + Nb)/(Ma + Mb)</span>
+<span class="sd">          dy = sqrt(y/w) = sqrt( (Na + Nb)/ w^2 ) = sqrt(Na+Nb)/(Ma + Mb)</span>
+
+<span class="sd">    This formula isn&#39;t strictly correct when applied to values which</span>
+<span class="sd">    have been scaled, for example to account for an attenuator in the</span>
+<span class="sd">    counting system.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># TODO: need better estimate of dx, with weighted broadening according</span>
+    <span class="c1"># to the distance of the x&#39;s from the centers.</span>
+    <span class="c1"># TODO: check the accuracy of the formula in the presence of</span>
+    <span class="c1"># attenuators.</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">dx</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">_dy</span><span class="p">,</span> <span class="n">weight</span> <span class="o">=</span> <span class="n">xdxydyw</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">weight</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">weight</span><span class="p">)</span> <span class="o">/</span> <span class="n">w</span>
+    <span class="n">dx</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">dx</span> <span class="o">*</span> <span class="n">weight</span><span class="p">)</span> <span class="o">/</span> <span class="n">w</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">y</span> <span class="o">*</span> <span class="n">weight</span><span class="p">)</span> <span class="o">/</span> <span class="n">w</span>
+    <span class="n">dy</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">y</span> <span class="o">/</span> <span class="n">w</span><span class="p">)</span>
+    <span class="c1"># print &quot;averaging&quot;, xdxydy, x, dx, y, dy</span>
+    <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">dx</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">dy</span><span class="p">,</span> <span class="n">w</span></div>
+
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

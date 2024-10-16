@@ -1,0 +1,7 @@
+refl1d.dist module
+==================
+
+.. automodule:: refl1d.dist
+   :members:
+   :undoc-members:
+   :show-inheritance:

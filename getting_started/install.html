@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Installing the application &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
+    <script src="../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Server installation" href="server.html" />
+    <link rel="prev" title="Getting Started" href="index.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>Installing the application</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        «&#160;&#160;<a href="index.html">Getting Started</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="server.html">Server installation</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="installing-the-application">
+<span id="installing"></span><h1>Installing the application<a class="headerlink" href="#installing-the-application" title="Link to this heading">¶</a></h1>
+<nav class="contents local" id="contents">
+<ul class="simple">
+<li><p><a class="reference internal" href="#installing-from-source" id="id1">Installing from source</a></p>
+<ul>
+<li><p><a class="reference internal" href="#windows" id="id2">Windows</a></p></li>
+<li><p><a class="reference internal" href="#linux" id="id3">Linux</a></p></li>
+<li><p><a class="reference internal" href="#os-x" id="id4">OS/X</a></p></li>
+</ul>
+</li>
+</ul>
+</nav>
+<div class="line-block">
+<div class="line">Windows installer: <a class="reference external" href="https://github.com/reflectometry/refl1d/releases/download/v0.7.7.post1533+gc6a0ac1/Refl1D-0.7.7.post1533+gc6a0ac1-exe.zip">Refl1D-0.7.7.post1533+gc6a0ac1-exe.zip</a></div>
+<div class="line">Source: <a class="reference external" href="https://github.com/reflectometry/refl1d/archive/0.7.7.post1533+gc6a0ac1.zip">0.7.7.post1533+gc6a0ac1.zip</a></div>
+</div>
+<p>Recent versions of the Refl1D application are available for windows
+from <a class="reference external" href="https://github.com/reflectometry/refl1d/releases/latest">github</a>.
+The file <cite>Refl1D-VERSION-exe.zip</cite> contains python, the application, the
+supporting libraries and everything else needed to run the application.</p>
+<p>To install, download and extract the zip file. Go to the extracted directory
+and click on <cite>refl1d_gui.bat</cite>. This will open a dialog saying that the
+application is untrusted with a “Don’t run” button at the bottom. Click
+on “more info” and a “Run anyway” button will appear. For command line
+operation, open a <cite>cmd</cite> command terminal, change to the extracted directory
+and type <cite>refl1d.bat</cite>.</p>
+<p>The installed python is a full version of python. If your specialized
+reflectometry models need additional python packages, then you can
+use <cite>python -m pip</cite> in the extracted directory to install them.</p>
+<p>Linux users will need to install from using pip:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">refl1d</span> <span class="n">wxpython</span>
+</pre></div>
+</div>
+<p>Note that the binary versions will lag the release version until the release
+process is automated.  Windows and Mac users may want to install using pip as
+well to get the version with the latest
+<a class="reference external" href="https://github.com/reflectometry/refl1d/blob/master/CHANGES.rst">changes</a>.</p>
+<section id="installing-from-source">
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Installing from source</a><a class="headerlink" href="#installing-from-source" title="Link to this heading">¶</a></h2>
+<p>Installing the application from source requires a working python environment.
+See below for operating system specific instructions.</p>
+<p>Our base scientific python environment contains the following packages as
+well as their dependencies:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>python 3</p></li>
+<li><p>numpy</p></li>
+<li><p>scipy</p></li>
+<li><p>matplotlib</p></li>
+<li><p>wxpython</p></li>
+</ul>
+</div></blockquote>
+<p>Once your environment is in place, you can install directly from PyPI
+using pip:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">refl1d</span>
+</pre></div>
+</div>
+<p>This will install refl1d, bumps and periodictable.</p>
+<p>You can run the program by typing:</p>
+<blockquote>
+<div><p>python -m refl1d.main</p>
+</div></blockquote>
+<p>If this fails, then follow the instructions in <a class="reference internal" href="contributing.html#contributing"><span class="std std-ref">Contributing Changes</span></a> to install
+from the source archive directly.</p>
+<section id="windows">
+<h3><a class="toc-backref" href="#id2" role="doc-backlink">Windows</a><a class="headerlink" href="#windows" title="Link to this heading">¶</a></h3>
+<p>There are couple of options for setting up a python environment on windows:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference external" href="https://www.python.org/">python.org</a>, and</p></li>
+<li><p><a class="reference external" href="https://www.anaconda.com/distribution/">Anaconda</a>.</p></li>
+</ul>
+</div></blockquote>
+<p>With most pypi packages now bundled with wheels, it is now easy to set up a
+development environment using the official python package.  Similarly,
+anaconda provides binaries for all the refl1d dependencies.</p>
+<p>You will need a C/C++ compiler.  If you already have Microsoft Visual C
+installed you are done. If not, you can use the MinGW compiler that is supplied
+with your python environment or download your own.  You can set MinGW
+as the default compiler by creating the file <em>Libdistutils\distutils.cfg</em>
+in your python directory (e.g., <em>C:\Python3.8</em>) with the following content:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">build</span><span class="p">]</span>
+<span class="n">compiler</span><span class="o">=</span><span class="n">mingw32</span>
+</pre></div>
+</div>
+<p>Once the python is prepared, you can install the periodic table and bumps
+package using the Windows console.</p>
+</section>
+<section id="linux">
+<h3><a class="toc-backref" href="#id3" role="doc-backlink">Linux</a><a class="headerlink" href="#linux" title="Link to this heading">¶</a></h3>
+<p>Linux distributions will provide the base required packages.  You
+will need to refer to your distribution documentation for details.</p>
+<p>On debian/ubuntu, the command will be something like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">python3</span><span class="o">-</span><span class="p">{</span><span class="n">matplotlib</span><span class="p">,</span><span class="n">numpy</span><span class="p">,</span><span class="n">scipy</span><span class="p">,</span><span class="n">wxgtk4</span><span class="mf">.0</span><span class="p">,</span><span class="n">pyparsing</span><span class="p">,</span><span class="n">setuptools</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>For development you also want nose and sphinx:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">python</span><span class="o">-</span><span class="p">{</span><span class="n">nose</span><span class="p">,</span><span class="n">sphinx</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>Latex is needed to build the pdf documentation.</p>
+</section>
+<section id="os-x">
+<h3><a class="toc-backref" href="#id4" role="doc-backlink">OS/X</a><a class="headerlink" href="#os-x" title="Link to this heading">¶</a></h3>
+<p>Similar to windows, you can install the official python distribution or
+use Anaconda.  You will need to install the Xcode command line utilities
+to get the compiler.</p>
+<p>To run the interactive interface on OS/X you may need to use:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pythonw</span> <span class="o">-</span><span class="n">m</span> <span class="n">refl1d</span><span class="o">.</span><span class="n">main</span> <span class="o">--</span><span class="n">edit</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        «&#160;&#160;<a href="index.html">Getting Started</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="server.html">Server installation</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

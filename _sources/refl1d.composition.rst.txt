@@ -1,0 +1,7 @@
+refl1d.composition module
+=========================
+
+.. automodule:: refl1d.composition
+   :members:
+   :undoc-members:
+   :show-inheritance:

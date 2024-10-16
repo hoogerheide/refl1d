@@ -1,0 +1,7 @@
+refl1d.view.layer\_dialog module
+================================
+
+.. automodule:: refl1d.view.layer_dialog
+   :members:
+   :undoc-members:
+   :show-inheritance:

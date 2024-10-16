@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Fitting &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
+    <script src="../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Reference" href="../api/index.html" />
+    <link rel="prev" title="Experiment" href="experiment.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>Fitting</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        «&#160;&#160;<a href="experiment.html">Experiment</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../api/index.html">Reference</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="fitting">
+<span id="fitting-guide"></span><h1>Fitting<a class="headerlink" href="#fitting" title="Link to this heading">¶</a></h1>
+<nav class="contents local" id="contents">
+<ul class="simple">
+<li><p><a class="reference internal" href="#quick-fit" id="id1">Quick Fit</a></p></li>
+<li><p><a class="reference internal" href="#uncertainty-analysis" id="id2">Uncertainty Analysis</a></p></li>
+<li><p><a class="reference internal" href="#using-the-posterior-distribution" id="id3">Using the posterior distribution</a></p></li>
+<li><p><a class="reference internal" href="#reporting-results" id="id4">Reporting results</a></p></li>
+<li><p><a class="reference internal" href="#publication-graphics" id="id5">Publication Graphics</a></p></li>
+<li><p><a class="reference internal" href="#tough-problems" id="id6">Tough Problems</a></p></li>
+<li><p><a class="reference internal" href="#command-line" id="id7">Command Line</a></p></li>
+<li><p><a class="reference internal" href="#other-optimizers" id="id8">Other optimizers</a></p></li>
+<li><p><a class="reference internal" href="#references" id="id9">References</a></p></li>
+</ul>
+</nav>
+<p>Obtaining a good fit depends foremost on having the correct model to fit.</p>
+<p>Too many layers, too few layers, too limited fit ranges, too open fit
+ranges, all of these can make fitting difficult.  For example, forgetting
+the SiOx layer on the silicon substrate will distort the model of a
+polymer film.</p>
+<p>Even with the correct model, there are systematic errors to address
+(see <cite>_data_guide</cite>). A warped sample can lead to broader resolution than
+expected near the critical edge, and <em>sample_broadening=value</em> must be
+specified when loading the data.  Small errors in alignment of the sample or
+the slits will move the measured critical edge, and so <em>probe.theta_offset</em>
+may need to be fitted.  Points near the critical edge are difficult to
+compute correctly with resolution because the reflectivity varies so quickly.
+Using <a class="reference internal" href="../refl1d.probe.html#refl1d.probe.Probe.critical_edge" title="refl1d.probe.Probe.critical_edge"><code class="xref py py-meth docutils literal notranslate"><span class="pre">refl1d.probe.Probe.critical_edge()</span></code></a>, the density of the
+points used to compute the resolution near the critical edge can be
+increased.  For thick samples  the resolution will integrate over
+multiple Kissig fringes, and <code class="xref py py-meth docutils literal notranslate"><span class="pre">refl1d.probe.Probe.over_sample()</span></code>
+will be needed to average across them and avoid aliasing effects.</p>
+<section id="quick-fit">
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Quick Fit</a><a class="headerlink" href="#quick-fit" title="Link to this heading">¶</a></h2>
+<p>While generating an appropriate model, you will want to perform a number
+of quick fits.  The Nelder-Mead simplex algorithm (fit=amoeba) works well
+for this.  You will want to run it with steps between 1000 and 3000 so
+the algorithm has a chance to converge.  Restarting a number of times
+(somewhere between 3 and 100) gives a reasonably thorough search of the
+fit space.  From the graphical user interface (refl_gui), using starts=1
+and clicking the fit button to improve the fit as needed works pretty well.
+From the command line interface (refl_cli), the command line will be
+something like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">refl1d</span> <span class="o">--</span><span class="n">fit</span><span class="o">=</span><span class="n">amoeba</span> <span class="o">--</span><span class="n">steps</span><span class="o">=</span><span class="mi">1000</span> <span class="o">--</span><span class="n">starts</span><span class="o">=</span><span class="mi">20</span> <span class="o">--</span><span class="n">parallel</span> <span class="n">model</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">store</span><span class="o">=</span><span class="n">T1</span>
+</pre></div>
+</div>
+<p>The command line result can be improved by using the previous fit value as
+the starting point for the next fit:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">refl1d</span> <span class="o">--</span><span class="n">fit</span><span class="o">=</span><span class="n">amoeba</span> <span class="o">--</span><span class="n">steps</span><span class="o">=</span><span class="mi">1000</span> <span class="o">--</span><span class="n">starts</span><span class="o">=</span><span class="mi">20</span> <span class="o">--</span><span class="n">parallel</span> <span class="n">model</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">store</span><span class="o">=</span><span class="n">T1</span> <span class="o">--</span><span class="n">pars</span><span class="o">=</span><span class="n">T1</span><span class="o">/</span><span class="n">model</span><span class="o">.</span><span class="n">par</span>
+</pre></div>
+</div>
+<p>Differential evolution (fit=de) and random lines (fit=rl) are alternatives
+to amoeba, perhaps a little more likely to find the global minimum but
+somewhat slower. These are population based algorithms in which several
+points from the current population are selected, and based on their
+position and value, a new point is generated.  The population is specified
+as a multiplier on the number of parameters in the model, so for example
+an 8 parameter model with DE’s default population (pop=10) would create 80
+points each generation.  Random lines with a large population is fast but
+is not good at finding isolated minima away from the general trend, so its
+population defaults to pop=0.5.  These algorithms can be called from the
+command line as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">refl1d</span> <span class="o">--</span><span class="n">fit</span><span class="o">=</span><span class="n">de</span> <span class="o">--</span><span class="n">steps</span><span class="o">=</span><span class="mi">3000</span> <span class="o">--</span><span class="n">parallel</span> <span class="n">model</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">store</span><span class="o">=</span><span class="n">T1</span>
+<span class="n">refl1d</span> <span class="o">--</span><span class="n">fit</span><span class="o">=</span><span class="n">rl</span> <span class="o">--</span><span class="n">steps</span><span class="o">=</span><span class="mi">3000</span> <span class="o">--</span><span class="n">starts</span><span class="o">=</span><span class="mi">200</span> <span class="o">--</span><span class="n">reset</span> <span class="o">--</span><span class="n">parellel</span> <span class="n">model</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">store</span><span class="o">=</span><span class="n">T1</span>
+</pre></div>
+</div>
+<p>Of course, –pars can be used to start from a previously completed fit.</p>
+</section>
+<section id="uncertainty-analysis">
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">Uncertainty Analysis</a><a class="headerlink" href="#uncertainty-analysis" title="Link to this heading">¶</a></h2>
+<p>More important than the optimal value of the parameters is an estimate
+of the uncertainty in those values.  By casting our problem as the
+likelihood of seeing the data given the model, we not only give
+ourselves the ability to incorporate prior information into the fit
+systematically, but we also give ourselves a strong foundation for
+assessing the uncertainty of the parameters.</p>
+<p>Uncertainty analysis is performed using DREAM (fit=dream).  This is a
+Markov chain Monte Carlo (MCMC) method with a differential evolution
+step generator.  Like simulated annealing, the MCMC explores the space
+using a random walk, always accepting a better point, but sometimes
+accepting a worse point depending on how much worse it is.</p>
+<p>DREAM can be started with a variety of initial populations.  The
+random population (init=random) distributes the initial points using
+a uniform distribution across the space of the parameters.  Latin
+hypersquares (init=lhs) improves on random by making sure that
+there is on value for each subrange of every variable. The covariance
+population (init=cov) selects points from the uncertainty ellipse
+computed from the derivative at the initial point.  This method
+will fail if the fitting parameters are highly correlated and the
+covariance matrix is singular.  The epsilon ball population (init=eps)
+starts DREAM from a tiny region near the initial point and lets it
+expand from there.  It can be useful to start with an epsilon ball
+from the previous best point when DREAM fails to converge using
+a more diverse initial population.</p>
+<p>The Markov chain will take time to converge on a stable population.
+This burn in time needs to be specified at the start of the analysis.
+After burn, DREAM will collect all points visited for N iterations
+of the algorithm.  If the burn time was long enough, the resulting
+points can be used to estimate uncertainty on parameters.</p>
+<p>A common command line for running DREAM is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">refl1d</span> <span class="o">--</span><span class="n">fit</span><span class="o">=</span><span class="n">dream</span> <span class="o">--</span><span class="n">burn</span><span class="o">=</span><span class="mi">1000</span> <span class="o">--</span><span class="n">steps</span><span class="o">=</span><span class="mi">1000</span> <span class="o">--</span><span class="n">init</span><span class="o">=</span><span class="n">cov</span> <span class="o">--</span><span class="n">parallel</span> <span class="o">--</span><span class="n">pars</span><span class="o">=</span><span class="n">T1</span><span class="o">/</span><span class="n">model</span><span class="o">.</span><span class="n">par</span> <span class="n">model</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">store</span><span class="o">=</span><span class="n">T2</span>
+</pre></div>
+</div>
+<p>The file T1/model.err contains a table showing for each
+parameter the mean(std), median and best values, and the 68% and 95%
+credible intervals.  The mean and standard deviation are computed from
+all the samples in the returned distribution.  These statistics are not
+robust: if the Markov process has not yet converged, then outliers will
+significantly distort the reported values.  Standard deviation is
+reported in compact notation, with the two digits in parentheses
+representing uncertainty in the last two digits of the mean.  Thus, for
+example, <span class="math notranslate nohighlight">\(24.9(28)\)</span> is <span class="math notranslate nohighlight">\(24.9 \pm 2.8\)</span>.  Median is the best value in the
+distribution.  Best is the best value ever seen.  The 68% and 95%
+intervals are the shortest intervals that contain 68% and 95% of
+the points respectively.  In order to report 2 digits of precision on
+the 95% interval, approximately 1000000 draws from the distribution
+are required, or steps = 1000000/(#parameters  #pop).  The 68% interval
+will require fewer draws, though how many has not yet been determined.</p>
+<a class="reference internal image-reference" href="../_images/var.png"><img alt="../_images/var.png" src="../_images/var.png" style="width: 800.0px; height: 430.0px;" />
+</a>
+<p>Histogramming the set of points visited will gives a picture of the
+probability density function for each parameter.  This histogram is
+generated automatically and saved in T1/model-var.png.  The histogram
+range represents the 95% credible interval, and the shaded region
+represents the 68% credible interval.  The green line shows the highest
+probability observed given that the parameter value is restricted to
+that bin of the histogram.  With enough samples, this will correspond
+to the maximum likelihood value of the function given that one parameter
+is restricted to that bin.  In practice, the analysis has converged
+when the green line follows the general shape of the histogram.</p>
+<a class="reference internal image-reference" href="../_images/corr.png"><img alt="../_images/corr.png" src="../_images/corr.png" style="width: 800.0px; height: 430.0px;" />
+</a>
+<p>The correlation plots show that the parameters are not uniquely
+determined from the data.  For example, the thickness of
+lamellae 3 and 4 are strongly anti-correlated, yielding a 95% CI of
+about 1 nm for each compared to the bulk nafion thickness CI of 0.2 nm.
+Summing lamellae thickness in the sampled points, we see the overall
+lamellae thickness has a CI of about 0.3 nm.  The correlation
+plot is saved in T1/model-corr.png.</p>
+<a class="reference internal image-reference" href="../_images/error.png"><img alt="../_images/error.png" src="../_images/error.png" style="width: 800.0px; height: 430.0px;" />
+</a>
+<p>To assure ourselves that the uncertainties produced by DREAM do
+indeed correspond to the underlying uncertainty in the model, we perform
+a Monte Carlo forward uncertainty analysis by selecting 50 samples from
+the computed posterior distribution, computing the corresponding
+reflectivity and calculating the normalized residuals.  Assuming that
+our measurement uncertainties are approximately normally distributed,
+approximately 68% of the normalized residuals should be within +/- 1 of
+the residual for the best model, and 98% should be within +/- 2. Note
+that our best fit does not capture all the details of the data, and the
+underlying systematic bias is not included in the uncertainty estimates.</p>
+<p>Plotting the profiles generated from the above sampling method, aligning
+them such that the cross correlation with the best profile is maximized,
+we see that the precise details of the lamellae are uncertain but the
+total thickness of the lamellae structure is well determined.  Bayesian
+analysis can also be used to determine relative likelihood of different
+number of layers, but we have not yet performed this analysis.  This plot
+is stored in T1/model-errors.png.</p>
+<p>The trace plot, T1/model-trace.png, shows the mixing properties of the
+first fitting parameter.  If the Markov process is well behaved, the
+trace plot will show a lot of mixing.  If it is ill behaved, and each
+chain is stuck in its own separate local minimum, then distinct lines
+will be visible in this plot.</p>
+<p>The convergence plot, T1/model-logp.png, shows the log likelihood
+values for each member of the population.  When the Markov process
+has converged, this plot will be flat with no distinct lines visible.
+If it shows a general upward sweep, then the burn time was not
+sufficient, and the analysis should be restarted.  The ability to
+continue to burn from the current population is not yet implemented.</p>
+<p>Given sufficient burn time, points in the search space will be visited
+with probability proportional to the goodness of fit.  It can be difficult
+to determine the correct amount of burn time in advance.  If burn is not
+long enough, then the population of log likelihood values will show an
+upward sweep.  Similarly, if steps is insufficient, th likelihood
+observed as a function of parameter value will be sparsely sampled, and
+the maximum likelihood curve will not match the posterior probability
+histogram.  To correct these issues, the DREAM analysis can be extended
+using the –resume option.  Assume the previous run completed with Markov
+chain convergence achieved at step 500.  The following command line will
+generate an additional 600 steps so that the posterior sample size is
+1600, then run an additional 500 steps of burn to remove the intial upward
+sweep in the log likelihood plot:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">refl1d</span> <span class="o">--</span><span class="n">fit</span><span class="o">=</span><span class="n">dream</span> <span class="o">--</span><span class="n">burn</span><span class="o">=</span><span class="mi">500</span> <span class="o">--</span><span class="n">steps</span><span class="o">=</span><span class="mi">1600</span> <span class="o">--</span><span class="n">parallel</span> <span class="o">--</span><span class="n">resume</span><span class="o">=</span><span class="n">T2</span> <span class="o">--</span><span class="n">store</span><span class="o">=</span><span class="n">T3</span>
+</pre></div>
+</div>
+<p>The results are stored in directory T3.</p>
+<p>Just because all the plots are well behaved does not mean that the
+Markov process has converged on the best result.  It is practically
+impossible to rule out a deep minimum with a narrow acceptance
+region in an otherwise unpromising part of the search space.</p>
+<p>In order to assess the DREAM algorithm for suitability for reflectometry
+fitting we did a number of tests.  Given that the fit surface is
+multimodal, we need to know that the uncertainty analysis can return
+multiple modes.  Because the fit problems may also be ill-conditioned,
+with strong correlations or anti-correlations between some parameters,
+the uncertainty analysis  needs to be able to correctly indicate that
+the correlations exist. Simple Metropolis-Hastings sampling does not
+work well in these conditions, but DREAM is able to handle them.</p>
+</section>
+<section id="using-the-posterior-distribution">
+<h2><a class="toc-backref" href="#id3" role="doc-backlink">Using the posterior distribution</a><a class="headerlink" href="#using-the-posterior-distribution" title="Link to this heading">¶</a></h2>
+<p>You can load the DREAM output population an perform uncertainty analysis
+operations after the fact:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ ipython -pylab
+
+from bumps.dream.state import load_state
+state = load_state(modelname)
+state.mark_outliers() # ignore outlier chains
+state.show()  # Plot statistics
+</pre></div>
+</div>
+<p>You can restrict a variable to a certain range when doing plots.
+For example, to restrict the third parameter to [0.8-1.0] and the
+fifth to [0.2-0.4]:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">bumps.dream</span> <span class="kn">import</span> <span class="n">views</span>
+<span class="n">selection</span><span class="o">=</span><span class="p">{</span><span class="mi">2</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.8</span><span class="p">,</span><span class="mf">1.0</span><span class="p">),</span> <span class="mi">4</span><span class="p">:(</span><span class="mf">0.2</span><span class="p">,</span><span class="mf">0.4</span><span class="p">),</span><span class="o">...</span><span class="p">}</span>
+<span class="n">views</span><span class="o">.</span><span class="n">plot_vars</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">selection</span><span class="o">=</span><span class="n">selection</span><span class="p">)</span>
+<span class="n">views</span><span class="o">.</span><span class="n">plot_corrmatrix</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">selection</span><span class="o">=</span><span class="n">selection</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You can also add derived variables using a function to generate the
+derived variable.  For example, to add a parameter which is p[0]+p[1]
+use:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">state</span><span class="o">.</span><span class="n">derive_vars</span><span class="p">(</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;x+y&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>You can generate multiple derived parameters at a time with a function
+that returns a sequence:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">state</span><span class="o">.</span><span class="n">derive_vars</span><span class="p">(</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;x*y&quot;</span><span class="p">,</span><span class="s2">&quot;x-y&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>These new parameters will show up in your plots:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">state</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The plotting code is somewhat complicated, and matplotlib doesn’t have a
+good way of changing plots interactively.  If you are running directly
+from the source tree, you can modify the dream plotting libraries as you
+need for a one-off plot, the replot the graph:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># ... after changing code in bumps/dream/views or bumps/dream/corrplot</span>
+<span class="n">reload</span><span class="p">(</span><span class="n">bumps</span><span class="o">.</span><span class="n">dream</span><span class="o">.</span><span class="n">views</span><span class="p">)</span>
+<span class="n">reload</span><span class="p">(</span><span class="n">bumps</span><span class="o">.</span><span class="n">dream</span><span class="o">.</span><span class="n">corrplot</span><span class="p">)</span>
+<span class="n">state</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Be sure to restore the original versions when you are done.  If the change
+is so good that everyone should use it, be sure to feed it back to the
+community via <a class="reference external" href="https://github.com/reflectometry/refl1d">https://github.com/reflectometry/refl1d</a>.</p>
+</section>
+<section id="reporting-results">
+<h2><a class="toc-backref" href="#id4" role="doc-backlink">Reporting results</a><a class="headerlink" href="#reporting-results" title="Link to this heading">¶</a></h2>
+<p>As with any parametric modeling technique, you cannot say that the model
+is correct and has certain parameter value, only that the observed data is
+consistent with the model and the given parameter values.  There may be
+other models within the parameter search space that are equally
+consistent, but which were not discovered by Refl1D, particularly if
+you are forced to use –init=eps to achieve convergence.  This is true
+even for models which exhibit good convergence:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>the marginal maximum likelihood (the green line)
+follows the marginal probability density (the blue line)</p></li>
+<li><p>the log likelihood function is flat, not sweeping upward</p></li>
+<li><p>the individual parameter traces exhibit good mixing</p></li>
+<li><p>the marginal probability density is unimodal and roughly normal</p></li>
+<li><p>the joint probabilities show no correlation structure</p></li>
+<li><p><span class="math notranslate nohighlight">\(\chi^2 \approx 1\)</span></p></li>
+<li><p>the residuals plot shows no structure</p></li>
+</ul>
+</div></blockquote>
+<p>The following blurb can be used as a description of the analysis method
+when reporting your results:</p>
+<blockquote>
+<div><p>Refl1D[1] was used to model the reflectivity data.  The sample depth
+profile is represented as a series of slabs of varying scattering length
+density and thickness with gaussian interfaces between them.  Freeform
+sections of the profile are modeled using monotonic splines.
+Reflectivity is computed using the Abeles optical matrix method, with
+interfacial effects computed by the method of Nevot and Croce or by
+approximating the interfaces by a series of thin slabs.  Refl1d supports
+simultaneous refinement of multiple reflectivity data sets with
+constraints between the models.</p>
+<p>Refl1D uses a Bayesian approach to determine the uncertainty in the
+model parameters.  By representing the problem as the likelihood of
+observing the measured reflectivity curve given a particular choice of
+parameters, Refl1D can use Markov Chain Monte Carlo (MCMC) methods[2]
+to draw a random sample from the joint parameter probability
+distribution.  This sample can then used to estimate the probability
+distribution for each individual parameter.</p>
+<p>[1] Kienzle P. A., Krycka J., A., and Patel, N. Refl1D: Interactive
+depth profile modeler.  <a class="reference external" href="http://refl1d.readthedocs.org">http://refl1d.readthedocs.org</a></p>
+<p>[2] Vrugt J. A., ter Braak C. J. F., Diks C. G. H., Higdon D.,
+Robinson B. A., and Hyman J. M.  Accelerating Markov chain Monte Carlo
+simulation by differential evolution with self-adaptive randomized
+subspace sampling, Int. J. Nonlin. Sci. Num., 10, 271–288, 2009.</p>
+</div></blockquote>
+<p>If you are reporting maximum likelihood and credible intervals:</p>
+<blockquote>
+<div><p>The parameter values reported are the those from the model which best
+fits the data, with uncertainty determined from the range of parameter
+values which covers 68% of the sample set.  This corresponds to the
+<span class="math notranslate nohighlight">\(1-\sigma\)</span> uncertainty level if the sample set were normally
+distributed.</p>
+</div></blockquote>
+<p>If you are reporting mean and standard deviation:</p>
+<blockquote>
+<div><p>The reported parameter values are computed from the mean and standard
+deviation of the sample set.  This corresponds to the best fitting
+normal distribition to marginal probability distribution for the
+parameter.</p>
+</div></blockquote>
+<p>There are caveats to reporting mean and standard deviation.  The technique
+is not robust.   If burn-in is insufficient, if the distribution is
+multi-modal, or if the distribution has long tails, then the reported
+mean may correspond to a bad fit, and the standard deviation can be
+huge. [We should confirm this by modeling a cauchy distribution]</p>
+</section>
+<section id="publication-graphics">
+<h2><a class="toc-backref" href="#id5" role="doc-backlink">Publication Graphics</a><a class="headerlink" href="#publication-graphics" title="Link to this heading">¶</a></h2>
+<p>The matplotlib package is capable of producing publication quality
+graphics for your models and fit results, but it requires you to write
+scripts to get the control that you need.  These scripts can be run
+from the refl1d application by first loading the model and the fit
+results then accessing their data directly to produce the plots that
+you need.</p>
+<p>The model file (called plot.py in this example) will start with the following:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">os.path</span>
+<span class="kn">from</span> <span class="nn">bumps.fitproblem</span> <span class="kn">import</span> <span class="n">load_problem</span>
+<span class="kn">from</span> <span class="nn">bumps.cli</span> <span class="kn">import</span> <span class="n">load_best</span>
+
+<span class="n">model</span><span class="p">,</span> <span class="n">store</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span>
+
+<span class="n">problem</span> <span class="o">=</span> <span class="n">load_problem</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="n">load_best</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="n">model</span><span class="p">[:</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span><span class="o">+</span><span class="s2">&quot;.par&quot;</span><span class="p">))</span>
+<span class="n">chisq</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">chisq</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;chisq </span><span class="si">%g</span><span class="s2">&quot;</span><span class="o">%</span><span class="n">chisq</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Assuming your model script is in model.py and you have run a fit with
+–store=X5, you can run this file using:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ refl1d -p plot.py model.py X5
+</pre></div>
+</div>
+<p>Now model.py is loaded and the best fit parameters are set.</p>
+<p>To produce plots, you will need access to the data and the theory.  This
+can be complex depending on how many models you are fitting and how many
+datasets there are per model.  For <a class="reference internal" href="../refl1d.fitproblem.html#refl1d.fitproblem.FitProblem" title="refl1d.fitproblem.FitProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">refl1d.fitproblem.FitProblem</span></code></a>
+models, the <a class="reference internal" href="../refl1d.experiment.html#refl1d.experiment.Experiment" title="refl1d.experiment.Experiment"><code class="xref py py-class docutils literal notranslate"><span class="pre">refl1d.experiment.Experiment</span></code></a> object is referenced
+by <em>problem.fitness</em>.  For <a class="reference internal" href="../refl1d.fitproblem.html#refl1d.fitproblem.FitProblem" title="refl1d.fitproblem.FitProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">refl1d.fitproblem.FitProblem</span></code></a> models,
+you need to use <em>problem.models[k].fitness</em> to access the experiment for
+model <em>k</em>.  Profiles and reflectivity theory are returned from methods
+in experiment.  The <a class="reference internal" href="../refl1d.probe.html#refl1d.probe.Probe" title="refl1d.probe.Probe"><code class="xref py py-class docutils literal notranslate"><span class="pre">refl1d.probe.Probe</span></code></a> data for the experiment is
+referenced by <em>experiment.probe</em>.  This will have attributes for <em>Q</em>, <em>dQ</em>,
+<em>R</em>, <em>dR</em>, <em>T</em>, <em>dT</em>, and <em>L</em>, <em>dL</em>, as well as methods for plotting
+the data.   This is not quite so simple: the sample may be non uniform,
+and composed of multiple samples for the same probe, and at the same time
+the probe may be composed of independent measurements kept separate so that
+you can fit alignment angle and overall intensity.  Magnetism adds
+another level of complexity, with extra profiles associated with each
+sample and separate reflectivities for the different spin states.</p>
+<p>How does this work in practice?  Consider a simple model such as nifilm-fit
+from the example directory.  We can access the parts by extending plot.py
+as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">experiment</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">fitness</span>
+<span class="n">z</span><span class="p">,</span><span class="n">rho</span><span class="p">,</span><span class="n">irho</span> <span class="o">=</span> <span class="n">experiment</span><span class="o">.</span><span class="n">smooth_profile</span><span class="p">(</span><span class="n">dz</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+<span class="c1"># ... insert profile plotting code here ...</span>
+<span class="n">QR</span> <span class="o">=</span> <span class="n">experiment</span><span class="o">.</span><span class="n">reflectivity</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">p</span><span class="p">,</span><span class="n">th</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parts</span><span class="p">(</span><span class="n">QR</span><span class="p">):</span>
+    <span class="n">Q</span><span class="p">,</span><span class="n">dQ</span><span class="p">,</span><span class="n">R</span><span class="p">,</span><span class="n">dR</span><span class="p">,</span><span class="n">theory</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">Q</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">dQ</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">R</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">dR</span><span class="p">,</span> <span class="n">th</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="c1"># ... insert reflectivity plotting code here ...</span>
+</pre></div>
+</div>
+<p>Next we can reload the the error sample data from the DREAM MCMC sequence:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">bumps.dream.state</span> <span class="kn">import</span> <span class="n">load_state</span>
+<span class="kn">from</span> <span class="nn">bumps.errplot</span> <span class="kn">import</span> <span class="n">calc_errors_from_state</span>
+<span class="kn">from</span> <span class="nn">refl1d.errors</span> <span class="kn">import</span> <span class="n">align_profiles</span>
+
+<span class="n">state</span> <span class="o">=</span> <span class="n">load_state</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="n">model</span><span class="p">[:</span><span class="o">-</span><span class="mi">3</span><span class="p">]))</span>
+<span class="n">state</span><span class="o">.</span><span class="n">mark_outliers</span><span class="p">()</span>
+<span class="c1"># ... insert correlation plots, etc. here ...</span>
+<span class="n">profiles</span><span class="p">,</span><span class="n">slabs</span><span class="p">,</span><span class="n">Q</span><span class="p">,</span><span class="n">residuals</span> <span class="o">=</span> <span class="n">calc_errors_from_state</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+<span class="n">aligned_profiles</span> <span class="o">=</span> <span class="n">align_profiles</span><span class="p">(</span><span class="n">profiles</span><span class="p">,</span> <span class="n">slabs</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">)</span>
+<span class="c1"># ... insert profile and residuals uncertainty plots here ...</span>
+</pre></div>
+</div>
+<p>The function <a class="reference internal" href="../refl1d.errors.html#refl1d.errors.calc_errors" title="refl1d.errors.calc_errors"><code class="xref py py-func docutils literal notranslate"><span class="pre">refl1d.errors.calc_errors()</span></code></a> provides details on the data
+structures for <em>profiles</em>, <em>Q</em> and <em>residuals</em>.  Look at the source in
+refl1d/errors.py to see how this data is used to produce the error plots
+with _profiles_overplot, _profiles_contour, _residuals_overplot and
+_residuals_contour.  The source is available from:</p>
+<blockquote>
+<div><p><a class="reference external" href="https://github.com/reflectometry/refl1d">https://github.com/reflectometry/refl1d</a></p>
+</div></blockquote>
+<p>Putting the pieces together, here is a skeleton for a specialized
+plotting script:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">os.path</span>
+<span class="kn">from</span> <span class="nn">bumps.fitproblem</span> <span class="kn">import</span> <span class="n">load_problem</span>
+<span class="kn">from</span> <span class="nn">bumps.cli</span> <span class="kn">import</span> <span class="n">load_best</span>
+
+<span class="n">model</span><span class="p">,</span> <span class="n">store</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span>
+
+<span class="n">problem</span> <span class="o">=</span> <span class="n">load_problem</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="n">load_best</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="n">model</span><span class="p">[:</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span><span class="o">+</span><span class="s2">&quot;.par&quot;</span><span class="p">))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;chisq </span><span class="si">%s</span><span class="s2">&quot;</span><span class="o">%</span><span class="n">problem</span><span class="o">.</span><span class="n">chisq_str</span><span class="p">())</span>
+
+<span class="n">chisq</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">chisq</span><span class="p">()</span>
+
+<span class="c1"># Assume for this example there is a single measurement in this problem.</span>
+<span class="c1"># Otherwise, you will need to use M.fitness for M in problem.models.</span>
+<span class="n">experiment</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">fitness</span>
+
+<span class="c1"># We are going to assume that we have a simple experiment with only one</span>
+<span class="c1"># reflectivity profile, and only one dataset associated with the profile.</span>
+<span class="c1"># The details for more complicated scenarios are in experiment.plot_profile</span>
+<span class="c1"># and experiment.plot_reflectivity.</span>
+<span class="n">z</span><span class="p">,</span> <span class="n">rho</span><span class="p">,</span> <span class="n">irho</span> <span class="o">=</span> <span class="n">experiment</span><span class="o">.</span><span class="n">smooth_profile</span><span class="p">(</span><span class="n">dz</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+<span class="n">pylab</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">pylab</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">211</span><span class="p">)</span>
+<span class="n">pylab</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">rho</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;SLD profile&#39;</span><span class="p">)</span>
+
+<span class="n">Qtheory</span><span class="p">,</span> <span class="n">Rtheory</span> <span class="o">=</span> <span class="n">experiment</span><span class="o">.</span><span class="n">reflectivity</span><span class="p">()</span>
+<span class="n">probe</span> <span class="o">=</span> <span class="n">experiment</span><span class="o">.</span><span class="n">probe</span>
+<span class="n">Q</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">dR</span> <span class="o">=</span> <span class="n">probe</span><span class="o">.</span><span class="n">Q</span><span class="p">,</span> <span class="n">probe</span><span class="o">.</span><span class="n">R</span><span class="p">,</span> <span class="n">probe</span><span class="o">.</span><span class="n">dR</span>
+<span class="n">pylab</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">212</span><span class="p">)</span>
+<span class="n">pylab</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">Qtheory</span><span class="p">,</span> <span class="n">Rtheory</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;theory&#39;</span><span class="p">)</span>
+<span class="n">pylab</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">yerr</span><span class="o">=</span><span class="n">dR</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;data&#39;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># Loading errors is expensive; may not want to do so all the time.</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="n">load_state</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="n">model</span><span class="p">[:</span><span class="o">-</span><span class="mi">3</span><span class="p">]))</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">mark_outliers</span><span class="p">()</span>
+    <span class="c1"># ... insert correlation plots, etc. here ...</span>
+    <span class="n">profiles</span><span class="p">,</span><span class="n">slabs</span><span class="p">,</span><span class="n">Q</span><span class="p">,</span><span class="n">residuals</span> <span class="o">=</span> <span class="n">calc_errors_from_state</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+    <span class="n">aligned_profiles</span> <span class="o">=</span> <span class="n">align_profiles</span><span class="p">(</span><span class="n">profiles</span><span class="p">,</span> <span class="n">slabs</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">)</span>
+    <span class="c1"># ... insert profile and residuals uncertainty plots here ...</span>
+
+<span class="n">pylab</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="k">raise</span> <span class="ne">Exception</span><span class="p">()</span>  <span class="c1"># We are just plotting; don&#39;t run the model</span>
+</pre></div>
+</div>
+<p>For the common problem of generating profile error plots aligned on
+a particular interface, you can use the simpler align.py model:</p>
+<blockquote>
+<div><p>from refl1d.names import *
+align_errors(model=””, store=””, align=’auto’)</p>
+</div></blockquote>
+<p>If you are using the command line then you should be able to type the
+following at the command prompt to generate the plots:</p>
+<blockquote>
+<div><p>$ refl1d align.py &lt;model&gt;.py &lt;store&gt; [&lt;align&gt;] [1|2|n]</p>
+</div></blockquote>
+<p>If you are using the GUI, you will have to set model, store and
+align directly in align.py each time you run.</p>
+<p>Align is either auto for the current behaviour, or it is an interface
+number. You can align on the center of a layer by adding 0.5 to the
+interface number. You can count interfaces from the surface by prefixing
+with R.  For example, 0 is the substrate interface, R1 is the surface
+interface, 2.5 is the the middle of layer 2 above the substrate.</p>
+<p>You can plot the profiles and residuals on one plot by setting plots to 1,
+on two separate plots by setting plots to 2, or each curve on its own
+plot by setting plots to n. Output is saved in &lt;store&gt;/&lt;model&gt;-err#.png.</p>
+</section>
+<section id="tough-problems">
+<h2><a class="toc-backref" href="#id6" role="doc-backlink">Tough Problems</a><a class="headerlink" href="#tough-problems" title="Link to this heading">¶</a></h2>
+<p>With the toughest fits, for example freeform models with many control
+points, parallel tempering (fit=pt) is the most promising algorithm.  This
+implementation is an extension of DREAM.  Whereas DREAM runs with a
+constant temperature, T=1, parallel tempering runs with multiple
+temperatures concurrently.   The high temperature points are able to walk
+up steep hills in the search space, possibly crossing over into a
+neighbouring valley.  The low temperature points agressively seek the
+nearest local minimum, rejecting any proposed point that is worse than
+the current.  Differential evolution helps adapt the steps to the shape
+of the search space, increasing the chances that the random step will be
+a step in the right direction.  The current implementation uses a fixed
+set of temperatures defaulting to Tmin=0.1 through Tmax=10 in nT=25 steps;
+future versions should adapt the temperature based on the fitting problem.</p>
+<p>Parallel tempering is run like dream, but with optional temperature
+controls:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">refl1d</span> <span class="o">--</span><span class="n">fit</span><span class="o">=</span><span class="n">dream</span> <span class="o">--</span><span class="n">burn</span><span class="o">=</span><span class="mi">1000</span> <span class="o">--</span><span class="n">steps</span><span class="o">=</span><span class="mi">1000</span> <span class="o">--</span><span class="n">init</span><span class="o">=</span><span class="n">cov</span> <span class="o">--</span><span class="n">parallel</span> <span class="o">--</span><span class="n">pars</span><span class="o">=</span><span class="n">T1</span><span class="o">/</span><span class="n">model</span><span class="o">.</span><span class="n">par</span> <span class="n">model</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">store</span><span class="o">=</span><span class="n">T2</span>
+</pre></div>
+</div>
+<p>Parallel tempering does not yet generate the uncertainty plots provided
+by DREAM.  The state is retained along the temperature for each point,
+but the code to generate histograms from points weighted by inverse
+temperature has not yet been written.</p>
+</section>
+<section id="command-line">
+<h2><a class="toc-backref" href="#id7" role="doc-backlink">Command Line</a><a class="headerlink" href="#command-line" title="Link to this heading">¶</a></h2>
+<p>The GUI version is slower because it frequently updates the graphs
+showing the best current fit.</p>
+<p>Run multiple models overnight, starting one after the last is complete
+by creating a batch file (e.g., run.bat) with one line per model.  Append
+the parameter –batch to the end of the command lines so the program
+doesn’t stop to show interactive graphs.  You can view the fitted
+results in the GUI using:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">refl1d</span> <span class="o">--</span><span class="n">edit</span> <span class="n">model</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">pars</span><span class="o">=</span><span class="n">T1</span><span class="o">/</span><span class="n">model</span><span class="o">.</span><span class="n">par</span>
+</pre></div>
+</div>
+</section>
+<section id="other-optimizers">
+<h2><a class="toc-backref" href="#id8" role="doc-backlink">Other optimizers</a><a class="headerlink" href="#other-optimizers" title="Link to this heading">¶</a></h2>
+<p>There are several other optimizers that are included but aren’t frequently used.</p>
+<p>BFGS (fit=newton) is a quasi-newton optimizer relying on numerical derivatives
+to find the nearest local minimum.  Because the reflectometry problem
+often has correlated parameters, the resulting matrices can be ill-conditioned
+and the fit isn’t robust.</p>
+<p>Particle swarm optimization (fit=ps) is another population based algorithm,
+but it does not appear to perform well for high dimensional problem spaces
+that frequently occur in reflectivity.</p>
+<p>SNOBFIT (fit=snobfit) attempts to construct a locally quadratic model of
+the entire search space.  While promising because it can begin to offer
+some guarantees that the search is complete given reasonable assumptions
+about the fitting surface, initial trials did not perform well and the
+algorithm has not yet been tuned to the reflectivity problem.</p>
+</section>
+<section id="references">
+<h2><a class="toc-backref" href="#id9" role="doc-backlink">References</a><a class="headerlink" href="#references" title="Link to this heading">¶</a></h2>
+<p>WH Press, BP Flannery, SA Teukolsky and WT Vetterling, Numerical Recipes in C, Cambridge University Press</p>
+<p>I. Sahin (2011) Random Lines: A Novel Population Set-Based Evolutionary Global Optimization Algorithm. Lecture Notes in Computer Science, 2011, Volume 6621/2011, 97-107
+DOI:10.1007/978-3-642-20407-4_9</p>
+<p>Vrugt, J. A., ter Braak, C. J. F., Diks, C. G. H., Higdon, D., Robinson, B. A., and Hyman, J. M.:Accelerating Markov chain Monte Carlo simulation by differential evolution with self-adaptive randomized subspace sampling, Int. J. Nonlin. Sci. Num., 10, 271–288, 2009.</p>
+<p>Kennedy, J.; Eberhart, R. (1995). “Particle Swarm Optimization”. Proceedings of IEEE International Conference on Neural Networks. IV. pp. 1942–1948. doi:10.1109/ICNN.1995.488968</p>
+<ol class="upperalpha simple" start="23">
+<li><p>Huyer and A. Neumaier, Snobfit - Stable Noisy Optimization by Branch and Fit, ACM Trans. Math. Software 35 (2008), Article 9.</p></li>
+</ol>
+<p>Storn, R.: System Design by Constraint Adaptation and Differential Evolution,
+Technical Report TR-96-039, International Computer Science Institute (November 1996)</p>
+<p>Swendsen RH and Wang JS (1986) Replica Monte Carlo simulation of spin glasses Physical Review Letters 57 : 2607-2609</p>
+</section>
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        «&#160;&#160;<a href="experiment.html">Experiment</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../api/index.html">Reference</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

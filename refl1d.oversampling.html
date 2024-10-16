@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>refl1d.oversampling module &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="_static/plot_directive.css" />
+    <script src="_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>refl1d.oversampling module</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="module-refl1d.oversampling">
+<span id="refl1d-oversampling-module"></span><h1>refl1d.oversampling module<a class="headerlink" href="#module-refl1d.oversampling" title="Link to this heading">¶</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.oversampling.analyze_fitproblem">
+<span class="sig-prename descclassname"><span class="pre">refl1d.oversampling.</span></span><span class="sig-name descname"><span class="pre">analyze_fitproblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_oversampling</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">201</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/oversampling.html#analyze_fitproblem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.oversampling.analyze_fitproblem" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.oversampling.get_optimal_single_oversampling">
+<span class="sig-prename descclassname"><span class="pre">refl1d.oversampling.</span></span><span class="sig-name descname"><span class="pre">get_optimal_single_oversampling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_oversampling</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">201</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/oversampling.html#get_optimal_single_oversampling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.oversampling.get_optimal_single_oversampling" title="Link to this definition">¶</a></dt>
+<dd><p>Determine how much oversampling is required to adequately calculate resolution smearing</p>
+<dl>
+<dt>Algorithm:</dt><dd><ul class="simple">
+<li><p>the model is oversampled to a very high number (max_oversampling)</p></li>
+<li><p>smeared R is calculated at max_oversampling and stored as reference “ideal” R</p></li>
+<li><p>oversampling is iterated (starting at 1), and smeared R is calculated and compared to “ideal” R</p></li>
+<li><p>points are “within tolerance” if (R(Q) - R_ref(Q)) / dR(Q) &lt; tolerance</p></li>
+<li><p>the value of oversampling at which a point becomes within tolerance is recorded for that point</p></li>
+<li><p>when all points are within tolerance the loop ends and the function reports the recommended oversampling</p></li>
+</ul>
+</dd>
+<dt>Args:</dt><dd><p>model (refl1d.experiment.Experiment): an Experiment, containing probe and sample
+tolerance (float, optional): allowed deviation of R from ideal R (multiplied by dR). Defaults to 0.05
+max_oversampling (int, optional): A very high oversampling that is expected to exceed</p>
+<blockquote>
+<div><p>the requirements for support (used to generate reference R). Defaults to 201.</p>
+</div></blockquote>
+</dd>
+<dt>Returns:</dt><dd><p>oversampling (int): suggested oversampling to get all R within tolerance
+optimal_oversampling: for each probe, per-Q array of oversampling needed to get R(Q) within tolerance</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="refl1d.oversampling.main">
+<span class="sig-prename descclassname"><span class="pre">refl1d.oversampling.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/refl1d/oversampling.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#refl1d.oversampling.main" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

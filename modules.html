@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>refl1d &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="_static/plot_directive.css" />
+    <script src="_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>refl1d</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="refl1d">
+<h1>refl1d<a class="headerlink" href="#refl1d" title="Link to this heading">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="check_examples.html">check_examples module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="conftest.html">conftest module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="refl1d.html">refl1d package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="refl1d.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.lib.html">refl1d.lib package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.lib.html#subpackages">Subpackages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.lib.html#module-refl1d.lib">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.view.html">refl1d.view package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.view.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.view.html#module-refl1d.view">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.webview.html">refl1d.webview package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.webview.html#subpackages">Subpackages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.webview.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.webview.html#module-refl1d.webview">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="refl1d.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.abeles.html">refl1d.abeles module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.abeles.html#refl1d.abeles.check"><code class="docutils literal notranslate"><span class="pre">check()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.abeles.html#refl1d.abeles.refl"><code class="docutils literal notranslate"><span class="pre">refl()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.anstodata.html">refl1d.anstodata module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.anstodata.html#refl1d.anstodata.ANSTOData"><code class="docutils literal notranslate"><span class="pre">ANSTOData</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.anstodata.html#refl1d.anstodata.Platypus"><code class="docutils literal notranslate"><span class="pre">Platypus</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.anstodata.html#refl1d.anstodata.load"><code class="docutils literal notranslate"><span class="pre">load()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.cheby.html">refl1d.cheby module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.cheby.html#refl1d.cheby.ChebyVF"><code class="docutils literal notranslate"><span class="pre">ChebyVF</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.cheby.html#refl1d.cheby.FreeformCheby"><code class="docutils literal notranslate"><span class="pre">FreeformCheby</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.composition.html">refl1d.composition module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.composition.html#refl1d.composition.CompositionSpace"><code class="docutils literal notranslate"><span class="pre">CompositionSpace</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.composition.html#refl1d.composition.Gaussian"><code class="docutils literal notranslate"><span class="pre">Gaussian</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.composition.html#refl1d.composition.Part"><code class="docutils literal notranslate"><span class="pre">Part</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.corrtest.html">refl1d.corrtest module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.corrtest.html#refl1d.corrtest.deriv"><code class="docutils literal notranslate"><span class="pre">deriv()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.corrtest.html#refl1d.corrtest.plot"><code class="docutils literal notranslate"><span class="pre">plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.corrtest.html#refl1d.corrtest.plot_deriv"><code class="docutils literal notranslate"><span class="pre">plot_deriv()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.corrtest.html#refl1d.corrtest.plot_transform"><code class="docutils literal notranslate"><span class="pre">plot_transform()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.corrtest.html#refl1d.corrtest.residual_nllf"><code class="docutils literal notranslate"><span class="pre">residual_nllf()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.dist.html">refl1d.dist module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.dist.html#refl1d.dist.DistributionExperiment"><code class="docutils literal notranslate"><span class="pre">DistributionExperiment</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.dist.html#refl1d.dist.Weights"><code class="docutils literal notranslate"><span class="pre">Weights</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.errors.html">refl1d.errors module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.errors.html#refl1d.errors.align_profiles"><code class="docutils literal notranslate"><span class="pre">align_profiles()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.errors.html#refl1d.errors.calc_errors"><code class="docutils literal notranslate"><span class="pre">calc_errors()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.errors.html#refl1d.errors.reload_errors"><code class="docutils literal notranslate"><span class="pre">reload_errors()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.errors.html#refl1d.errors.run_errors"><code class="docutils literal notranslate"><span class="pre">run_errors()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.errors.html#refl1d.errors.show_errors"><code class="docutils literal notranslate"><span class="pre">show_errors()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.errors.html#refl1d.errors.show_profiles"><code class="docutils literal notranslate"><span class="pre">show_profiles()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.errors.html#refl1d.errors.show_residuals"><code class="docutils literal notranslate"><span class="pre">show_residuals()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.experiment.html">refl1d.experiment module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.experiment.html#refl1d.experiment.Experiment"><code class="docutils literal notranslate"><span class="pre">Experiment</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.experiment.html#refl1d.experiment.ExperimentBase"><code class="docutils literal notranslate"><span class="pre">ExperimentBase</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.experiment.html#refl1d.experiment.MixedExperiment"><code class="docutils literal notranslate"><span class="pre">MixedExperiment</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.experiment.html#refl1d.experiment.WebviewPlotFunction"><code class="docutils literal notranslate"><span class="pre">WebviewPlotFunction</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.experiment.html#refl1d.experiment.WebviewPlotInfo"><code class="docutils literal notranslate"><span class="pre">WebviewPlotInfo</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.experiment.html#refl1d.experiment.nice"><code class="docutils literal notranslate"><span class="pre">nice()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.experiment.html#refl1d.experiment.plot_sample"><code class="docutils literal notranslate"><span class="pre">plot_sample()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.fasta.html">refl1d.fasta module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.fasta.html#refl1d.fasta.D2Omatch"><code class="docutils literal notranslate"><span class="pre">D2Omatch()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.fasta.html#refl1d.fasta.Molecule"><code class="docutils literal notranslate"><span class="pre">Molecule</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.fasta.html#refl1d.fasta.Sequence"><code class="docutils literal notranslate"><span class="pre">Sequence</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.fasta.html#refl1d.fasta.fasta_table"><code class="docutils literal notranslate"><span class="pre">fasta_table()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.fasta.html#refl1d.fasta.isotope_substitution"><code class="docutils literal notranslate"><span class="pre">isotope_substitution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.fasta.html#refl1d.fasta.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.fasta.html#refl1d.fasta.read_fasta"><code class="docutils literal notranslate"><span class="pre">read_fasta()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.fasta.html#refl1d.fasta.test"><code class="docutils literal notranslate"><span class="pre">test()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.fitplugin.html">refl1d.fitplugin module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.fitplugin.html#refl1d.fitplugin.calc_errors"><code class="docutils literal notranslate"><span class="pre">calc_errors()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.fitplugin.html#refl1d.fitplugin.data_view"><code class="docutils literal notranslate"><span class="pre">data_view()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.fitplugin.html#refl1d.fitplugin.model_view"><code class="docutils literal notranslate"><span class="pre">model_view()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.fitplugin.html#refl1d.fitplugin.new_model"><code class="docutils literal notranslate"><span class="pre">new_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.fitplugin.html#refl1d.fitplugin.show_errors"><code class="docutils literal notranslate"><span class="pre">show_errors()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.fitproblem.html">refl1d.fitproblem module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.fitproblem.html#refl1d.fitproblem.FitProblem"><code class="docutils literal notranslate"><span class="pre">FitProblem</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.flayer.html">refl1d.flayer module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.flayer.html#refl1d.flayer.FunctionalMagnetism"><code class="docutils literal notranslate"><span class="pre">FunctionalMagnetism</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.flayer.html#refl1d.flayer.FunctionalProfile"><code class="docutils literal notranslate"><span class="pre">FunctionalProfile</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.freeform.html">refl1d.freeform module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.freeform.html#refl1d.freeform.FreeInterface"><code class="docutils literal notranslate"><span class="pre">FreeInterface</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.freeform.html#refl1d.freeform.FreeLayer"><code class="docutils literal notranslate"><span class="pre">FreeLayer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.freeform.html#refl1d.freeform.FreeformInterface01"><code class="docutils literal notranslate"><span class="pre">FreeformInterface01</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.fresnel.html">refl1d.fresnel module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.fresnel.html#refl1d.fresnel.Fresnel"><code class="docutils literal notranslate"><span class="pre">Fresnel</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.fresnel.html#refl1d.fresnel.test"><code class="docutils literal notranslate"><span class="pre">test()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.garefl.html">refl1d.garefl module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.garefl.html#refl1d.garefl.load"><code class="docutils literal notranslate"><span class="pre">load()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.instrument.html">refl1d.instrument module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.instrument.html#scanning-reflectometers">Scanning Reflectometers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.instrument.html#predefined-instruments">Predefined Instruments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.instrument.html#gui-usage">GUI Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.instrument.html#refl1d.instrument.Monochromatic"><code class="docutils literal notranslate"><span class="pre">Monochromatic</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.instrument.html#refl1d.instrument.Pulsed"><code class="docutils literal notranslate"><span class="pre">Pulsed</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.magnetic.html">refl1d.magnetic module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.magnetic.html#refl1d.magnetic.FreeMagnetic"><code class="docutils literal notranslate"><span class="pre">FreeMagnetic</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.magnetic.html#refl1d.magnetic.MagneticLayer"><code class="docutils literal notranslate"><span class="pre">MagneticLayer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.magnetic.html#refl1d.magnetic.MagneticSlab"><code class="docutils literal notranslate"><span class="pre">MagneticSlab</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.magnetic.html#refl1d.magnetic.MagneticStack"><code class="docutils literal notranslate"><span class="pre">MagneticStack</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.magnetic.html#refl1d.magnetic.MagneticTwist"><code class="docutils literal notranslate"><span class="pre">MagneticTwist</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.magnetism.html">refl1d.magnetism module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.magnetism.html#refl1d.magnetism.BaseMagnetism"><code class="docutils literal notranslate"><span class="pre">BaseMagnetism</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.magnetism.html#refl1d.magnetism.FreeMagnetism"><code class="docutils literal notranslate"><span class="pre">FreeMagnetism</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.magnetism.html#refl1d.magnetism.Magnetism"><code class="docutils literal notranslate"><span class="pre">Magnetism</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.magnetism.html#refl1d.magnetism.MagnetismStack"><code class="docutils literal notranslate"><span class="pre">MagnetismStack</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.magnetism.html#refl1d.magnetism.MagnetismTwist"><code class="docutils literal notranslate"><span class="pre">MagnetismTwist</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.main.html">refl1d.main module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.main.html#refl1d.main.cli"><code class="docutils literal notranslate"><span class="pre">cli()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.main.html#refl1d.main.gui"><code class="docutils literal notranslate"><span class="pre">gui()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.main.html#refl1d.main.setup_bumps"><code class="docutils literal notranslate"><span class="pre">setup_bumps()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.material.html">refl1d.material module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.material.html#refl1d.material.BulkDensityMaterial"><code class="docutils literal notranslate"><span class="pre">BulkDensityMaterial</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.material.html#refl1d.material.CellVolumeMaterial"><code class="docutils literal notranslate"><span class="pre">CellVolumeMaterial</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.material.html#refl1d.material.Material"><code class="docutils literal notranslate"><span class="pre">Material()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.material.html#refl1d.material.Mixture"><code class="docutils literal notranslate"><span class="pre">Mixture</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.material.html#refl1d.material.NaturalDensityMaterial"><code class="docutils literal notranslate"><span class="pre">NaturalDensityMaterial</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.material.html#refl1d.material.NumberDensityMaterial"><code class="docutils literal notranslate"><span class="pre">NumberDensityMaterial</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.material.html#refl1d.material.ProbeCache"><code class="docutils literal notranslate"><span class="pre">ProbeCache</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.material.html#refl1d.material.RelativeDensityMaterial"><code class="docutils literal notranslate"><span class="pre">RelativeDensityMaterial</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.material.html#refl1d.material.SLD"><code class="docutils literal notranslate"><span class="pre">SLD</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.material.html#refl1d.material.Scatterer"><code class="docutils literal notranslate"><span class="pre">Scatterer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.material.html#refl1d.material.Vacuum"><code class="docutils literal notranslate"><span class="pre">Vacuum</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.materialdb.html">refl1d.materialdb module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.model.html">refl1d.model module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.model.html#refl1d.model.Layer"><code class="docutils literal notranslate"><span class="pre">Layer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.model.html#refl1d.model.Repeat"><code class="docutils literal notranslate"><span class="pre">Repeat</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.model.html#refl1d.model.Slab"><code class="docutils literal notranslate"><span class="pre">Slab</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.model.html#refl1d.model.Stack"><code class="docutils literal notranslate"><span class="pre">Stack</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.mono.html">refl1d.mono module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.mono.html#refl1d.mono.FreeInterface"><code class="docutils literal notranslate"><span class="pre">FreeInterface</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.mono.html#refl1d.mono.FreeLayer"><code class="docutils literal notranslate"><span class="pre">FreeLayer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.mono.html#refl1d.mono.inflections"><code class="docutils literal notranslate"><span class="pre">inflections()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.names.html">refl1d.names module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.names.html#refl1d.names.ModelFunction"><code class="docutils literal notranslate"><span class="pre">ModelFunction()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.ncnrdata.html">refl1d.ncnrdata module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.ncnrdata.html#refl1d.ncnrdata.ANDR"><code class="docutils literal notranslate"><span class="pre">ANDR</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.ncnrdata.html#refl1d.ncnrdata.MAGIK"><code class="docutils literal notranslate"><span class="pre">MAGIK</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.ncnrdata.html#refl1d.ncnrdata.NCNRData"><code class="docutils literal notranslate"><span class="pre">NCNRData</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.ncnrdata.html#refl1d.ncnrdata.NG1"><code class="docutils literal notranslate"><span class="pre">NG1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.ncnrdata.html#refl1d.ncnrdata.NG7"><code class="docutils literal notranslate"><span class="pre">NG7</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.ncnrdata.html#refl1d.ncnrdata.PBR"><code class="docutils literal notranslate"><span class="pre">PBR</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.ncnrdata.html#refl1d.ncnrdata.XRay"><code class="docutils literal notranslate"><span class="pre">XRay</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.ncnrdata.html#refl1d.ncnrdata.find_xsec"><code class="docutils literal notranslate"><span class="pre">find_xsec()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.ncnrdata.html#refl1d.ncnrdata.load"><code class="docutils literal notranslate"><span class="pre">load()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.ncnrdata.html#refl1d.ncnrdata.load_magnetic"><code class="docutils literal notranslate"><span class="pre">load_magnetic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.ncnrdata.html#refl1d.ncnrdata.parse_ncnr_file"><code class="docutils literal notranslate"><span class="pre">parse_ncnr_file()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.oversampling.html">refl1d.oversampling module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.oversampling.html#refl1d.oversampling.analyze_fitproblem"><code class="docutils literal notranslate"><span class="pre">analyze_fitproblem()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.oversampling.html#refl1d.oversampling.get_optimal_single_oversampling"><code class="docutils literal notranslate"><span class="pre">get_optimal_single_oversampling()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.oversampling.html#refl1d.oversampling.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.plottable.html">refl1d.plottable module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.plottable.html#refl1d.plottable.Complement"><code class="docutils literal notranslate"><span class="pre">Complement</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.plottable.html#refl1d.plottable.Contrast"><code class="docutils literal notranslate"><span class="pre">Contrast</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.plottable.html#refl1d.plottable.Data"><code class="docutils literal notranslate"><span class="pre">Data</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.plottable.html#refl1d.plottable.Data2D"><code class="docutils literal notranslate"><span class="pre">Data2D</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.plottable.html#refl1d.plottable.Fit"><code class="docutils literal notranslate"><span class="pre">Fit</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.plottable.html#refl1d.plottable.Histogram"><code class="docutils literal notranslate"><span class="pre">Histogram</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.plottable.html#refl1d.plottable.MplPage"><code class="docutils literal notranslate"><span class="pre">MplPage</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.plottable.html#refl1d.plottable.Page"><code class="docutils literal notranslate"><span class="pre">Page</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.plottable.html#refl1d.plottable.Style"><code class="docutils literal notranslate"><span class="pre">Style</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.plottable.html#refl1d.plottable.Trend"><code class="docutils literal notranslate"><span class="pre">Trend</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.plottable.html#refl1d.plottable.Vector"><code class="docutils literal notranslate"><span class="pre">Vector</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.polymer.html">refl1d.polymer module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.polymer.html#refl1d.polymer.EndTetheredPolymer"><code class="docutils literal notranslate"><span class="pre">EndTetheredPolymer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.polymer.html#refl1d.polymer.PolymerBrush"><code class="docutils literal notranslate"><span class="pre">PolymerBrush</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.polymer.html#refl1d.polymer.PolymerMushroom"><code class="docutils literal notranslate"><span class="pre">PolymerMushroom</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.polymer.html#refl1d.polymer.VolumeProfile"><code class="docutils literal notranslate"><span class="pre">VolumeProfile</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.polymer.html#refl1d.polymer.layer_thickness"><code class="docutils literal notranslate"><span class="pre">layer_thickness()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.probe.html">refl1d.probe module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.probe.html#refl1d.probe.BaseProbe"><code class="docutils literal notranslate"><span class="pre">BaseProbe</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.probe.html#refl1d.probe.NeutronProbe"><code class="docutils literal notranslate"><span class="pre">NeutronProbe</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.probe.html#refl1d.probe.PolarizedNeutronProbe"><code class="docutils literal notranslate"><span class="pre">PolarizedNeutronProbe</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.probe.html#refl1d.probe.PolarizedNeutronQProbe"><code class="docutils literal notranslate"><span class="pre">PolarizedNeutronQProbe</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.probe.html#refl1d.probe.PolarizedQProbe"><code class="docutils literal notranslate"><span class="pre">PolarizedQProbe</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.probe.html#refl1d.probe.Probe"><code class="docutils literal notranslate"><span class="pre">Probe</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.probe.html#refl1d.probe.ProbeSet"><code class="docutils literal notranslate"><span class="pre">ProbeSet</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.probe.html#refl1d.probe.QProbe"><code class="docutils literal notranslate"><span class="pre">QProbe</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.probe.html#refl1d.probe.Qmeasurement_union"><code class="docutils literal notranslate"><span class="pre">Qmeasurement_union()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.probe.html#refl1d.probe.XrayProbe"><code class="docutils literal notranslate"><span class="pre">XrayProbe</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.probe.html#refl1d.probe.load4"><code class="docutils literal notranslate"><span class="pre">load4()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.probe.html#refl1d.probe.make_probe"><code class="docutils literal notranslate"><span class="pre">make_probe()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.probe.html#refl1d.probe.measurement_union"><code class="docutils literal notranslate"><span class="pre">measurement_union()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.probe.html#refl1d.probe.parse_orso"><code class="docutils literal notranslate"><span class="pre">parse_orso()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.probe.html#refl1d.probe.spin_asymmetry"><code class="docutils literal notranslate"><span class="pre">spin_asymmetry()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.profile.html">refl1d.profile module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.profile.html#example">Example</a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.profile.html#refl1d.profile.Microslabs"><code class="docutils literal notranslate"><span class="pre">Microslabs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.profile.html#refl1d.profile.blend"><code class="docutils literal notranslate"><span class="pre">blend()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.profile.html#refl1d.profile.build_profile"><code class="docutils literal notranslate"><span class="pre">build_profile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.profile.html#refl1d.profile.compute_limited_sigma"><code class="docutils literal notranslate"><span class="pre">compute_limited_sigma()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.rebin.html">refl1d.rebin module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.rebin.html#refl1d.rebin.bin_edges"><code class="docutils literal notranslate"><span class="pre">bin_edges()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.rebin.html#refl1d.rebin.logbin_edges"><code class="docutils literal notranslate"><span class="pre">logbin_edges()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.rebin.html#refl1d.rebin.rebin"><code class="docutils literal notranslate"><span class="pre">rebin()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.rebin.html#refl1d.rebin.rebin2d"><code class="docutils literal notranslate"><span class="pre">rebin2d()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.refl_tr.html">refl1d.refl_tr module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.refl_tr.html#refl1d.refl_tr.check"><code class="docutils literal notranslate"><span class="pre">check()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.refl_tr.html#refl1d.refl_tr.check2"><code class="docutils literal notranslate"><span class="pre">check2()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.refl_tr.html#refl1d.refl_tr.check3"><code class="docutils literal notranslate"><span class="pre">check3()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.refl_tr.html#refl1d.refl_tr.refl_tr"><code class="docutils literal notranslate"><span class="pre">refl_tr()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.reflectivity.html">refl1d.reflectivity module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.reflectivity.html#refl1d.reflectivity.convolve"><code class="docutils literal notranslate"><span class="pre">convolve()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.reflectivity.html#refl1d.reflectivity.magnetic_amplitude"><code class="docutils literal notranslate"><span class="pre">magnetic_amplitude()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.reflectivity.html#refl1d.reflectivity.magnetic_reflectivity"><code class="docutils literal notranslate"><span class="pre">magnetic_reflectivity()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.reflectivity.html#refl1d.reflectivity.reflectivity"><code class="docutils literal notranslate"><span class="pre">reflectivity()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.reflectivity.html#refl1d.reflectivity.reflectivity_amplitude"><code class="docutils literal notranslate"><span class="pre">reflectivity_amplitude()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.reflectivity.html#refl1d.reflectivity.unpolarized_magnetic"><code class="docutils literal notranslate"><span class="pre">unpolarized_magnetic()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.refllib.html">refl1d.refllib module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.refllib.html#refl1d.refllib.set_backend"><code class="docutils literal notranslate"><span class="pre">set_backend()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.resolution.html">refl1d.resolution module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.resolution.html#refl1d.resolution.FWHM2sigma"><code class="docutils literal notranslate"><span class="pre">FWHM2sigma()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.resolution.html#refl1d.resolution.QL2T"><code class="docutils literal notranslate"><span class="pre">QL2T()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.resolution.html#refl1d.resolution.QT2L"><code class="docutils literal notranslate"><span class="pre">QT2L()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.resolution.html#refl1d.resolution.TL2Q"><code class="docutils literal notranslate"><span class="pre">TL2Q()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.resolution.html#refl1d.resolution.TOF2L"><code class="docutils literal notranslate"><span class="pre">TOF2L()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.resolution.html#refl1d.resolution.binedges"><code class="docutils literal notranslate"><span class="pre">binedges()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.resolution.html#refl1d.resolution.bins"><code class="docutils literal notranslate"><span class="pre">bins()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.resolution.html#refl1d.resolution.binwidths"><code class="docutils literal notranslate"><span class="pre">binwidths()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.resolution.html#refl1d.resolution.dQ_broadening"><code class="docutils literal notranslate"><span class="pre">dQ_broadening()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.resolution.html#refl1d.resolution.dQdL2dT"><code class="docutils literal notranslate"><span class="pre">dQdL2dT()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.resolution.html#refl1d.resolution.dQdT2dLoL"><code class="docutils literal notranslate"><span class="pre">dQdT2dLoL()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.resolution.html#refl1d.resolution.dTdL2dQ"><code class="docutils literal notranslate"><span class="pre">dTdL2dQ()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.resolution.html#refl1d.resolution.divergence"><code class="docutils literal notranslate"><span class="pre">divergence()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.resolution.html#refl1d.resolution.sigma2FWHM"><code class="docutils literal notranslate"><span class="pre">sigma2FWHM()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.resolution.html#refl1d.resolution.slit_widths"><code class="docutils literal notranslate"><span class="pre">slit_widths()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.snsdata.html">refl1d.snsdata module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.snsdata.html#refl1d.snsdata.Liquids"><code class="docutils literal notranslate"><span class="pre">Liquids</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.snsdata.html#refl1d.snsdata.Magnetic"><code class="docutils literal notranslate"><span class="pre">Magnetic</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.snsdata.html#refl1d.snsdata.QRL_to_data"><code class="docutils literal notranslate"><span class="pre">QRL_to_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.snsdata.html#refl1d.snsdata.SNSData"><code class="docutils literal notranslate"><span class="pre">SNSData</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.snsdata.html#refl1d.snsdata.TOF_to_data"><code class="docutils literal notranslate"><span class="pre">TOF_to_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.snsdata.html#refl1d.snsdata.boltzmann_feather"><code class="docutils literal notranslate"><span class="pre">boltzmann_feather()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.snsdata.html#refl1d.snsdata.has_columns"><code class="docutils literal notranslate"><span class="pre">has_columns()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.snsdata.html#refl1d.snsdata.intensity_from_spline"><code class="docutils literal notranslate"><span class="pre">intensity_from_spline()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.snsdata.html#refl1d.snsdata.load"><code class="docutils literal notranslate"><span class="pre">load()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.snsdata.html#refl1d.snsdata.parse_sns_file"><code class="docutils literal notranslate"><span class="pre">parse_sns_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.snsdata.html#refl1d.snsdata.write_file"><code class="docutils literal notranslate"><span class="pre">write_file()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.staj.html">refl1d.staj module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.staj.html#refl1d.staj.MlayerMagnetic"><code class="docutils literal notranslate"><span class="pre">MlayerMagnetic</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.staj.html#refl1d.staj.MlayerModel"><code class="docutils literal notranslate"><span class="pre">MlayerModel</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.stajconvert.html">refl1d.stajconvert module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.stajconvert.html#refl1d.stajconvert.fit_all"><code class="docutils literal notranslate"><span class="pre">fit_all()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.stajconvert.html#refl1d.stajconvert.load_mlayer"><code class="docutils literal notranslate"><span class="pre">load_mlayer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.stajconvert.html#refl1d.stajconvert.mlayer_magnetic_to_model"><code class="docutils literal notranslate"><span class="pre">mlayer_magnetic_to_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.stajconvert.html#refl1d.stajconvert.mlayer_to_model"><code class="docutils literal notranslate"><span class="pre">mlayer_to_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.stajconvert.html#refl1d.stajconvert.model_to_mlayer"><code class="docutils literal notranslate"><span class="pre">model_to_mlayer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.stajconvert.html#refl1d.stajconvert.save_mlayer"><code class="docutils literal notranslate"><span class="pre">save_mlayer()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.stitch.html">refl1d.stitch module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.stitch.html#refl1d.stitch.poisson_average"><code class="docutils literal notranslate"><span class="pre">poisson_average()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.stitch.html#refl1d.stitch.stitch"><code class="docutils literal notranslate"><span class="pre">stitch()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.support.html">refl1d.support module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.support.html#refl1d.support.get_data_path"><code class="docutils literal notranslate"><span class="pre">get_data_path()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.support.html#refl1d.support.sample_data"><code class="docutils literal notranslate"><span class="pre">sample_data()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.util.html">refl1d.util module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="refl1d.util.html#refl1d.util.merge_ends"><code class="docutils literal notranslate"><span class="pre">merge_ends()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="refl1d.html#module-refl1d">Module contents</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="refl1d.html#refl1d.use"><code class="docutils literal notranslate"><span class="pre">use()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="run.html">run module</a></li>
+</ul>
+</div>
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

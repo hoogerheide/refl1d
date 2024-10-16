@@ -1,0 +1,7 @@
+refl1d.flayer module
+====================
+
+.. automodule:: refl1d.flayer
+   :members:
+   :undoc-members:
+   :show-inheritance:

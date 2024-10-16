@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>refl1d.flayer &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <script src="../../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>refl1d.flayer</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <h1>Source code for refl1d.flayer</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">inspect</span>
+
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">real</span><span class="p">,</span> <span class="n">imag</span><span class="p">,</span> <span class="n">asarray</span><span class="p">,</span> <span class="n">broadcast_to</span>
+
+<span class="kn">from</span> <span class="nn">bumps.parameter</span> <span class="kn">import</span> <span class="n">Parameter</span><span class="p">,</span> <span class="n">to_dict</span><span class="p">,</span> <span class="n">Calculation</span>
+<span class="kn">from</span> <span class="nn">refl1d.material</span> <span class="kn">import</span> <span class="n">SLD</span>
+<span class="kn">from</span> <span class="nn">refl1d.model</span> <span class="kn">import</span> <span class="n">Layer</span>
+<span class="kn">from</span> <span class="nn">refl1d.magnetism</span> <span class="kn">import</span> <span class="n">BaseMagnetism</span><span class="p">,</span> <span class="n">Magnetism</span><span class="p">,</span> <span class="n">DEFAULT_THETA_M</span>
+<span class="kn">from</span> <span class="nn">refl1d</span> <span class="kn">import</span> <span class="n">util</span>
+
+
+<div class="viewcode-block" id="FunctionalProfile">
+<a class="viewcode-back" href="../../refl1d.flayer.html#refl1d.flayer.FunctionalProfile">[docs]</a>
+<span class="k">class</span> <span class="nc">FunctionalProfile</span><span class="p">(</span><span class="n">Layer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generic profile function</span>
+
+<span class="sd">    Parameters:</span>
+
+<span class="sd">        *thickness* the thickness of the layer</span>
+
+<span class="sd">        *interface* the roughness of the surface [not implemented]</span>
+
+<span class="sd">        *profile* the profile function, suitably parameterized</span>
+
+<span class="sd">        *tol* is the tolerance for considering values equal</span>
+
+<span class="sd">        *magnetism* magnetic profile associated with the layer</span>
+
+<span class="sd">        *name* is the layer name</span>
+
+<span class="sd">    The profile function takes a depth vector *z* returns a density vector</span>
+<span class="sd">    *rho*. For absorbing profiles, return complex vector *rho + irho*1j*.</span>
+
+<span class="sd">    Fitting parameters are the available named arguments to the function.</span>
+<span class="sd">    The first argument is a depth vector, which is the array of depths at</span>
+<span class="sd">    which the profile is to be evaluated.  It is guaranteed to be increasing,</span>
+<span class="sd">    with step size 2*z[0].</span>
+
+<span class="sd">    Initial values for the function parameters can be given using name=value.</span>
+<span class="sd">    These values can be scalars or fitting parameters.  The function will</span>
+<span class="sd">    be called with the current parameter values as arguments.  The layer</span>
+<span class="sd">    thickness can be computed as :func:`layer_thickness`.</span>
+
+<span class="sd">    There is no mechanism for querying the larger profile to determine the</span>
+<span class="sd">    value of the *rho* at the layer boundaries.  If needed, this information</span>
+<span class="sd">    will have to be communicated through shared parameters.  For example::</span>
+
+<span class="sd">        L1 = SLD(&#39;L1&#39;, rho=2.07)</span>
+<span class="sd">        L3 = SLD(&#39;L3&#39;, rho=4)</span>
+<span class="sd">        def linear(z, rhoL, rhoR):</span>
+<span class="sd">            rho = z * (rhoR-rhoL)/(z[-1]-z[0]) + rhoL</span>
+<span class="sd">            return rho</span>
+<span class="sd">        profile = FunctionalProfile(100, 0, profile=linear,</span>
+<span class="sd">                                    rhoL=L1.rho, rhoR=L3.rho)</span>
+<span class="sd">        sample = L1 | profile | L3</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">RESERVED</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;thickness&quot;</span><span class="p">,</span> <span class="s2">&quot;interface&quot;</span><span class="p">,</span> <span class="s2">&quot;profile&quot;</span><span class="p">,</span> <span class="s2">&quot;tol&quot;</span><span class="p">,</span> <span class="s2">&quot;magnetism&quot;</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">)</span>
+
+    <span class="c1"># TODO: test that thickness(z) matches the thickness of the layer</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">thickness</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">interface</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">profile</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">magnetism</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">profile</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="k">if</span> <span class="n">interface</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;interface not yet supported&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">profile</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Need profile&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thickness</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">thickness</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; thickness&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">interface</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">interface</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; interface&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">profile</span> <span class="o">=</span> <span class="n">profile</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tol</span> <span class="o">=</span> <span class="n">tol</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">magnetism</span> <span class="o">=</span> <span class="n">magnetism</span>
+
+        <span class="c1"># TODO: maybe make these lazy (and for magnetism below as well)</span>
+        <span class="n">rho_start</span> <span class="o">=</span> <span class="n">_LayerLimit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">isend</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">isrho</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">irho_start</span> <span class="o">=</span> <span class="n">_LayerLimit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">isend</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">isrho</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">rho_end</span> <span class="o">=</span> <span class="n">_LayerLimit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">isend</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">isrho</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">irho_end</span> <span class="o">=</span> <span class="n">_LayerLimit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">isend</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">isrho</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start</span> <span class="o">=</span> <span class="n">SLD</span><span class="p">(</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; start&quot;</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="n">rho_start</span><span class="p">,</span> <span class="n">irho</span><span class="o">=</span><span class="n">irho_start</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">end</span> <span class="o">=</span> <span class="n">SLD</span><span class="p">(</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; end&quot;</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="n">rho_end</span><span class="p">,</span> <span class="n">irho</span><span class="o">=</span><span class="n">irho_end</span><span class="p">)</span>
+
+        <span class="n">_set_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">profile</span><span class="p">,</span> <span class="n">kw</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">RESERVED</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FunctionalProfile.parameters">
+<a class="viewcode-back" href="../../refl1d.flayer.html#refl1d.flayer.FunctionalProfile.parameters">[docs]</a>
+    <span class="k">def</span> <span class="nf">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">P</span> <span class="o">=</span> <span class="n">_get_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">P</span><span class="p">[</span><span class="s2">&quot;thickness&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thickness</span>
+        <span class="c1"># P[&#39;interface&#39;] = self.interface</span>
+        <span class="k">return</span> <span class="n">P</span></div>
+
+
+<div class="viewcode-block" id="FunctionalProfile.to_dict">
+<a class="viewcode-back" href="../../refl1d.flayer.html#refl1d.flayer.FunctionalProfile.to_dict">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">to_dict</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="s2">&quot;thickness&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">thickness</span><span class="p">,</span>
+                <span class="s2">&quot;interface&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="p">,</span>
+                <span class="s2">&quot;profile&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">,</span>
+                <span class="s2">&quot;parameters&quot;</span><span class="p">:</span> <span class="n">_get_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+                <span class="s2">&quot;tol&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">tol</span><span class="p">,</span>
+                <span class="s2">&quot;magnetism&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">magnetism</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FunctionalProfile.render">
+<a class="viewcode-back" href="../../refl1d.flayer.html#refl1d.flayer.FunctionalProfile.render">[docs]</a>
+    <span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">probe</span><span class="p">,</span> <span class="n">slabs</span><span class="p">):</span>
+        <span class="n">Pw</span><span class="p">,</span> <span class="n">Pz</span> <span class="o">=</span> <span class="n">slabs</span><span class="o">.</span><span class="n">microslabs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thickness</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">Pw</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="c1"># print kw</span>
+        <span class="c1"># TODO: always return rho, irho from profile function</span>
+        <span class="c1"># return value may be a constant for rho or irho</span>
+        <span class="n">phi</span> <span class="o">=</span> <span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">(</span><span class="n">Pz</span><span class="p">,</span> <span class="o">**</span><span class="n">_get_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="n">phi</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">Pz</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;profile function &#39;</span><span class="si">%s</span><span class="s2">&#39; did not return array phi(z)&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="n">Pw</span><span class="p">,</span> <span class="n">phi</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">merge_ends</span><span class="p">(</span><span class="n">Pw</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tol</span><span class="p">)</span>
+        <span class="c1"># P = M*phi + S*(1-phi)</span>
+        <span class="n">slabs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">rho</span><span class="o">=</span><span class="p">[</span><span class="n">real</span><span class="p">(</span><span class="n">phi</span><span class="p">)],</span> <span class="n">irho</span><span class="o">=</span><span class="p">[</span><span class="n">imag</span><span class="p">(</span><span class="n">phi</span><span class="p">)],</span> <span class="n">w</span><span class="o">=</span><span class="n">Pw</span><span class="p">)</span></div>
+</div>
+
+        <span class="c1"># slabs.interface(self.interface.value)</span>
+
+
+<div class="viewcode-block" id="FunctionalMagnetism">
+<a class="viewcode-back" href="../../refl1d.flayer.html#refl1d.flayer.FunctionalMagnetism">[docs]</a>
+<span class="k">class</span> <span class="nc">FunctionalMagnetism</span><span class="p">(</span><span class="n">BaseMagnetism</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Functional magnetism profile.</span>
+
+<span class="sd">    Parameters:</span>
+
+<span class="sd">        *profile* the profile function, suitably parameterized</span>
+
+<span class="sd">        *tol* is the tolerance for considering values equal</span>
+
+<span class="sd">        :class:`refl1d.magnetism.BaseMagnetism` parameters</span>
+
+<span class="sd">    The profile function takes a depth vector *z* and returns a magnetism</span>
+<span class="sd">    vector *rhoM*. For magnetic twist, return a pair of vectors *(rhoM, thetaM)*.</span>
+<span class="sd">    Constants can be returned for *rhoM* or *thetaM*.  If *thetaM* is not</span>
+<span class="sd">    provided it defaults to *thetaM=270*.</span>
+
+<span class="sd">    See :class:`FunctionalProfile` for a description of the the profile</span>
+<span class="sd">    function.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">RESERVED</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;profile&quot;</span><span class="p">,</span> <span class="s2">&quot;tol&quot;</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;extent&quot;</span><span class="p">,</span> <span class="s2">&quot;dead_below&quot;</span><span class="p">,</span> <span class="s2">&quot;dead_above&quot;</span><span class="p">,</span> <span class="s2">&quot;interface_below&quot;</span><span class="p">,</span> <span class="s2">&quot;interface_above&quot;</span><span class="p">)</span>
+    <span class="n">magnetic</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profile</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">profile</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="k">if</span> <span class="n">profile</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Need profile&quot;</span><span class="p">)</span>
+        <span class="c1"># strip magnetism keywords from list of keywords</span>
+        <span class="n">magkw</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">kw</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">a</span><span class="p">))</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">RESERVED</span><span class="p">)</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">kw</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+        <span class="n">BaseMagnetism</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">magkw</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">profile</span> <span class="o">=</span> <span class="n">profile</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tol</span> <span class="o">=</span> <span class="n">tol</span>
+
+        <span class="n">_set_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">profile</span><span class="p">,</span> <span class="n">kw</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">RESERVED</span><span class="p">)</span>
+        <span class="n">rhoM_start</span> <span class="o">=</span> <span class="n">_MagnetismLimit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">isend</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">isrhoM</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">rhoM_end</span> <span class="o">=</span> <span class="n">_MagnetismLimit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">isend</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">isrhoM</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">thetaM_start</span> <span class="o">=</span> <span class="n">_MagnetismLimit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">isend</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">isrhoM</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">thetaM_end</span> <span class="o">=</span> <span class="n">_MagnetismLimit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">isend</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">isrhoM</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start</span> <span class="o">=</span> <span class="n">Magnetism</span><span class="p">(</span><span class="n">rhoM</span><span class="o">=</span><span class="n">rhoM_start</span><span class="p">,</span> <span class="n">thetaM</span><span class="o">=</span><span class="n">thetaM_start</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">end</span> <span class="o">=</span> <span class="n">Magnetism</span><span class="p">(</span><span class="n">rhoM</span><span class="o">=</span><span class="n">rhoM_end</span><span class="p">,</span> <span class="n">thetaM</span><span class="o">=</span><span class="n">thetaM_end</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">anchor</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="FunctionalMagnetism.set_anchor">
+<a class="viewcode-back" href="../../refl1d.flayer.html#refl1d.flayer.FunctionalMagnetism.set_anchor">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_anchor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stack</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">anchor</span> <span class="o">=</span> <span class="p">(</span><span class="n">stack</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span></div>
+
+
+    <span class="c1"># TODO: is there a sane way of computing magnetism thickness in advance?</span>
+    <span class="k">def</span> <span class="nf">_calc_thickness</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">anchor</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Need layer.magnetism.set_anchor(stack, layer) to compute&quot;</span> <span class="s2">&quot; magnetic thickness.&quot;</span><span class="p">)</span>
+        <span class="n">stack</span><span class="p">,</span> <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">anchor</span>
+        <span class="n">stack</span><span class="p">,</span> <span class="n">start</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">_lookup</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">start</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">extent</span><span class="p">):</span>
+            <span class="n">total</span> <span class="o">+=</span> <span class="n">stack</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">thickness</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">total</span> <span class="o">-=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dead_below</span><span class="o">.</span><span class="n">value</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dead_above</span><span class="o">.</span><span class="n">value</span>
+        <span class="k">return</span> <span class="n">total</span>
+
+<div class="viewcode-block" id="FunctionalMagnetism.parameters">
+<a class="viewcode-back" href="../../refl1d.flayer.html#refl1d.flayer.FunctionalMagnetism.parameters">[docs]</a>
+    <span class="k">def</span> <span class="nf">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">parameters</span> <span class="o">=</span> <span class="n">BaseMagnetism</span><span class="o">.</span><span class="n">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">parameters</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">_get_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">parameters</span></div>
+
+
+<div class="viewcode-block" id="FunctionalMagnetism.to_dict">
+<a class="viewcode-back" href="../../refl1d.flayer.html#refl1d.flayer.FunctionalMagnetism.to_dict">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="n">BaseMagnetism</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="n">to_dict</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;profile&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">,</span>
+                    <span class="s2">&quot;parameters&quot;</span><span class="p">:</span> <span class="n">_get_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+                    <span class="s2">&quot;tol&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">tol</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FunctionalMagnetism.render">
+<a class="viewcode-back" href="../../refl1d.flayer.html#refl1d.flayer.FunctionalMagnetism.render">[docs]</a>
+    <span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">probe</span><span class="p">,</span> <span class="n">slabs</span><span class="p">,</span> <span class="n">thickness</span><span class="p">,</span> <span class="n">anchor</span><span class="p">,</span> <span class="n">sigma</span><span class="p">):</span>
+        <span class="n">Pw</span><span class="p">,</span> <span class="n">Pz</span> <span class="o">=</span> <span class="n">slabs</span><span class="o">.</span><span class="n">microslabs</span><span class="p">(</span><span class="n">thickness</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">Pw</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">P</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">(</span><span class="n">Pz</span><span class="p">,</span> <span class="o">**</span><span class="n">_get_values</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+
+        <span class="n">rhoM</span><span class="p">,</span> <span class="n">thetaM</span> <span class="o">=</span> <span class="n">P</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">DEFAULT_THETA_M</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># rhoM or thetaM may be constant, lists or arrays (but not tuples!)</span>
+            <span class="n">rhoM</span><span class="p">,</span> <span class="n">thetaM</span> <span class="o">=</span> <span class="p">[</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Pz</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">(</span><span class="n">rhoM</span><span class="p">,</span> <span class="n">thetaM</span><span class="p">)]</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;profile function &#39;</span><span class="si">%s</span><span class="s2">&#39; did not return array rhoM(z)&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="n">P</span> <span class="o">=</span> <span class="n">rhoM</span> <span class="o">+</span> <span class="n">thetaM</span> <span class="o">*</span> <span class="mf">0.001</span><span class="n">j</span>  <span class="c1"># combine rhoM/thetaM so they can be merged</span>
+        <span class="n">Pw</span><span class="p">,</span> <span class="n">P</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">merge_ends</span><span class="p">(</span><span class="n">Pw</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tol</span><span class="p">)</span>
+        <span class="n">rhoM</span><span class="p">,</span> <span class="n">thetaM</span> <span class="o">=</span> <span class="n">P</span><span class="o">.</span><span class="n">real</span><span class="p">,</span> <span class="n">P</span><span class="o">.</span><span class="n">imag</span> <span class="o">*</span> <span class="mi">1000</span>  <span class="c1"># split out rhoM,thetaM again</span>
+        <span class="n">slabs</span><span class="o">.</span><span class="n">add_magnetism</span><span class="p">(</span><span class="n">anchor</span><span class="o">=</span><span class="n">anchor</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="n">Pw</span><span class="p">,</span> <span class="n">rhoM</span><span class="o">=</span><span class="n">rhoM</span><span class="p">,</span> <span class="n">thetaM</span><span class="o">=</span><span class="n">thetaM</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;FunctionalMagnetism(</span><span class="si">%s</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">_set_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">profile</span><span class="p">,</span> <span class="n">kw</span><span class="p">,</span> <span class="n">reserved</span><span class="p">):</span>
+    <span class="c1"># Query profile function for the list of arguments</span>
+    <span class="nb">vars</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getfullargspec</span><span class="p">(</span><span class="n">profile</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="c1"># print &quot;vars&quot;, vars</span>
+    <span class="k">if</span> <span class="n">inspect</span><span class="o">.</span><span class="n">ismethod</span><span class="p">(</span><span class="n">profile</span><span class="p">):</span>
+        <span class="nb">vars</span> <span class="o">=</span> <span class="nb">vars</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>  <span class="c1"># Chop self</span>
+    <span class="nb">vars</span> <span class="o">=</span> <span class="nb">vars</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>  <span class="c1"># Chop z</span>
+    <span class="c1"># print vars</span>
+    <span class="n">unused</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">kw</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">unused</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Profile got unexpected keyword argument &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="n">unused</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">dups</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">vars</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">reserved</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dups</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Profile has conflicting argument </span><span class="si">%r</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">dups</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">:</span>
+        <span class="n">kw</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kw</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">pv</span> <span class="o">=</span> <span class="p">[</span><span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">vi</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">vi</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">v</span><span class="p">)]</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="n">pv</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">pv</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span> <span class="o">=</span> <span class="nb">vars</span>
+
+
+<span class="k">def</span> <span class="nf">_get_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="p">}</span>
+
+
+<span class="k">def</span> <span class="nf">_get_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">vals</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="p">:</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">vals</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">asarray</span><span class="p">([</span><span class="n">vk</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">vk</span> <span class="ow">in</span> <span class="n">v</span><span class="p">],</span> <span class="s2">&quot;d&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">vals</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">value</span>
+    <span class="k">return</span> <span class="n">vals</span>
+
+
+<span class="k">class</span> <span class="nc">_LayerLimit</span><span class="p">(</span><span class="n">Calculation</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flayer</span><span class="p">,</span> <span class="n">isend</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">isrho</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">description</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;rho&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">isrho</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;irho&#39;</span><span class="si">}</span><span class="s2"> Layer Limit, isend=</span><span class="si">{</span><span class="n">isend</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flayer</span> <span class="o">=</span> <span class="n">flayer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">isend</span> <span class="o">=</span> <span class="n">isend</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">isrho</span> <span class="o">=</span> <span class="n">isrho</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">flayer</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="s2">&quot;.rho_&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">isrho</span> <span class="k">else</span> <span class="s2">&quot;.irho_&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="s2">&quot;end&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">isend</span> <span class="k">else</span> <span class="s2">&quot;start&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">_function</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">asarray</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">flayer</span><span class="o">.</span><span class="n">thickness</span><span class="o">.</span><span class="n">value</span><span class="p">])</span>
+        <span class="n">P</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">flayer</span><span class="o">.</span><span class="n">profile</span><span class="p">(</span><span class="n">asarray</span><span class="p">(</span><span class="n">z</span><span class="p">),</span> <span class="o">**</span><span class="n">_get_values</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">flayer</span><span class="p">))</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">isend</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="n">real</span><span class="p">(</span><span class="n">P</span><span class="p">[</span><span class="n">index</span><span class="p">])</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">isrho</span> <span class="k">else</span> <span class="n">imag</span><span class="p">(</span><span class="n">P</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">flayer</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag</span>
+
+
+<span class="k">class</span> <span class="nc">_MagnetismLimit</span><span class="p">(</span><span class="n">Calculation</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flayer</span><span class="p">,</span> <span class="n">isend</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">isrhoM</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">description</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;rhoM&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">isrhoM</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;thetaM&#39;</span><span class="si">}</span><span class="s2"> Magnetism Limit, isend=</span><span class="si">{</span><span class="n">isend</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flayer</span> <span class="o">=</span> <span class="n">flayer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">isend</span> <span class="o">=</span> <span class="n">isend</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">isrhoM</span> <span class="o">=</span> <span class="n">isrhoM</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">flayer</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="s2">&quot;.rhoM_&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">isrhoM</span> <span class="k">else</span> <span class="s2">&quot;.thetaM_&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="s2">&quot;end&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">isend</span> <span class="k">else</span> <span class="s2">&quot;start&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">_function</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">zmax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">flayer</span><span class="o">.</span><span class="n">_calc_thickness</span><span class="p">()</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">asarray</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">zmax</span><span class="p">])</span>
+        <span class="n">P</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">flayer</span><span class="o">.</span><span class="n">profile</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="o">**</span><span class="n">_get_values</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">flayer</span><span class="p">))</span>
+        <span class="n">rhoM</span><span class="p">,</span> <span class="n">thetaM</span> <span class="o">=</span> <span class="n">P</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">DEFAULT_THETA_M</span><span class="p">)</span>
+        <span class="n">rhoM</span><span class="p">,</span> <span class="n">thetaM</span> <span class="o">=</span> <span class="p">[</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">z</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">(</span><span class="n">rhoM</span><span class="p">,</span> <span class="n">thetaM</span><span class="p">)]</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">isend</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="n">rhoM</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">isrhoM</span> <span class="k">else</span> <span class="n">thetaM</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">flayer</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag</span>
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

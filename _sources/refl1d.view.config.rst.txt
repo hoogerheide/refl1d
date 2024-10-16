@@ -1,0 +1,7 @@
+refl1d.view.config module
+=========================
+
+.. automodule:: refl1d.view.config
+   :members:
+   :undoc-members:
+   :show-inheritance:

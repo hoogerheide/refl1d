@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Performing a fit &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <script src="../../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Back reflectivity" href="nifilm-back.html" />
+    <link rel="prev" title="Attaching data" href="nifilm-data.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>Performing a fit</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        «&#160;&#160;<a href="nifilm-data.html">Attaching data</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="nifilm-back.html">Back reflectivity</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="performing-a-fit">
+<h1>Performing a fit<a class="headerlink" href="#performing-a-fit" title="Link to this heading">¶</a></h1>
+<p>Now that we know how to define a sample and load data, we can learn how
+to perform a fit on the data.  This is shown in
+<a class="reference download internal" download="" href="../../_downloads/3b2479678f3e9bb05e040567cca7075f/nifilm-fit.py"><code class="xref download docutils literal notranslate"><span class="pre">nifilm-fit.py</span></code></a>:</p>
+<p>We use the usual sample definition, except we set the thickness of the
+nickel layer to 125 Å so that the model does not match the data:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">refl1d.names</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="c1"># Turn off resolution bars in plots.  Only do this after you have plotted the</span>
+<span class="c1"># data with resolution bars so you know it looks reasonable, and you are not</span>
+<span class="c1"># fitting the sample_broadening parameter in the probe.</span>
+<span class="n">Probe</span><span class="o">.</span><span class="n">show_resolution</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="n">nickel</span> <span class="o">=</span> <span class="n">Material</span><span class="p">(</span><span class="s2">&quot;Ni&quot;</span><span class="p">)</span>
+<span class="n">sample</span> <span class="o">=</span> <span class="n">silicon</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span> <span class="o">|</span> <span class="n">nickel</span><span class="p">(</span><span class="mi">125</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span> <span class="o">|</span> <span class="n">air</span>
+</pre></div>
+</div>
+<p>We are going to try to recover the original thickness by letting the
+thickness value range by <span class="math notranslate nohighlight">\(125 \pm 50\)</span> Å.  Since nickel is layer 1 in
+the sample (counting starts at 0 in Python), we can access the layer
+parameters using sample[1].  The parameter we are accessing is the
+thickness parameter, and we are setting it’s fit range to <span class="math notranslate nohighlight">\(\pm 50\)</span> Å.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sample</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">thickness</span><span class="o">.</span><span class="n">pm</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We are also going to let the interfacial roughness between the layers vary.
+The interface between two layers is defined by the width of the interface on
+top of the layer below.  Here we are restricting the silicon:nickel interface
+to the interval <span class="math notranslate nohighlight">\([3,12]\)</span> and the nickel:air interface to the range <span class="math notranslate nohighlight">\([0,20]\)</span>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sample</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">12</span><span class="p">)</span>
+<span class="n">sample</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The data is loaded as before.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">instrument</span> <span class="o">=</span> <span class="n">SNS</span><span class="o">.</span><span class="n">Liquids</span><span class="p">()</span>
+<span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;nifilm-tof-</span><span class="si">%d</span><span class="s2">.dat&quot;</span> <span class="o">%</span> <span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)]</span>
+<span class="n">probe</span> <span class="o">=</span> <span class="n">ProbeSet</span><span class="p">(</span><span class="n">instrument</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">files</span><span class="p">)</span>
+
+<span class="n">M</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">probe</span><span class="o">=</span><span class="n">probe</span><span class="p">,</span> <span class="n">sample</span><span class="o">=</span><span class="n">sample</span><span class="p">)</span>
+
+<span class="n">problem</span> <span class="o">=</span> <span class="n">FitProblem</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>As you can see the new nickel thickness changes the theory curve
+significantly:</p>
+<p>(<a class="reference download internal" download="" href="../../_downloads/f3d4c59990fe6c875844660c58df71e7/nifilm-fit-1.py"><code class="xref download docutils literal notranslate"><span class="pre">Source</span> <span class="pre">code</span></code></a>, <a class="reference download internal" download="" href="../../_downloads/b1f8aaf34f6d338350f3d35aecacf203/nifilm-fit-1.png"><code class="xref download docutils literal notranslate"><span class="pre">png</span></code></a>, <a class="reference download internal" download="" href="../../_downloads/c6a17d22084f9bbe32758e08b8551dbb/nifilm-fit-1.hires.png"><code class="xref download docutils literal notranslate"><span class="pre">hires.png</span></code></a>, <a class="reference download internal" download="" href="../../_downloads/50d428ac10a66e69c66c653d88122712/nifilm-fit-1.pdf"><code class="xref download docutils literal notranslate"><span class="pre">pdf</span></code></a>)</p>
+<figure class="align-default">
+<img alt="../../_images/nifilm-fit-1.png" class="plot-directive" src="../../_images/nifilm-fit-1.png" />
+</figure>
+<p>We can now load and run the fit:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">..</span> <span class="n">parsed</span><span class="o">-</span><span class="n">literal</span><span class="p">::</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p>$ refl1d nifilm-fit.py –fit=newton –steps=100 –store=T1</p>
+</div></blockquote>
+<p>The <code class="docutils literal notranslate"><span class="pre">--fit=newton</span></code> option says to use the quasi-newton optimizer for
+not more than 100 steps.  The <code class="docutils literal notranslate"><span class="pre">--store=T1</span></code> option says to store the
+initial model, the fit results and any monitoring information in the
+directory T1.</p>
+<p>Here is the resulting fit:</p>
+<p>(<a class="reference download internal" download="" href="../../_downloads/61867e67e53660c5e5d36bfaf81126ea/nifilm-fit-2.py"><code class="xref download docutils literal notranslate"><span class="pre">Source</span> <span class="pre">code</span></code></a>, <a class="reference download internal" download="" href="../../_downloads/721ad2cf89275df5c33a5a8a5b305c09/nifilm-fit-2.png"><code class="xref download docutils literal notranslate"><span class="pre">png</span></code></a>, <a class="reference download internal" download="" href="../../_downloads/6ec7cbc4c6ee16c6905f870f579f3294/nifilm-fit-2.hires.png"><code class="xref download docutils literal notranslate"><span class="pre">hires.png</span></code></a>, <a class="reference download internal" download="" href="../../_downloads/d8a7e303c80eac3b093fe7b869ea7d1c/nifilm-fit-2.pdf"><code class="xref download docutils literal notranslate"><span class="pre">pdf</span></code></a>)</p>
+<figure class="align-default">
+<img alt="../../_images/nifilm-fit-2.png" class="plot-directive" src="../../_images/nifilm-fit-2.png" />
+</figure>
+<p>All is well: Normalized <span class="math notranslate nohighlight">\(\chi^2_N\)</span> is close to 1 and the line goes nicely
+through the data.</p>
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        «&#160;&#160;<a href="nifilm-data.html">Attaching data</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="nifilm-back.html">Back reflectivity</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+refl1d.view.demo module
+=======================
+
+.. automodule:: refl1d.view.demo
+   :members:
+   :undoc-members:
+   :show-inheritance:

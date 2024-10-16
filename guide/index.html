@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>User’s Guide &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
+    <script src="../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Using Refl1D" href="intro.html" />
+    <link rel="prev" title="Magnetism example" href="../tutorial/spinvalve/n101G.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>User’s Guide</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        «&#160;&#160;<a href="../tutorial/spinvalve/n101G.html">Magnetism example</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="intro.html">Using Refl1D</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="user-s-guide">
+<span id="users-guide-index"></span><h1>User’s Guide<a class="headerlink" href="#user-s-guide" title="Link to this heading">¶</a></h1>
+<p>Refl1D is a complex piece of software hiding some simple mathematics.
+The reflectivity of a sample is a simple function of its optical
+transform matrix <span class="math notranslate nohighlight">\(M\)</span>.  By slicing the sample in uniform layers, each
+of which has a transfer matrix <span class="math notranslate nohighlight">\(M_i\)</span>, we can estimate the transfer
+matrix for a depth-varying sample using <span class="math notranslate nohighlight">\(M=\prod M_i\)</span>.  We can
+adjust the properties of the individual layers until the measured
+reflectivity best matches the calculated reflectivty.</p>
+<p>The complexity comes from multiple sources:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Determining depth structure from reflectivity is an inverse problem
+requiring a search through a landscape with multiple minima, whose
+global minimum is small and often in an unpromising region.</p></li>
+<li><p>The solution is not unique:  multiple minima may be equally valid
+solutions to the inversion problem.</p></li>
+<li><p>The measurement is sensitive to nuisance parameters such as sample
+alignment.  That means the analysis program must include data
+reduction steps, making data handling complicated.</p></li>
+<li><p>The models are complex.  Since the ideal profile is not unique and
+is difficult to locate, we often constrain our search to feasible
+physical models to limit the search space, and to account for
+information from other sources.</p></li>
+<li><p>The reflectivity is dependent on the type of radiation used to probe
+the sample and even its energy.</p></li>
+</ul>
+</div></blockquote>
+<p><a class="reference internal" href="intro.html#intro-guide"><span class="std std-ref">Using Refl1D</span></a></p>
+<blockquote>
+<div><p>Model scripts associate a sample description with data and fitting
+options to define the system you wish to refine.</p>
+</div></blockquote>
+<p><a class="reference internal" href="parameter.html#parameter-guide"><span class="std std-ref">Parameters</span></a></p>
+<blockquote>
+<div><p>The adjustable values in each component of the system are defined
+by <code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code> objects.  When you
+set the range on a parameter, the system will be able to automatically
+adjust the value in order to find the best match between theory
+and data.</p>
+</div></blockquote>
+<p><a class="reference internal" href="data.html#data-guide"><span class="std std-ref">Data Representation</span></a></p>
+<blockquote>
+<div><p>Data is loaded from instrument specific file
+formats into a generic <a class="reference internal" href="../refl1d.probe.html#refl1d.probe.Probe" title="refl1d.probe.Probe"><code class="xref py py-class docutils literal notranslate"><span class="pre">Probe</span></code></a>.  The
+probe object manages the data view and by extension, the view of
+the theory.  The probe object also knows the measurement resolution,
+and controls the set of theory points that must be evaluated
+in order to computed the expected value at each point.</p>
+</div></blockquote>
+<p><a class="reference internal" href="materials.html#materials-guide"><span class="std std-ref">Materials</span></a></p>
+<blockquote>
+<div><p>The strength of the interaction can be represented either in
+terms of their scattering length density using
+<a class="reference internal" href="../refl1d.material.html#refl1d.material.SLD" title="refl1d.material.SLD"><code class="xref py py-class docutils literal notranslate"><span class="pre">SLD</span></code></a>, or by their chemical
+formula using <a class="reference internal" href="../refl1d.material.html#refl1d.material.Material" title="refl1d.material.Material"><code class="xref py py-class docutils literal notranslate"><span class="pre">Material</span></code></a>, with
+scattering length density computed from the information in the
+probe.  <a class="reference internal" href="../refl1d.material.html#refl1d.material.Mixture" title="refl1d.material.Mixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">Mixture</span></code></a> can be used
+to make a composite material whose parts vary be mass or by volume.</p>
+</div></blockquote>
+<p><a class="reference internal" href="sample.html#sample-guide"><span class="std std-ref">Sample Representation</span></a></p>
+<blockquote>
+<div><p>Materials are composed into samples, usually as a
+<a class="reference internal" href="../refl1d.model.html#refl1d.model.Stack" title="refl1d.model.Stack"><code class="xref py py-class docutils literal notranslate"><span class="pre">Stack</span></code></a> of
+<a class="reference internal" href="../refl1d.model.html#refl1d.model.Slab" title="refl1d.model.Slab"><code class="xref py py-class docutils literal notranslate"><span class="pre">Slabs</span></code></a> layers, but more specific profiles
+such as <a class="reference internal" href="../refl1d.polymer.html#refl1d.polymer.PolymerBrush" title="refl1d.polymer.PolymerBrush"><code class="xref py py-class docutils literal notranslate"><span class="pre">PolymerBrush</span></code></a>
+are available.  Freeform sections of the profile can be described
+using <a class="reference internal" href="../refl1d.mono.html#refl1d.mono.FreeLayer" title="refl1d.mono.FreeLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">FreeLayer</span></code></a>, allowing
+arbitrary scattering length density profiles within the layer, or
+<a class="reference internal" href="../refl1d.mono.html#refl1d.mono.FreeInterface" title="refl1d.mono.FreeInterface"><code class="xref py py-class docutils literal notranslate"><span class="pre">FreeInterface</span></code></a> allowing
+arbitrary transitions from one SLD to another.  New layer types
+can be defined by subclassing <a class="reference internal" href="../refl1d.model.html#refl1d.model.Layer" title="refl1d.model.Layer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Layer</span></code></a>.</p>
+</div></blockquote>
+<p><a class="reference internal" href="experiment.html#experiment-guide"><span class="std std-ref">Experiment</span></a></p>
+<blockquote>
+<div><p>Sample descriptions and data sets are combined into an
+<a class="reference internal" href="../refl1d.experiment.html#refl1d.experiment.Experiment" title="refl1d.experiment.Experiment"><code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment</span></code></a> object,
+allowing the program to compute the expected reflectivity
+from the sample and the probability that reflectivity measured
+could have come from that sample.  For complex cases, where the
+sample varies on a length scale larger than the coherence length
+of the probe, you may need to model your measurement with a
+<code class="xref py py-class docutils literal notranslate"><span class="pre">CompositeExperiment</span></code>.</p>
+</div></blockquote>
+<p><a class="reference internal" href="fitting.html#fitting-guide"><span class="std std-ref">Fitting</span></a></p>
+<blockquote>
+<div><p>One or more experiments can be combined into a
+<code class="xref py py-class docutils literal notranslate"><span class="pre">FitProblem</span></code>.  This is then
+given to one of the many fitters, such as
+<code class="xref py py-class docutils literal notranslate"><span class="pre">PTFit</span></code>, which adjust the varying
+parameters, trying to find the best fit.  PTFit can also
+be used for Bayesian analysis in order to estimate the confidence
+in which the parameter values are known.</p>
+</div></blockquote>
+<div class="toctree-wrapper compound">
+</div>
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        «&#160;&#160;<a href="../tutorial/spinvalve/n101G.html">Magnetism example</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="intro.html">Using Refl1D</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

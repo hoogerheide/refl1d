@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>refl1d.stajconvert &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <script src="../../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>refl1d.stajconvert</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <h1>Source code for refl1d.stajconvert</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This program is in the public domain</span>
+<span class="c1"># Author: Paul Kienzle</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Convert staj files to Refl1D models</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">tan</span><span class="p">,</span> <span class="n">cos</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">radians</span><span class="p">,</span> <span class="n">degrees</span><span class="p">,</span> <span class="n">pi</span>
+<span class="kn">from</span> <span class="nn">bumps</span> <span class="kn">import</span> <span class="n">parameter</span>
+
+<span class="kn">from</span> <span class="nn">.staj</span> <span class="kn">import</span> <span class="n">MlayerModel</span><span class="p">,</span> <span class="n">MlayerMagnetic</span><span class="p">,</span> <span class="n">ERF_FWHM</span>
+<span class="kn">from</span> <span class="nn">.model</span> <span class="kn">import</span> <span class="n">Slab</span><span class="p">,</span> <span class="n">Stack</span><span class="p">,</span> <span class="n">Repeat</span>
+<span class="kn">from</span> <span class="nn">.magnetism</span> <span class="kn">import</span> <span class="n">Magnetism</span>
+<span class="kn">from</span> <span class="nn">.material</span> <span class="kn">import</span> <span class="n">SLD</span>
+<span class="kn">from</span> <span class="nn">.resolution</span> <span class="kn">import</span> <span class="n">QL2T</span><span class="p">,</span> <span class="n">sigma2FWHM</span>
+<span class="kn">from</span> <span class="nn">.probe</span> <span class="kn">import</span> <span class="n">NeutronProbe</span><span class="p">,</span> <span class="n">XrayProbe</span><span class="p">,</span> <span class="n">PolarizedNeutronProbe</span>
+
+
+<div class="viewcode-block" id="load_mlayer">
+<a class="viewcode-back" href="../../refl1d.stajconvert.html#refl1d.stajconvert.load_mlayer">[docs]</a>
+<span class="k">def</span> <span class="nf">load_mlayer</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">fit_pmp</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">layers</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load a staj file as a model.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">filename</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.staj&quot;</span><span class="p">):</span>
+        <span class="n">staj</span> <span class="o">=</span> <span class="n">MlayerModel</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">mlayer_to_model</span><span class="p">(</span><span class="n">staj</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">layers</span><span class="o">=</span><span class="n">layers</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">sta</span> <span class="o">=</span> <span class="n">MlayerMagnetic</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">mlayer_magnetic_to_model</span><span class="p">(</span><span class="n">sta</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">layers</span><span class="o">=</span><span class="n">layers</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">fit_pmp</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">fit_all</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">pmp</span><span class="o">=</span><span class="n">fit_pmp</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">model</span></div>
+
+
+
+<div class="viewcode-block" id="save_mlayer">
+<a class="viewcode-back" href="../../refl1d.stajconvert.html#refl1d.stajconvert.save_mlayer">[docs]</a>
+<span class="k">def</span> <span class="nf">save_mlayer</span><span class="p">(</span><span class="n">experiment</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">datafile</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Save a model to a staj file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">staj</span> <span class="o">=</span> <span class="n">model_to_mlayer</span><span class="p">(</span><span class="n">experiment</span><span class="p">,</span> <span class="n">datafile</span><span class="p">)</span>
+    <span class="c1"># print staj</span>
+    <span class="n">staj</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="fit_all">
+<a class="viewcode-back" href="../../refl1d.stajconvert.html#refl1d.stajconvert.fit_all">[docs]</a>
+<span class="k">def</span> <span class="nf">fit_all</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">pmp</span><span class="o">=</span><span class="mi">20</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Set all non-zero parameters to fitted parameters inside the model.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Exclude unlikely fitting parameters</span>
+    <span class="n">exclude</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+        <span class="p">(</span>
+            <span class="n">M</span><span class="o">.</span><span class="n">sample</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">thickness</span><span class="p">,</span>
+            <span class="n">M</span><span class="o">.</span><span class="n">sample</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">thickness</span><span class="p">,</span>
+            <span class="n">M</span><span class="o">.</span><span class="n">sample</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">interface</span><span class="p">,</span>
+            <span class="n">M</span><span class="o">.</span><span class="n">probe</span><span class="o">.</span><span class="n">back_absorption</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">M</span><span class="o">.</span><span class="n">probe</span><span class="o">.</span><span class="n">intensity</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">exclude</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">M</span><span class="o">.</span><span class="n">probe</span><span class="o">.</span><span class="n">intensity</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">M</span><span class="o">.</span><span class="n">probe</span><span class="o">.</span><span class="n">background</span><span class="o">.</span><span class="n">value</span> <span class="o">&lt;</span> <span class="mf">2e-10</span><span class="p">:</span>
+        <span class="n">exclude</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">M</span><span class="o">.</span><span class="n">probe</span><span class="o">.</span><span class="n">background</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="c1"># Fit everything else using a range of +/- pmp %</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parameter</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">M</span><span class="o">.</span><span class="n">parameters</span><span class="p">()):</span>
+        <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">exclude</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">value</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">pmp</span><span class="p">(</span><span class="n">pmp</span><span class="p">)</span></div>
+
+        <span class="c1"># p.fixed = False</span>
+
+
+<div class="viewcode-block" id="mlayer_to_model">
+<a class="viewcode-back" href="../../refl1d.stajconvert.html#refl1d.stajconvert.mlayer_to_model">[docs]</a>
+<span class="k">def</span> <span class="nf">mlayer_to_model</span><span class="p">(</span><span class="n">staj</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">layers</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert a loaded staj file to a refl1d experiment.</span>
+
+<span class="sd">    Returns a new experiment</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">.experiment</span> <span class="kn">import</span> <span class="n">Experiment</span>
+
+    <span class="n">sample</span> <span class="o">=</span> <span class="n">_mlayer_to_stack</span><span class="p">(</span><span class="n">staj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">layers</span><span class="p">)</span>
+    <span class="n">probe</span> <span class="o">=</span> <span class="n">_load_probe</span><span class="p">(</span><span class="n">staj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">xs</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">sample</span><span class="o">=</span><span class="n">sample</span><span class="p">,</span> <span class="n">probe</span><span class="o">=</span><span class="n">probe</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">_mlayer_to_stack</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">layers</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a sample stack based on the model used in the staj file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># check pars</span>
+    <span class="k">if</span> <span class="n">layers</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">layers</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">rho</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Have </span><span class="si">%d</span><span class="s2"> staj layers but got </span><span class="si">%d</span><span class="s2"> layer names&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">rho</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">layers</span><span class="p">)))</span>
+
+    <span class="c1"># prepend datafile name to layers</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">data_file</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">):</span>
+        <span class="n">name</span> <span class="o">+=</span> <span class="s2">&quot; &quot;</span>
+
+    <span class="n">i1</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">num_top</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">i2</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">num_top</span> <span class="o">+</span> <span class="n">s</span><span class="o">.</span><span class="n">num_middle</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="c1"># Construct slabs</span>
+    <span class="n">slabs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">rho</span><span class="p">))):</span>
+        <span class="k">if</span> <span class="n">layers</span><span class="p">:</span>
+            <span class="n">Lname</span> <span class="o">=</span> <span class="n">layers</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">layers</span><span class="p">)</span> <span class="o">-</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">Lname</span> <span class="o">=</span> <span class="s2">&quot;V&quot;</span>
+        <span class="k">elif</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">i1</span><span class="p">:</span>
+            <span class="n">Lname</span> <span class="o">=</span> <span class="s2">&quot;T</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">i2</span><span class="p">:</span>
+            <span class="n">Lname</span> <span class="o">=</span> <span class="s2">&quot;M</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">i</span> <span class="o">-</span> <span class="n">i1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">Lname</span> <span class="o">=</span> <span class="s2">&quot;B</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">i</span> <span class="o">-</span> <span class="n">i2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">slabs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">Slab</span><span class="p">(</span>
+                <span class="n">material</span><span class="o">=</span><span class="n">SLD</span><span class="p">(</span><span class="n">rho</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">rho</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">irho</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">irho</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span> <span class="o">+</span> <span class="n">Lname</span><span class="p">),</span>
+                <span class="n">thickness</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">thickness</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                <span class="n">interface</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">sigma_roughness</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Build stack</span>
+    <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">num_repeats</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">stack</span> <span class="o">=</span> <span class="n">Stack</span><span class="p">(</span><span class="n">slabs</span><span class="p">[:</span><span class="n">i1</span><span class="p">]</span> <span class="o">+</span> <span class="n">slabs</span><span class="p">[</span><span class="n">i2</span><span class="p">:])</span>
+    <span class="k">elif</span> <span class="n">s</span><span class="o">.</span><span class="n">num_repeats</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">stack</span> <span class="o">=</span> <span class="n">Stack</span><span class="p">(</span><span class="n">slabs</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">stack</span> <span class="o">=</span> <span class="n">Stack</span><span class="p">(</span><span class="n">slabs</span><span class="p">[:</span><span class="n">i1</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">Repeat</span><span class="p">(</span><span class="n">Stack</span><span class="p">(</span><span class="n">slabs</span><span class="p">[</span><span class="n">i1</span><span class="p">:</span><span class="n">i2</span><span class="p">]))]</span> <span class="o">+</span> <span class="n">slabs</span><span class="p">[</span><span class="n">i2</span><span class="p">:])</span>
+
+    <span class="k">return</span> <span class="n">stack</span>
+
+
+<span class="n">XS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;A&quot;</span><span class="p">:</span> <span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="s2">&quot;B&quot;</span><span class="p">:</span> <span class="s2">&quot;-+&quot;</span><span class="p">,</span> <span class="s2">&quot;C&quot;</span><span class="p">:</span> <span class="s2">&quot;+-&quot;</span><span class="p">,</span> <span class="s2">&quot;D&quot;</span><span class="p">:</span> <span class="s2">&quot;++&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">}</span>
+
+
+<span class="k">def</span> <span class="nf">_load_probe</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">xs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">data_file</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">data_file</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="s2">&quot;simulated&quot;</span>
+        <span class="n">Q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">Qmin</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">Qmax</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">num_Q</span><span class="p">)</span>
+        <span class="n">R</span><span class="p">,</span> <span class="n">dR</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">data_file</span>
+        <span class="n">Q</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">dR</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">data_file</span> <span class="o">+</span> <span class="n">xs</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+
+    <span class="c1"># Use Q and wavelength L from the staj file to determine angle T</span>
+    <span class="n">L</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">wavelength</span>
+    <span class="n">T</span> <span class="o">=</span> <span class="n">QL2T</span><span class="p">(</span><span class="n">Q</span><span class="o">=</span><span class="n">Q</span><span class="p">,</span> <span class="n">L</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">wavelength</span><span class="p">)</span>
+
+    <span class="c1"># Refl1D uses the following for dQ:</span>
+    <span class="c1">#</span>
+    <span class="c1">#     (dQ/Q)^2 = (dL/L)^2 + (dT/tan(T))^2</span>
+    <span class="c1">#</span>
+    <span class="c1"># Given the mlayer resolution dQ, and wavelength divergence dL, we can solve the</span>
+    <span class="c1"># above for dT such that dQ in refl1d matches dQ in mlayer.</span>
+    <span class="c1">#</span>
+    <span class="c1">#      dT = sqrt( tan(T)^2 * ( (dQ/Q)^2 - (dL/L)^2) ) )</span>
+    <span class="c1">#         = sqrt( (dQ*L/4*pi*sin(T))^2*(sin(T)/cos(T))^2 - (tan(T)*dL/L)^2 )</span>
+    <span class="c1">#         = sqrt( (dQ*L/4*pi*cos(T))^2 - (tan(T)*dL/L)^2 )</span>
+    <span class="n">dQ</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">FWHMresolution</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span>
+    <span class="n">dL</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">wavelength_dispersion</span>
+    <span class="n">dT</span> <span class="o">=</span> <span class="n">degrees</span><span class="p">(</span><span class="n">sqrt</span><span class="p">((</span><span class="n">dQ</span> <span class="o">*</span> <span class="n">L</span> <span class="o">/</span> <span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">pi</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">radians</span><span class="p">(</span><span class="n">T</span><span class="p">))))</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">-</span> <span class="p">(</span><span class="n">tan</span><span class="p">(</span><span class="n">radians</span><span class="p">(</span><span class="n">T</span><span class="p">))</span> <span class="o">*</span> <span class="n">dL</span> <span class="o">/</span> <span class="n">L</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+
+    <span class="c1"># Hack: X-ray is 1.54; anything above 2 is neutron.  Doesn&#39;t matter since</span>
+    <span class="c1"># materials are set as SLD rather than composition.</span>
+    <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">wavelength</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">probe</span> <span class="o">=</span> <span class="n">XrayProbe</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">probe</span> <span class="o">=</span> <span class="n">NeutronProbe</span>
+    <span class="n">probe</span> <span class="o">=</span> <span class="n">probe</span><span class="p">(</span>
+        <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span>
+        <span class="n">dT</span><span class="o">=</span><span class="n">dT</span><span class="p">,</span>
+        <span class="n">L</span><span class="o">=</span><span class="n">L</span><span class="p">,</span>
+        <span class="n">dL</span><span class="o">=</span><span class="n">dL</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">dR</span><span class="p">),</span>
+        <span class="n">theta_offset</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s2">&quot;theta_offset&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>  <span class="c1"># gj2 has no theta offset</span>
+        <span class="n">background</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">background</span><span class="p">,</span>
+        <span class="n">intensity</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">intensity</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">probe</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+    <span class="c1"># probe.oversample(n=10)</span>
+    <span class="k">return</span> <span class="n">probe</span>
+
+
+<div class="viewcode-block" id="model_to_mlayer">
+<a class="viewcode-back" href="../../refl1d.stajconvert.html#refl1d.stajconvert.model_to_mlayer">[docs]</a>
+<span class="k">def</span> <span class="nf">model_to_mlayer</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">datafile</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return an mlayer model based on the a slab stack.</span>
+
+<span class="sd">    Raises TypeError if model cannot be stored as a staj file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">stack</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span>
+    <span class="n">probe</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">probe</span>
+
+    <span class="n">staj</span> <span class="o">=</span> <span class="n">MlayerModel</span><span class="p">(</span><span class="n">roughness_steps</span><span class="o">=</span><span class="mi">51</span><span class="p">)</span>
+
+    <span class="c1"># Set up beam info</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">probe</span><span class="o">.</span><span class="n">L</span> <span class="o">!=</span> <span class="n">probe</span><span class="o">.</span><span class="n">L</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="c1"># Reason is that mlayer uses mu/(2 lambda) rather than irho</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Mlayer only supports monochromatic sources&quot;</span><span class="p">)</span>
+
+    <span class="n">staj</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+        <span class="n">wavelength</span><span class="o">=</span><span class="n">probe</span><span class="o">.</span><span class="n">L</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="n">intensity</span><span class="o">=</span><span class="n">probe</span><span class="o">.</span><span class="n">intensity</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">background</span><span class="o">=</span><span class="n">probe</span><span class="o">.</span><span class="n">background</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">theta_offset</span><span class="o">=</span><span class="n">probe</span><span class="o">.</span><span class="n">theta_offset</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">datafile</span><span class="p">:</span>
+        <span class="n">staj</span><span class="o">.</span><span class="n">data_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">datafile</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">staj</span><span class="o">.</span><span class="n">Qmin</span><span class="p">,</span> <span class="n">staj</span><span class="o">.</span><span class="n">Qmax</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">probe</span><span class="o">.</span><span class="n">Qo</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">probe</span><span class="o">.</span><span class="n">Qo</span><span class="p">)</span>
+        <span class="n">staj</span><span class="o">.</span><span class="n">num_Q</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">probe</span><span class="o">.</span><span class="n">Qo</span><span class="p">)</span>
+    <span class="n">staj</span><span class="o">.</span><span class="n">fit_FWHMresolution</span><span class="p">(</span><span class="n">probe</span><span class="o">.</span><span class="n">Qo</span><span class="p">,</span> <span class="n">sigma2FWHM</span><span class="p">(</span><span class="n">probe</span><span class="o">.</span><span class="n">dQ</span><span class="p">))</span>
+
+    <span class="c1"># Interpret slabs and repeats</span>
+    <span class="n">sections</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">section</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">repeats</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">stack</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">Slab</span><span class="p">):</span>
+            <span class="n">section</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">Repeat</span><span class="p">):</span>
+            <span class="n">sections</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">section</span><span class="p">)</span>
+            <span class="n">sections</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">l</span><span class="p">[:])</span>
+            <span class="n">repeats</span> <span class="o">=</span> <span class="n">l</span><span class="o">.</span><span class="n">repeat</span>
+            <span class="n">section</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Only slabs supported&quot;</span><span class="p">)</span>
+    <span class="n">sections</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">section</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sections</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Only one repeated section supported&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sections</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">sections</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">Slab</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Only slabs supported in repeat section&quot;</span><span class="p">)</span>
+        <span class="n">num_top</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sections</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">num_middle</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sections</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">num_bottom</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sections</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">num_top</span> <span class="o">&gt;</span> <span class="mi">9</span> <span class="ow">or</span> <span class="n">num_middle</span> <span class="o">&gt;</span> <span class="mi">9</span> <span class="ow">or</span> <span class="n">num_bottom</span> <span class="o">&gt;</span> <span class="mi">9</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Maximum section length of 9&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">num_top</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">num_middle</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">num_bottom</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Need at least one slab per section, plus vacuum&quot;</span><span class="p">)</span>
+        <span class="n">staj</span><span class="o">.</span><span class="n">num_top</span> <span class="o">=</span> <span class="n">num_top</span>
+        <span class="n">staj</span><span class="o">.</span><span class="n">num_middle</span> <span class="o">=</span> <span class="n">num_middle</span>
+        <span class="n">staj</span><span class="o">.</span><span class="n">num_bottom</span> <span class="o">=</span> <span class="n">num_bottom</span>
+        <span class="n">staj</span><span class="o">.</span><span class="n">num_repeats</span> <span class="o">=</span> <span class="n">repeats</span>
+        <span class="n">slabs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">slabs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">sections</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+        <span class="n">slabs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">sections</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="n">slabs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">sections</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># must be only one section</span>
+        <span class="n">slabs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">sections</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">slabs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">28</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Too many slabs (only 28 slabs allowed)&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Convert slabs to sld parameters</span>
+    <span class="c1"># print &quot;\n&quot;.join(str(s) for s in slabs)</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">slabs</span><span class="p">:</span>
+        <span class="n">rho</span><span class="p">,</span> <span class="n">irho</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">material</span><span class="o">.</span><span class="n">sld</span><span class="p">(</span><span class="n">probe</span><span class="p">)</span>
+        <span class="n">thickness</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">thickness</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">roughness</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">rho</span><span class="p">,</span> <span class="n">irho</span><span class="p">,</span> <span class="n">thickness</span><span class="p">,</span> <span class="n">roughness</span><span class="p">))</span>
+    <span class="n">vectors</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">values</span><span class="p">)]</span>
+
+    <span class="c1"># If back reflectivity, reverse the layers and move the interfaces</span>
+    <span class="c1"># from the top of the layer to the bottom.</span>
+    <span class="k">if</span> <span class="n">probe</span><span class="o">.</span><span class="n">back_reflectivity</span><span class="p">:</span>
+        <span class="n">vectors</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">vectors</span><span class="p">]</span>
+        <span class="n">vectors</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">vectors</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">staj</span><span class="o">.</span><span class="n">num_top</span><span class="p">,</span> <span class="n">staj</span><span class="o">.</span><span class="n">num_bottom</span> <span class="o">=</span> <span class="n">staj</span><span class="o">.</span><span class="n">num_bottom</span><span class="p">,</span> <span class="n">staj</span><span class="o">.</span><span class="n">num_top</span>
+
+    <span class="n">staj</span><span class="o">.</span><span class="n">rho</span><span class="p">,</span> <span class="n">staj</span><span class="o">.</span><span class="n">irho</span><span class="p">,</span> <span class="n">staj</span><span class="o">.</span><span class="n">thickness</span><span class="p">,</span> <span class="n">staj</span><span class="o">.</span><span class="n">sigma_roughness</span> <span class="o">=</span> <span class="n">vectors</span>
+
+    <span class="c1"># If no repeats, split the model into sections</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sections</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="c1"># If the stack is too short, add layers at the top until it is</span>
+        <span class="c1"># tall enough.  These layers should have the same SLD as the</span>
+        <span class="c1"># old top layer, and a thickness large enough to accommodate</span>
+        <span class="c1"># the interface between the top layer and the second layer.</span>
+        <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">staj</span><span class="o">.</span><span class="n">rho</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="n">staj</span><span class="o">.</span><span class="n">rho</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">staj</span><span class="o">.</span><span class="n">rho</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">staj</span><span class="o">.</span><span class="n">rho</span><span class="p">))</span>
+            <span class="n">staj</span><span class="o">.</span><span class="n">irho</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">staj</span><span class="o">.</span><span class="n">irho</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">staj</span><span class="o">.</span><span class="n">irho</span><span class="p">))</span>
+            <span class="n">staj</span><span class="o">.</span><span class="n">thickness</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mf">3.5</span> <span class="o">*</span> <span class="n">staj</span><span class="o">.</span><span class="n">sigma_roughness</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">staj</span><span class="o">.</span><span class="n">thickness</span><span class="p">[</span><span class="mi">1</span><span class="p">:]))</span>
+            <span class="n">staj</span><span class="o">.</span><span class="n">sigma_roughness</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">staj</span><span class="o">.</span><span class="n">sigma_roughness</span><span class="p">))</span>
+
+        <span class="n">staj</span><span class="o">.</span><span class="n">split_sections</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">staj</span></div>
+
+
+
+<div class="viewcode-block" id="mlayer_magnetic_to_model">
+<a class="viewcode-back" href="../../refl1d.stajconvert.html#refl1d.stajconvert.mlayer_magnetic_to_model">[docs]</a>
+<span class="k">def</span> <span class="nf">mlayer_magnetic_to_model</span><span class="p">(</span><span class="n">sta</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">layers</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert a loaded sta file to a refl1d experiment.</span>
+
+<span class="sd">    Returns a new experiment</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">.experiment</span> <span class="kn">import</span> <span class="n">Experiment</span>
+
+    <span class="n">sample</span> <span class="o">=</span> <span class="n">_mlayer_magnetic_to_stack</span><span class="p">(</span><span class="n">sta</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">layers</span><span class="p">)</span>
+    <span class="n">probe</span> <span class="o">=</span> <span class="n">_mlayer_magnetic_to_probe</span><span class="p">(</span><span class="n">sta</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">sample</span><span class="o">=</span><span class="n">sample</span><span class="p">,</span> <span class="n">probe</span><span class="o">=</span><span class="n">probe</span><span class="p">,</span> <span class="n">dz</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">_mlayer_magnetic_to_stack</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">layers</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a sample stack based on the model used in the sta file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># check pars</span>
+    <span class="k">if</span> <span class="n">layers</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">layers</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">rho</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Have </span><span class="si">%d</span><span class="s2"> sta layers but got </span><span class="si">%d</span><span class="s2"> layer names&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">rho</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">layers</span><span class="p">)))</span>
+
+    <span class="c1"># prepend datafile name to layers</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">data_file</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">):</span>
+        <span class="n">name</span> <span class="o">+=</span> <span class="s2">&quot; &quot;</span>
+
+    <span class="c1"># Construct slabs</span>
+    <span class="n">magnetic_offset</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">thickness</span> <span class="o">-</span> <span class="n">s</span><span class="o">.</span><span class="n">mthickness</span><span class="p">)</span>
+    <span class="n">slabs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">nlayers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">rho</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nlayers</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">layers</span><span class="p">:</span>
+            <span class="n">Lname</span> <span class="o">=</span> <span class="n">layers</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">layers</span><span class="p">)</span> <span class="o">-</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">Lname</span> <span class="o">=</span> <span class="s2">&quot;V&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">Lname</span> <span class="o">=</span> <span class="s2">&quot;M</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">i</span>
+        <span class="n">slab_i</span> <span class="o">=</span> <span class="n">Slab</span><span class="p">(</span>
+            <span class="n">material</span><span class="o">=</span><span class="n">SLD</span><span class="p">(</span><span class="n">rho</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">rho</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">irho</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">irho</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span> <span class="o">+</span> <span class="n">Lname</span><span class="p">),</span>
+            <span class="n">thickness</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">thickness</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+            <span class="n">interface</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">sigma_roughness</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">mrho</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="n">slab_i</span><span class="o">.</span><span class="n">magnetism</span> <span class="o">=</span> <span class="n">Magnetism</span><span class="p">(</span>
+                <span class="n">s</span><span class="o">.</span><span class="n">mrho</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                <span class="n">s</span><span class="o">.</span><span class="n">mtheta</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                <span class="n">interface_below</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">sigma_mroughness</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">nlayers</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
+                <span class="n">interface_above</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">sigma_mroughness</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                <span class="n">dead_below</span><span class="o">=</span><span class="n">magnetic_offset</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">nlayers</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
+                <span class="n">dead_above</span><span class="o">=</span><span class="n">magnetic_offset</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+            <span class="p">)</span>
+        <span class="n">slabs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">slab_i</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">Stack</span><span class="p">(</span><span class="n">slabs</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_mlayer_magnetic_to_probe</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a model probe based on the data used for the staj file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">data_file</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">active_xsec</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">active_xsec</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+    <span class="n">xs</span> <span class="o">=</span> <span class="p">[</span><span class="n">_load_probe</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">xs</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">xs</span> <span class="ow">in</span> <span class="n">active_xsec</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">xs</span> <span class="ow">in</span> <span class="s2">&quot;ABCD&quot;</span><span class="p">]</span>
+    <span class="n">probe</span> <span class="o">=</span> <span class="n">PolarizedNeutronProbe</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">Aguide</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">guide_angle</span><span class="p">)</span>
+    <span class="c1"># probe.oversample(n=6)</span>
+    <span class="k">return</span> <span class="n">probe</span>
+</pre></div>
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        <a class="uplink" href="../../index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

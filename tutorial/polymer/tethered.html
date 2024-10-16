@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Defining the film &#8212; Refl1D 0.7.7.post1533+gc6a0ac1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/haiku-site.css?v=ccbba224" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <script src="../../_static/documentation_options.js?v=132fb2fb"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Freeform interface" href="freeform.html" />
+    <link rel="prev" title="Tethered Polymer" href="readme.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="../../index.html">
+          <span>Refl1D 0.7.7.post1533+gc6a0ac1 documentation</span></a></h1>
+        <h2 class="heading"><span>Defining the film</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        «&#160;&#160;<a href="readme.html">Tethered Polymer</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="freeform.html">Freeform interface</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="defining-the-film">
+<h1>Defining the film<a class="headerlink" href="#defining-the-film" title="Link to this heading">¶</a></h1>
+<p>We first need to define the materials</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">refl1d.names</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">copy</span>
+
+<span class="c1"># === Materials ===</span>
+<span class="n">SiOx</span> <span class="o">=</span> <span class="n">SLD</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;SiOx&quot;</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="mf">3.47</span><span class="p">)</span>
+<span class="n">D_toluene</span> <span class="o">=</span> <span class="n">SLD</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;D-toluene&quot;</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="mf">5.66</span><span class="p">)</span>
+<span class="n">D_initiator</span> <span class="o">=</span> <span class="n">SLD</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;D-initiator&quot;</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="mf">1.5</span><span class="p">)</span>
+<span class="n">D_polystyrene</span> <span class="o">=</span> <span class="n">SLD</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;D-PS&quot;</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="mf">6.2</span><span class="p">)</span>
+<span class="n">H_toluene</span> <span class="o">=</span> <span class="n">SLD</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;H-toluene&quot;</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="mf">0.94</span><span class="p">)</span>
+<span class="n">H_initiator</span> <span class="o">=</span> <span class="n">SLD</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;H-initiator&quot;</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In this case we are using the neutron scattering length density as is
+standard practice in reflectivity experiments rather than the chemical
+formula and mass density.  The <a class="reference internal" href="../../refl1d.material.html#refl1d.material.SLD" title="refl1d.material.SLD"><code class="xref py py-class docutils literal notranslate"><span class="pre">SLD</span></code></a> class
+allows us to name the material and define the real and imaginary components
+of scattering length density <span class="math notranslate nohighlight">\(\rho\)</span>.  Note that we are using the imaginary
+<span class="math notranslate nohighlight">\(\rho_i\)</span> rather than the absorption coefficient <span class="math notranslate nohighlight">\(\mu = 2\lambda\rho_i\)</span>
+since it removes the dependence on wavelength from the calculation of
+the reflectivity.</p>
+<p>For the tethered polymer we don’t use a simple slab model, but instead
+define a <a class="reference internal" href="../../refl1d.polymer.html#refl1d.polymer.PolymerBrush" title="refl1d.polymer.PolymerBrush"><code class="xref py py-class docutils literal notranslate"><span class="pre">PolymerBrush</span></code></a>
+layer, which understands that the system is compose of polymer plus
+solvent, and that the polymer chains tail off like:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}V(z) = \left\{
+       \begin{array}{ll}
+        V_o                        &amp; \mbox{if } z &lt;= z_o \\
+        V_o (1 - ((z-z_o)/L)^2)^p  &amp; \mbox{if } z_o &lt; z &lt; z_o + L \\
+        0                          &amp; \mbox{if } z &gt;= z_o + L
+        \end{array}
+       \right.\end{split}\]</div>
+<p>This volume profile combines with the scattering length density of the
+polymer and the solvent to form an SLD profile:</p>
+<div class="math notranslate nohighlight">
+\[\rho(z) = \rho_p V(z) + \rho_s (1 - V(z))\]</div>
+<p>The tethered polymer layer definition looks like</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># === Sample ===</span>
+<span class="c1"># Deuterated sample</span>
+<span class="n">D_brush</span> <span class="o">=</span> <span class="n">PolymerBrush</span><span class="p">(</span><span class="n">polymer</span><span class="o">=</span><span class="n">D_polystyrene</span><span class="p">,</span> <span class="n">solvent</span><span class="o">=</span><span class="n">D_toluene</span><span class="p">,</span> <span class="n">base_vf</span><span class="o">=</span><span class="mi">70</span><span class="p">,</span> <span class="n">base</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span> <span class="n">power</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This layer can be combined with the remaining layers to form the
+deuterated measurement sample</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">D</span> <span class="o">=</span> <span class="n">silicon</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span> <span class="o">|</span> <span class="n">SiOx</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span> <span class="o">|</span> <span class="n">D_initiator</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span> <span class="o">|</span> <span class="n">D_brush</span><span class="p">(</span><span class="mi">400</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">|</span> <span class="n">D_toluene</span>
+</pre></div>
+</div>
+<p>The stack notation <code class="docutils literal notranslate"><span class="pre">material(thickness,</span> <span class="pre">interface)</span> <span class="pre">|</span> <span class="pre">...</span></code> is performing
+a number of tasks for you.  One thing it is doing is wrapping materials
+(which are objects that understand scattering length densities) into
+slabs (which are objects that understand thickness and interface).  These
+slabs are then gathered together into a stack:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">L_silicon</span> <span class="o">=</span> <span class="n">Slab</span><span class="p">(</span><span class="n">material</span><span class="o">=</span><span class="n">silicon</span><span class="p">,</span> <span class="n">thickness</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">interface</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">L_SiOx</span> <span class="o">=</span> <span class="n">Slab</span><span class="p">(</span><span class="n">material</span><span class="o">=</span><span class="n">SiOx</span><span class="p">,</span> <span class="n">thickness</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">interface</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">L_D_initiator</span> <span class="o">=</span> <span class="n">Slab</span><span class="p">(</span><span class="n">material</span><span class="o">=</span><span class="n">D_initiator</span><span class="p">,</span> <span class="n">thickness</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">interface</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+<span class="n">L_D_brush</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="n">D_brush</span><span class="p">)</span>
+<span class="n">L_D_brush</span><span class="o">.</span><span class="n">thickness</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="mi">400</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">D_brush</span><span class="o">.</span><span class="n">name</span><span class="o">+</span><span class="s2">&quot; thickness&quot;</span><span class="p">)</span>
+<span class="n">L_D_brush</span><span class="o">.</span><span class="n">interface</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">D_brush</span><span class="o">.</span><span class="n">name</span><span class="o">+</span><span class="s2">&quot; interface&quot;</span><span class="p">)</span>
+<span class="n">L_D_toluene</span> <span class="o">=</span> <span class="n">Slab</span><span class="p">(</span><span class="n">material</span><span class="o">=</span><span class="n">D_toluene</span><span class="p">)</span>
+<span class="n">D</span> <span class="o">=</span> <span class="n">Stack</span><span class="p">([</span><span class="n">L_silicon</span><span class="p">,</span> <span class="n">L_SiOx</span><span class="p">,</span> <span class="n">L_D_initiator</span><span class="p">,</span> <span class="n">L_D_brush</span><span class="p">,</span> <span class="n">L_D_toluene</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>The undeuterated sample is similar to the deuterated sample. We start
+by copying the polymer brush layer so that parameters such as <em>length</em>,
+<em>power</em>, etc. will be shared between the two systems, but we replace the
+deuterated toluene solvent with undeuterated toluene.  We then use
+this <em>H_brush</em> to define a new stack with undeuterated tolune</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Undeuterated sample is a copy of the deuterated sample</span>
+<span class="n">H_brush</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="n">D_brush</span><span class="p">)</span>  <span class="c1"># Share tethered polymer parameters...</span>
+<span class="n">H_brush</span><span class="o">.</span><span class="n">solvent</span> <span class="o">=</span> <span class="n">H_toluene</span>  <span class="c1"># ... but use different solvent</span>
+<span class="n">H</span> <span class="o">=</span> <span class="n">silicon</span> <span class="o">|</span> <span class="n">SiOx</span> <span class="o">|</span> <span class="n">H_initiator</span> <span class="o">|</span> <span class="n">H_brush</span> <span class="o">|</span> <span class="n">H_toluene</span>
+</pre></div>
+</div>
+<p>We want to share thickness and interface between the two systems
+as well, so we write a loop to go through the layers of <em>D</em> and
+copy the thickness and interface parameters to <em>H</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">D</span><span class="p">):</span>
+    <span class="n">H</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">thickness</span> <span class="o">=</span> <span class="n">D</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">thickness</span>
+    <span class="n">H</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">interface</span> <span class="o">=</span> <span class="n">D</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">interface</span>
+</pre></div>
+</div>
+<p>What is happening internally is that for each layer in the stack we are
+copying the parameter for the thickness from the deuterated sample
+slab to the thickness slot in the undeuterated sample slab.  Similarly
+for interface.  When the refinement engine sets a new value for a
+thickness parameter and asks the two models to evaluate <span class="math notranslate nohighlight">\(\chi^2\)</span>, both
+models will see the same thickness parameter value.</p>
+</section>
+<section id="setting-fit-ranges">
+<h1>Setting fit ranges<a class="headerlink" href="#setting-fit-ranges" title="Link to this heading">¶</a></h1>
+<p>With both samples defined, we next specify the ranges on the fitted
+parameters</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># === Fit parameters ===</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>
+    <span class="n">D</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">D</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">thickness</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+<span class="n">D</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">thickness</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+<span class="n">D_polystyrene</span><span class="o">.</span><span class="n">rho</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mf">6.2</span><span class="p">,</span> <span class="mf">6.5</span><span class="p">)</span>
+<span class="n">SiOx</span><span class="o">.</span><span class="n">rho</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mf">2.07</span><span class="p">,</span> <span class="mf">4.16</span><span class="p">)</span>  <span class="c1"># Si to SiO2</span>
+<span class="n">D_toluene</span><span class="o">.</span><span class="n">rho</span><span class="o">.</span><span class="n">pmp</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">D_initiator</span><span class="o">.</span><span class="n">rho</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">)</span>
+<span class="n">D_brush</span><span class="o">.</span><span class="n">base_vf</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mi">80</span><span class="p">)</span>
+<span class="n">D_brush</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+<span class="n">D_brush</span><span class="o">.</span><span class="n">length</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">500</span><span class="p">)</span>
+<span class="n">D_brush</span><span class="o">.</span><span class="n">power</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<span class="n">D_brush</span><span class="o">.</span><span class="n">sigma</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+
+<span class="c1"># Undeuterated system adds two extra parameters</span>
+<span class="n">H_toluene</span><span class="o">.</span><span class="n">rho</span><span class="o">.</span><span class="n">pmp</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">H_initiator</span><span class="o">.</span><span class="n">rho</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Notice that in some cases we are using layer number to reference the
+parameter, such as <code class="docutils literal notranslate"><span class="pre">D[1].thickness</span></code> whereas in other cases we are using
+variables directly, such as <code class="docutils literal notranslate"><span class="pre">D_toluene.rho</span></code>.  Determining which to
+use requires an understanding of the underlying stack model.  In this
+case, the thickness is associated with the SiOx slab thickness, but
+we never formed a variable to contain <code class="docutils literal notranslate"><span class="pre">Slab(material=SiOx)</span></code>, so we
+have to reference it via the stack.   We did however create a variable
+to contain <code class="docutils literal notranslate"><span class="pre">Material(name=&quot;D_toluene&quot;)</span></code> so we can access its parameters
+directly.  Also, notice that we only need to set one of <code class="docutils literal notranslate"><span class="pre">D[1].thickness</span></code>
+and <code class="docutils literal notranslate"><span class="pre">H[1].thickness</span></code> since they are the same underlying parameter.</p>
+</section>
+<section id="attaching-data">
+<h1>Attaching data<a class="headerlink" href="#attaching-data" title="Link to this heading">¶</a></h1>
+<p>Next we associate the reflectivity curves with the samples:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># === Data files ===</span>
+<span class="n">instrument</span> <span class="o">=</span> <span class="n">NCNR</span><span class="o">.</span><span class="n">NG7</span><span class="p">(</span><span class="n">Qlo</span><span class="o">=</span><span class="mf">0.005</span><span class="p">,</span> <span class="n">slits_at_Qlo</span><span class="o">=</span><span class="mf">0.075</span><span class="p">)</span>
+<span class="n">D_probe</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;10ndt001.refl&quot;</span><span class="p">,</span> <span class="n">back_reflectivity</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">H_probe</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;10nht001.refl&quot;</span><span class="p">,</span> <span class="n">back_reflectivity</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">D_probe</span><span class="o">.</span><span class="n">theta_offset</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="o">-</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We set <code class="docutils literal notranslate"><span class="pre">back_reflectivity=True</span></code> because we are coming in through the
+substrate.  The reflectometry calculator will automatically reverse
+the stack and adjust the effective incident angle to account for the
+refraction when the beam enters the side of the substrate.  Ideally
+you will have measured the incident beam intensity through the substrate
+as well so that substrate absorption effects are corrected for in your
+data reduction steps, but if not, you can set an estimate for
+<code class="docutils literal notranslate"><span class="pre">back_absorption</span></code> when you load the file.  Like <code class="docutils literal notranslate"><span class="pre">intensity</span></code> you can
+set a range on the value and adjust it during refinement.</p>
+<p>Finally, we define the fitting problem from the probes and samples.
+The dz parameter controls the size of the profiles steps when generating
+the tethered polymer interface.  The dA parameter allows these steps
+to be joined together into larger slabs, with each slab having
+<span class="math notranslate nohighlight">\((\rho_{\text max} - \rho_{\text min}) w &lt; \Delta A\)</span>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># === Problem definition ===</span>
+<span class="n">D_model</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">sample</span><span class="o">=</span><span class="n">D</span><span class="p">,</span> <span class="n">probe</span><span class="o">=</span><span class="n">D_probe</span><span class="p">,</span> <span class="n">dz</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">dA</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">H_model</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">sample</span><span class="o">=</span><span class="n">H</span><span class="p">,</span> <span class="n">probe</span><span class="o">=</span><span class="n">H_probe</span><span class="p">,</span> <span class="n">dz</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">dA</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">models</span> <span class="o">=</span> <span class="n">H_model</span><span class="p">,</span> <span class="n">D_model</span>
+</pre></div>
+</div>
+<p>This is a multifit problem where both models contribute to the goodness
+of fit measure <span class="math notranslate nohighlight">\(\chi^2\)</span>.  Since no weight vector was defined the fits
+have equal weight.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">problem</span> <span class="o">=</span> <span class="n">FitProblem</span><span class="p">(</span><span class="n">models</span><span class="p">)</span>
+<span class="n">problem</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;tethered&quot;</span>
+</pre></div>
+</div>
+<p>The polymer brush model is a smooth profile function, which is evaluated
+by slicing it into thin slabs, then joining together similar slabs to
+improve evaluation time.  The <code class="docutils literal notranslate"><span class="pre">dz=0.5</span></code> parameter tells us that we
+should slice the brush into 0.5 Å steps.  The <code class="docutils literal notranslate"><span class="pre">dA=1</span></code> parameter
+says we should join together thin slabs while the scattering density
+uncertainty in the joined slabs <span class="math notranslate nohighlight">\(\Delta A &lt; 1\)</span>, where
+<span class="math notranslate nohighlight">\(\Delta A = (\max\rho - \min\rho)(\max z - \min z)\)</span>.  Similarly for
+the absorption cross section <span class="math notranslate nohighlight">\(\rho_i\)</span> and the effective magnetic cross
+section <span class="math notranslate nohighlight">\(\rho_M \cos(\theta_M)\)</span>.  If <code class="docutils literal notranslate"><span class="pre">dA=None</span></code> (the default) then no
+profile contraction occurs.</p>
+<p>The resulting model looks like:</p>
+<p>(<a class="reference download internal" download="" href="../../_downloads/c4823480ad59558d279a1ca4e648fd32/tethered-1.py"><code class="xref download docutils literal notranslate"><span class="pre">Source</span> <span class="pre">code</span></code></a>)</p>
+<figure class="align-default" id="id1">
+<img alt="../../_images/tethered-1_00.png" class="plot-directive" src="../../_images/tethered-1_00.png" />
+<figcaption>
+<p><span class="caption-text">(<a class="reference download internal" download="" href="../../_downloads/f8c69d03ae23ee15953bd6840baa4364/tethered-1_00.png"><code class="xref download docutils literal notranslate"><span class="pre">png</span></code></a>, <a class="reference download internal" download="" href="../../_downloads/2248e6719a0ec8f76a29b3c76cc9a9b8/tethered-1_00.hires.png"><code class="xref download docutils literal notranslate"><span class="pre">hires.png</span></code></a>, <a class="reference download internal" download="" href="../../_downloads/75f35762f29cfa93af6a214e4e87d664/tethered-1_00.pdf"><code class="xref download docutils literal notranslate"><span class="pre">pdf</span></code></a>)</span><a class="headerlink" href="#id1" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id2">
+<img alt="../../_images/tethered-1_01.png" class="plot-directive" src="../../_images/tethered-1_01.png" />
+<figcaption>
+<p><span class="caption-text">(<a class="reference download internal" download="" href="../../_downloads/c7467ab1445176d790eeaa0c1e00980f/tethered-1_01.png"><code class="xref download docutils literal notranslate"><span class="pre">png</span></code></a>, <a class="reference download internal" download="" href="../../_downloads/b4b3e05f311262f76d8e35402672d6a2/tethered-1_01.hires.png"><code class="xref download docutils literal notranslate"><span class="pre">hires.png</span></code></a>, <a class="reference download internal" download="" href="../../_downloads/b0e8b0d5345140bf20b30a339a20854a/tethered-1_01.pdf"><code class="xref download docutils literal notranslate"><span class="pre">pdf</span></code></a>)</span><a class="headerlink" href="#id2" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>This complete model script is defined in
+<a class="reference download internal" download="" href="../../_downloads/4d7ef407fa29807aed1f70cbe2d1bb76/tethered.py"><code class="xref download docutils literal notranslate"><span class="pre">tethered.py</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">refl1d.names</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">copy</span>
+
+<span class="c1"># === Materials ===</span>
+<span class="n">SiOx</span> <span class="o">=</span> <span class="n">SLD</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;SiOx&quot;</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="mf">3.47</span><span class="p">)</span>
+<span class="n">D_toluene</span> <span class="o">=</span> <span class="n">SLD</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;D-toluene&quot;</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="mf">5.66</span><span class="p">)</span>
+<span class="n">D_initiator</span> <span class="o">=</span> <span class="n">SLD</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;D-initiator&quot;</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="mf">1.5</span><span class="p">)</span>
+<span class="n">D_polystyrene</span> <span class="o">=</span> <span class="n">SLD</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;D-PS&quot;</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="mf">6.2</span><span class="p">)</span>
+<span class="n">H_toluene</span> <span class="o">=</span> <span class="n">SLD</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;H-toluene&quot;</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="mf">0.94</span><span class="p">)</span>
+<span class="n">H_initiator</span> <span class="o">=</span> <span class="n">SLD</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;H-initiator&quot;</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="c1"># === Sample ===</span>
+<span class="c1"># Deuterated sample</span>
+<span class="n">D_brush</span> <span class="o">=</span> <span class="n">PolymerBrush</span><span class="p">(</span><span class="n">polymer</span><span class="o">=</span><span class="n">D_polystyrene</span><span class="p">,</span> <span class="n">solvent</span><span class="o">=</span><span class="n">D_toluene</span><span class="p">,</span> <span class="n">base_vf</span><span class="o">=</span><span class="mi">70</span><span class="p">,</span> <span class="n">base</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span> <span class="n">power</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+<span class="n">D</span> <span class="o">=</span> <span class="n">silicon</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span> <span class="o">|</span> <span class="n">SiOx</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span> <span class="o">|</span> <span class="n">D_initiator</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span> <span class="o">|</span> <span class="n">D_brush</span><span class="p">(</span><span class="mi">400</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">|</span> <span class="n">D_toluene</span>
+
+<span class="c1"># Undeuterated sample is a copy of the deuterated sample</span>
+<span class="n">H_brush</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="n">D_brush</span><span class="p">)</span>  <span class="c1"># Share tethered polymer parameters...</span>
+<span class="n">H_brush</span><span class="o">.</span><span class="n">solvent</span> <span class="o">=</span> <span class="n">H_toluene</span>  <span class="c1"># ... but use different solvent</span>
+<span class="n">H</span> <span class="o">=</span> <span class="n">silicon</span> <span class="o">|</span> <span class="n">SiOx</span> <span class="o">|</span> <span class="n">H_initiator</span> <span class="o">|</span> <span class="n">H_brush</span> <span class="o">|</span> <span class="n">H_toluene</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">D</span><span class="p">):</span>
+    <span class="n">H</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">thickness</span> <span class="o">=</span> <span class="n">D</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">thickness</span>
+    <span class="n">H</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">interface</span> <span class="o">=</span> <span class="n">D</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">interface</span>
+
+<span class="c1"># === Fit parameters ===</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>
+    <span class="n">D</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">D</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">thickness</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+<span class="n">D</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">thickness</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+<span class="n">D_polystyrene</span><span class="o">.</span><span class="n">rho</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mf">6.2</span><span class="p">,</span> <span class="mf">6.5</span><span class="p">)</span>
+<span class="n">SiOx</span><span class="o">.</span><span class="n">rho</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mf">2.07</span><span class="p">,</span> <span class="mf">4.16</span><span class="p">)</span>  <span class="c1"># Si to SiO2</span>
+<span class="n">D_toluene</span><span class="o">.</span><span class="n">rho</span><span class="o">.</span><span class="n">pmp</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">D_initiator</span><span class="o">.</span><span class="n">rho</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">)</span>
+<span class="n">D_brush</span><span class="o">.</span><span class="n">base_vf</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mi">80</span><span class="p">)</span>
+<span class="n">D_brush</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+<span class="n">D_brush</span><span class="o">.</span><span class="n">length</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">500</span><span class="p">)</span>
+<span class="n">D_brush</span><span class="o">.</span><span class="n">power</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<span class="n">D_brush</span><span class="o">.</span><span class="n">sigma</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+
+<span class="c1"># Undeuterated system adds two extra parameters</span>
+<span class="n">H_toluene</span><span class="o">.</span><span class="n">rho</span><span class="o">.</span><span class="n">pmp</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">H_initiator</span><span class="o">.</span><span class="n">rho</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
+
+<span class="c1"># === Data files ===</span>
+<span class="n">instrument</span> <span class="o">=</span> <span class="n">NCNR</span><span class="o">.</span><span class="n">NG7</span><span class="p">(</span><span class="n">Qlo</span><span class="o">=</span><span class="mf">0.005</span><span class="p">,</span> <span class="n">slits_at_Qlo</span><span class="o">=</span><span class="mf">0.075</span><span class="p">)</span>
+<span class="n">D_probe</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;10ndt001.refl&quot;</span><span class="p">,</span> <span class="n">back_reflectivity</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">H_probe</span> <span class="o">=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;10nht001.refl&quot;</span><span class="p">,</span> <span class="n">back_reflectivity</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">D_probe</span><span class="o">.</span><span class="n">theta_offset</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="o">-</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+
+<span class="c1"># === Problem definition ===</span>
+<span class="n">D_model</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">sample</span><span class="o">=</span><span class="n">D</span><span class="p">,</span> <span class="n">probe</span><span class="o">=</span><span class="n">D_probe</span><span class="p">,</span> <span class="n">dz</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">dA</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">H_model</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">sample</span><span class="o">=</span><span class="n">H</span><span class="p">,</span> <span class="n">probe</span><span class="o">=</span><span class="n">H_probe</span><span class="p">,</span> <span class="n">dz</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">dA</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">models</span> <span class="o">=</span> <span class="n">H_model</span><span class="p">,</span> <span class="n">D_model</span>
+
+<span class="n">problem</span> <span class="o">=</span> <span class="n">FitProblem</span><span class="p">(</span><span class="n">models</span><span class="p">)</span>
+<span class="n">problem</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;tethered&quot;</span>
+
+</pre></div>
+</div>
+<p>The model can be fit using the parallel tempering optimizer:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ refl1d tethered.py --fit=pt --store=T1
+</pre></div>
+</div>
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        «&#160;&#160;<a href="readme.html">Tethered Polymer</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="freeform.html">Freeform interface</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

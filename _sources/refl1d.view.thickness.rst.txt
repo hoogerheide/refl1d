@@ -1,0 +1,7 @@
+refl1d.view.thickness module
+============================
+
+.. automodule:: refl1d.view.thickness
+   :members:
+   :undoc-members:
+   :show-inheritance:

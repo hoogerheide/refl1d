@@ -1,0 +1,7 @@
+refl1d.view.binder module
+=========================
+
+.. automodule:: refl1d.view.binder
+   :members:
+   :undoc-members:
+   :show-inheritance:
